@@ -43,9 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException;
-import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +58,6 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private final KnowledgeBaseMapper knowledgeBaseMapper;
     private final KnowledgeDocumentMapper knowledgeDocumentMapper;
     private final VectorStoreAdmin vectorStoreAdmin;
-    private final S3Client s3Client;
 
     @Transactional
     @Override
@@ -88,19 +84,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         knowledgeBaseMapper.insert(kbDO);
 
-        String bucketName = requestParam.getCollectionName();
-        try {
-            s3Client.createBucket(builder -> builder.bucket(bucketName));
-            log.info("成功创建RestFS存储桶，Bucket名称: {}", bucketName);
-        } catch (BucketAlreadyOwnedByYouException | BucketAlreadyExistsException e) {
-            if (e instanceof BucketAlreadyOwnedByYouException) {
-                log.error("RestFS存储桶已存在，Bucket名称: {}", bucketName, e);
-            } else {
-                log.error("RestFS存储桶已存在但由其他账户拥有，Bucket名称: {}", bucketName, e);
-            }
-            throw new ServiceException("存储桶名称已被占用：" + bucketName);
-        }
-
+        // 创建向量空间（用于向量检索）
         VectorSpaceSpec spaceSpec = VectorSpaceSpec.builder()
                 .spaceId(VectorSpaceId.builder()
                         .logicalName(requestParam.getCollectionName())
@@ -109,6 +93,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 .build();
         vectorStoreAdmin.ensureVectorSpace(spaceSpec);
 
+        log.info("成功创建知识库, id={}, name={}, collectionName={}", kbDO.getId(), name, requestParam.getCollectionName());
         return String.valueOf(kbDO.getId());
     }
 

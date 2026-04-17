@@ -53,7 +53,7 @@ public class IngestionTaskDO {
     private String pipelineId;
 
     /**
-     * 数据源类型 (如: file, url, feishu, s3)
+     * 数据源类型 (如: file, url, feishu, oss)
      */
     private String sourceType;
 
