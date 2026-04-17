@@ -76,7 +76,7 @@ public class IntentNodeDO {
     private String examples;
 
     /**
-     * Milvus Collection 名称（仅对 kind=0 有意义）
+     * 向量集合名称（仅对 kind=0 有意义）
      */
     private String collectionName;
 

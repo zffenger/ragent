@@ -18,8 +18,7 @@
 package com.nageoffer.ai.ragent.index;
 
 import cn.hutool.core.util.IdUtil;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.nageoffer.ai.ragent.core.chunk.VectorChunk;
 import com.nageoffer.ai.ragent.rag.config.RAGDefaultProperties;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
@@ -27,9 +26,7 @@ import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
 import com.nageoffer.ai.ragent.infra.embedding.EmbeddingService;
 import com.nageoffer.ai.ragent.rag.core.retrieve.RetrieverService;
-import io.milvus.v2.client.MilvusClientV2;
-import io.milvus.v2.service.vector.request.InsertReq;
-import io.milvus.v2.service.vector.response.InsertResp;
+import com.nageoffer.ai.ragent.rag.core.vector.VectorStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
@@ -57,7 +54,7 @@ public class InvoiceIndexDocumentTests {
 
     private final LLMService llmService;
     private final EmbeddingService embeddingService;
-    private final MilvusClientV2 milvusClient;
+    private final VectorStoreService vectorStoreService;
     private final RetrieverService retrieverService;
     private final RAGDefaultProperties ragDefaultProperties;
 
@@ -71,18 +68,10 @@ public class InvoiceIndexDocumentTests {
         List<String> chunks = splitIntoLineChunks(actualDocument, 5);
 
         String docId = UUID.randomUUID().toString();
-        List<JsonObject> rows = buildRowsForChunks(
-                docId,
-                chunks
-        );
+        List<VectorChunk> vectorChunks = buildVectorChunks(docId, chunks);
 
-        InsertReq req = InsertReq.builder()
-                .collectionName(ragDefaultProperties.getCollectionName())
-                .data(rows)
-                .build();
-
-        InsertResp resp = milvusClient.insert(req);
-        log.info("Indexed file document. documentId={},  chunks={}, insertCnt={}", docId, chunks.size(), resp.getInsertCnt());
+        vectorStoreService.indexDocumentChunks(ragDefaultProperties.getCollectionName(), docId, vectorChunks);
+        log.info("Indexed file document. documentId={}, chunks={}", docId, chunks.size());
     }
 
     @Test
@@ -309,11 +298,10 @@ public class InvoiceIndexDocumentTests {
     }
 
     /**
-     * 构造一批向量插入行
+     * 构造一批向量 chunk
      */
-    private List<JsonObject> buildRowsForChunks(String documentId,
-                                                List<String> chunks) {
-        List<JsonObject> rows = new ArrayList<>();
+    private List<VectorChunk> buildVectorChunks(String documentId, List<String> chunks) {
+        List<VectorChunk> vectorChunks = new ArrayList<>();
         long now = System.currentTimeMillis();
 
         for (int i = 0; i < chunks.size(); i++) {
@@ -321,30 +309,27 @@ public class InvoiceIndexDocumentTests {
             if (!StringUtils.hasText(chunk)) continue;
 
             List<Float> emb = embeddingService.embed(chunk);
+            float[] embedding = new float[emb.size()];
+            for (int j = 0; j < emb.size(); j++) {
+                embedding[j] = emb.get(j);
+            }
 
-            JsonObject row = new JsonObject();
-            // 每个 chunk 一个独立主键
-            row.addProperty("doc_id", IdUtil.getSnowflakeNextIdStr());
-            row.add("embedding", floatListToJson(emb));
-            row.addProperty("content", chunk);
+            VectorChunk vectorChunk = VectorChunk.builder()
+                    .chunkId(IdUtil.getSnowflakeNextIdStr())
+                    .content(chunk)
+                    .embedding(embedding)
+                    .index(i)
+                    .metadata(java.util.Map.of(
+                            "documentId", documentId,
+                            "chunkIndex", i,
+                            "totalChunks", chunks.size(),
+                            "timestamp", now
+                    ))
+                    .build();
 
-            JsonObject metadata = new JsonObject();
-            metadata.addProperty("documentId", documentId);
-            metadata.addProperty("chunkIndex", i);
-            metadata.addProperty("totalChunks", chunks.size());
-            metadata.addProperty("timestamp", now);
-            row.add("metadata", metadata);
-
-            rows.add(row);
+            vectorChunks.add(vectorChunk);
         }
 
-        return rows;
-    }
-
-
-    private JsonArray floatListToJson(List<Float> list) {
-        JsonArray arr = new JsonArray();
-        list.forEach(arr::add);
-        return arr;
+        return vectorChunks;
     }
 }

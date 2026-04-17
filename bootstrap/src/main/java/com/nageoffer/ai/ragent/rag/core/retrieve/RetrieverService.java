@@ -25,7 +25,7 @@ import java.util.List;
  * 向量检索服务接口（RetrieverService）
  * <p>
  * 用途说明：
- * - 封装对向量数据库（如 Milvus / pgVector / Elasticsearch KNN）的检索能力
+ * - 封装对向量数据库（如 pgVector / Elasticsearch KNN）的检索能力
  * - 负责从向量库中查找与用户问题（Query）最相关的若干文档片段（Chunk）
  * - 是 RAG 系统中 Retrieval 阶段的核心组件
  * <p>

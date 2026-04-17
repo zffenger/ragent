@@ -3,7 +3,6 @@
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![Java](https://img.shields.io/badge/Java-17-ff7f2a.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x-6db33f.svg)
-![Milvus](https://img.shields.io/badge/Milvus-2.6.x-00b3ff.svg)
 ![React](https://img.shields.io/badge/React-18-61dafb.svg)
 
 > 从 0 到 1 纯手工打造，一套真正能落地、经得起推敲的 Agentic RAG 系统。深入底层设计细节，覆盖全链路核心能力。配套完整的 RAG 学习路线、项目实战、部署教程与简历写法。
@@ -34,7 +33,7 @@
 - **会话记忆管理**：保留近 `N` 轮对话，超限自动摘要压缩，控 `Token` 成本不丢上下文。
 - **模型路由与容错**：多模型优先级调度、首包探测、健康检查、自动降级，单模型故障不影响服务。
 - **MCP 工具集成**：意图非知识检索时自动提参调用业务工具，检索与工具调用无缝融合。
-- **文档入库ETL**：节点编排 `Pipeline`，从抓取、解析、增强、分块、向量化到写入 `Milvus`，灵活配置可扩展。
+- **文档入库ETL**：节点编排 `Pipeline`，从抓取、解析、增强、分块、向量化到写入向量数据库，灵活配置可扩展。
 - **全链路追踪**：重写、意图、检索、生成每个环节均有 `Trace` 记录，排查与调优有据可依。
 - **管理后台**：`React` 管理界面，覆盖知识库管理、意图树编辑、入库监控、链路追踪、系统设置。
 
@@ -188,19 +187,19 @@ Ragent 采用前后端分离的单体架构，后端按职责分为四个 Maven 
 
 技术栈选型：
 
-| 层面       | 技术选型                                                     |
-| ---------- | ------------------------------------------------------------ |
-| 后端框架   | Java 17、Spring Boot 3.5.7、MyBatis Plus                     |
-| 前端框架   | React 18、Vite、TypeScript                                   |
-| 关系数据库 | MySQL（20 多张业务表）                                       |
-| 向量数据库 | Milvus 2.6                                                   |
-| 缓存/限流  | Redis + Redisson                                             |
-| 对象存储   | S3 兼容存储（RustFS）                                        |
-| 消息队列   | RocketMQ 5.x                                                 |
-| 文档解析   | Apache Tika 3.2                                              |
+| 层面       | 技术选型                                      |
+| ---------- |-------------------------------------------|
+| 后端框架   | Java 17、Spring Boot 3.5.7、MyBatis Plus    |
+| 前端框架   | React 18、Vite、TypeScript                  |
+| 关系数据库 | MySQL（20 多张业务表）                           |
+| 向量数据库 | pgvector                                  |
+| 缓存/限流  | Redis + Redisson                          |
+| 对象存储   | S3 兼容存储（RustFS）                           |
+| 消息队列   | RocketMQ 5.x                              |
+| 文档解析   | Apache Tika 3.2                           |
 | 模型供应商 | 百炼（阿里云）、SiliconFlow、Ollama（本地）、vLLM（后续扩展） |
-| 认证鉴权   | Sa-Token                                                     |
-| 代码规范   | Spotless（自动格式化）                                       |
+| 认证鉴权   | Sa-Token                                  |
+| 代码规范   | Spotless（自动格式化）                           |
 
 ### 2. RAG 核心流程
 

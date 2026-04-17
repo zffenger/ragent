@@ -33,7 +33,7 @@ public class KnowledgeBaseCreateRequest {
     private String embeddingModel;
 
     /**
-     * Milvus Collection 名称
+     * 向量集合名称
      */
     private String collectionName;
 }

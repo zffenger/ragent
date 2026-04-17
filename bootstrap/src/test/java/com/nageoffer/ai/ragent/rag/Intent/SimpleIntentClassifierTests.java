@@ -84,15 +84,15 @@ public class SimpleIntentClassifierTests {
                 - 对应的推荐向量集合（collectionName），例如：
                   - 大部分人事/制度类问题：rag_hr_collection
                   - IT 支持类问题：rag_it_collection
-                - 可选的元数据过滤条件（filterExpr），用于 Milvus expr，
+                - 可选的元数据过滤条件（filterExpr），用于向量检索过滤，
                   例如：biz_type in ["ATTENDANCE","WORKING_HOURS"]
-                
+
                 【输出格式要求（非常重要）】：
                 1. 只输出一个 JSON 对象，不要包含任何多余文字。
                 2. JSON 字段包括：
                    - intent: 字符串，取值为 ["RECRUITMENT","COMPENSATION","ATTENDANCE","POLICY","IT_SUPPORT","GENERAL"] 之一
                    - collectionName: 字符串，向量集合名称，如 "rag_hr_collection" 或 "rag_it_collection"
-                   - filterExpr: 字符串或 null，Milvus 的 expr 过滤条件，如 "biz_type in [\\"ATTENDANCE\\"]"
+                   - filterExpr: 字符串或 null，元数据过滤条件，如 "biz_type in [\\"ATTENDANCE\\"]"
                    - confidence: 0 到 1 之间的小数，表示你对该分类的信心度
                    - reason: 字符串，简要说明你这样分类的理由
                 

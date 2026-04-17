@@ -93,7 +93,7 @@ public class IntentNode {
     private IntentKind kind = IntentKind.KB;
 
     /**
-     * Milvus Collection 名称（仅对 kind=KB 有意义）
+     * 向量集合名称（仅对 kind=KB 有意义）
      */
     private String collectionName;
 
@@ -125,8 +125,8 @@ public class IntentNode {
     private String paramPromptTemplate;
 
     /**
-     * 是否为“最终节点”（叶子节点）：
-     * - 叶子节点才挂知识库（Milvus Collection）
+     * 是否为”最终节点”（叶子节点）：
+     * - 叶子节点才挂知识库（向量集合）
      * - 叶子节点才会参与意图匹配打分
      */
     public boolean isLeaf() {

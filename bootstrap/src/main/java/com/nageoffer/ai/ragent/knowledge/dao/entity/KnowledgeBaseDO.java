@@ -54,7 +54,7 @@ public class KnowledgeBaseDO {
     private String embeddingModel;
 
     /**
-     * Milvus Collection 名称（创建后禁止修改）
+     * 向量集合名称（创建后禁止修改）
      */
     private String collectionName;
 
