@@ -38,7 +38,7 @@ import com.nageoffer.ai.ragent.core.parser.DocumentParserSelector;
 import com.nageoffer.ai.ragent.core.parser.ParserType;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
-import com.nageoffer.ai.ragent.framework.mq.producer.MessageQueueProducer;
+import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionPipelineDO;
 import com.nageoffer.ai.ragent.ingestion.dao.mapper.IngestionPipelineMapper;
 import com.nageoffer.ai.ragent.ingestion.domain.context.IngestionContext;
@@ -64,7 +64,6 @@ import com.nageoffer.ai.ragent.knowledge.enums.DocumentStatus;
 import com.nageoffer.ai.ragent.knowledge.enums.ProcessMode;
 import com.nageoffer.ai.ragent.knowledge.enums.SourceType;
 import com.nageoffer.ai.ragent.knowledge.handler.RemoteFileFetcher;
-import com.nageoffer.ai.ragent.knowledge.mq.event.KnowledgeDocumentChunkEvent;
 import com.nageoffer.ai.ragent.knowledge.schedule.CronScheduleHelper;
 import com.nageoffer.ai.ragent.knowledge.service.KnowledgeChunkService;
 import com.nageoffer.ai.ragent.knowledge.service.KnowledgeDocumentScheduleService;
@@ -75,7 +74,8 @@ import com.nageoffer.ai.ragent.rag.dto.StoredFileDTO;
 import com.nageoffer.ai.ragent.rag.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionOperations;
@@ -90,6 +90,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -111,12 +113,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     private final ChunkEmbeddingService chunkEmbeddingService;
     private final KnowledgeDocumentChunkLogMapper chunkLogMapper;
     private final TransactionOperations transactionOperations;
-    private final MessageQueueProducer messageQueueProducer;
+    private final RedissonClient redissonClient;
     private final KnowledgeScheduleProperties scheduleProperties;
     private final RemoteFileFetcher remoteFileFetcher;
-
-    @Value("knowledge-document-chunk_topic${unique-name:}")
-    private String chunkTopic;
 
     @Override
     public KnowledgeDocumentVO upload(String kbId, KnowledgeDocumentUploadRequest requestParam, MultipartFile file) {
@@ -155,34 +154,61 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
     @Override
     public void startChunk(String docId) {
-        KnowledgeDocumentChunkEvent event = KnowledgeDocumentChunkEvent.builder()
-                .docId(docId)
-                .operator(UserContext.getUsername())
-                .build();
+        String operator = UserContext.getUsername();
+        String lockKey = "knowledge:document:chunk:" + docId;
+        RLock lock = redissonClient.getLock(lockKey);
 
-        messageQueueProducer.sendInTransaction(
-                chunkTopic,
-                docId,
-                "文档分块",
-                event,
-                arg -> {
-                    int updated = documentMapper.update(
-                            new LambdaUpdateWrapper<KnowledgeDocumentDO>()
-                                    .set(KnowledgeDocumentDO::getStatus, DocumentStatus.RUNNING.getCode())
-                                    .set(KnowledgeDocumentDO::getUpdatedBy, event.getOperator())
-                                    .eq(KnowledgeDocumentDO::getId, docId)
-                                    .ne(KnowledgeDocumentDO::getStatus, DocumentStatus.RUNNING.getCode())
-                    );
-                    if (updated == 0) {
-                        KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-                        Assert.notNull(documentDO, () -> new ClientException("文档不存在"));
-                        throw new ClientException("文档分块操作正在进行中，请稍后再试");
+        // 尝试获取锁，不等待，持有时间 30 分钟（文档分块可能耗时较长）
+        boolean locked;
+        try {
+            locked = lock.tryLock(0, 30, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException("获取文档分块锁失败");
+        }
+
+        if (!locked) {
+            throw new ClientException("文档分块操作正在进行中，请稍后再试");
+        }
+
+        try {
+            // 使用乐观锁更新状态，防止并发执行
+            int updated = documentMapper.update(
+                    new LambdaUpdateWrapper<KnowledgeDocumentDO>()
+                            .set(KnowledgeDocumentDO::getStatus, DocumentStatus.RUNNING.getCode())
+                            .set(KnowledgeDocumentDO::getUpdatedBy, operator)
+                            .eq(KnowledgeDocumentDO::getId, docId)
+                            .ne(KnowledgeDocumentDO::getStatus, DocumentStatus.RUNNING.getCode())
+            );
+            if (updated == 0) {
+                KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
+                Assert.notNull(documentDO, () -> new ClientException("文档不存在"));
+                throw new ClientException("文档分块操作正在进行中，请稍后再试");
+            }
+
+            KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
+            scheduleService.upsertSchedule(documentDO);
+
+            // 在虚拟线程中异步执行分块任务
+            Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
+                try {
+                    executeChunk(docId);
+                } catch (Exception e) {
+                    log.error("文档分块任务执行失败, docId={}", docId, e);
+                } finally {
+                    // 任务完成后释放锁
+                    if (lock.isHeldByCurrentThread()) {
+                        lock.unlock();
                     }
-                    KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-                    event.setKbId(documentDO.getKbId());
-                    scheduleService.upsertSchedule(documentDO);
                 }
-        );
+            });
+        } catch (Exception e) {
+            // 如果启动任务失败，释放锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+            throw e;
+        }
     }
 
     @Override
