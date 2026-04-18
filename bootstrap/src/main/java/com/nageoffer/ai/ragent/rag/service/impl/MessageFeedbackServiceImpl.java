@@ -23,34 +23,34 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
-import com.nageoffer.ai.ragent.framework.mq.producer.MessageQueueProducer;
 import com.nageoffer.ai.ragent.rag.controller.request.MessageFeedbackRequest;
 import com.nageoffer.ai.ragent.rag.dao.entity.ConversationMessageDO;
 import com.nageoffer.ai.ragent.rag.dao.entity.MessageFeedbackDO;
 import com.nageoffer.ai.ragent.rag.dao.mapper.ConversationMessageMapper;
 import com.nageoffer.ai.ragent.rag.dao.mapper.MessageFeedbackMapper;
-import com.nageoffer.ai.ragent.rag.mq.event.MessageFeedbackEvent;
 import com.nageoffer.ai.ragent.rag.service.MessageFeedbackService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+/**
+ * 消息反馈服务实现
+ * 异步提交使用虚拟线程池执行，避免阻塞主请求
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageFeedbackServiceImpl implements MessageFeedbackService {
 
     private final MessageFeedbackMapper feedbackMapper;
     private final ConversationMessageMapper conversationMessageMapper;
-    private final MessageQueueProducer messageQueueProducer;
-
-    @Value("message-feedback_topic${unique-name:}")
-    private String feedbackTopic;
 
     @Override
     public void submitFeedbackAsync(String messageId, MessageFeedbackRequest request) {
@@ -62,15 +62,17 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
         Assert.notNull(vote, () -> new ClientException("反馈值不能为空"));
         Assert.isTrue(vote == 1 || vote == -1, () -> new ClientException("反馈值必须为 1 或 -1"));
 
-        MessageFeedbackEvent event = MessageFeedbackEvent.builder()
-                .messageId(messageId)
-                .userId(userId)
-                .vote(vote)
-                .reason(request.getReason())
-                .comment(request.getComment())
-                .submitTime(System.currentTimeMillis())
-                .build();
-        messageQueueProducer.send(feedbackTopic, userId + ":" + messageId, "消息反馈", event);
+        long submitTime = System.currentTimeMillis();
+
+        // 使用虚拟线程池异步执行
+        Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
+            try {
+                doSubmitFeedback(messageId, userId, vote, request.getReason(), request.getComment(), submitTime);
+                log.info("异步提交消息反馈成功, messageId={}, userId={}, vote={}", messageId, userId, vote);
+            } catch (Exception e) {
+                log.error("异步提交消息反馈失败, messageId={}, userId={}, vote={}", messageId, userId, vote, e);
+            }
+        });
     }
 
     @Override
@@ -84,9 +86,7 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
         Assert.notNull(vote, () -> new ClientException("反馈值不能为空"));
         Assert.isTrue(vote == 1 || vote == -1, () -> new ClientException("反馈值必须为 1 或 -1"));
 
-        ConversationMessageDO message = loadAssistantMessage(messageId, userId);
-        doUpsertFeedback(messageId, userId, message.getConversationId(),
-                vote, request.getReason(), request.getComment(), System.currentTimeMillis());
+        doSubmitFeedback(messageId, userId, vote, request.getReason(), request.getComment(), System.currentTimeMillis());
     }
 
     @Override
@@ -109,6 +109,11 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
                         MessageFeedbackDO::getVote,
                         (first, second) -> first
                 ));
+    }
+
+    private void doSubmitFeedback(String messageId, String userId, Integer vote, String reason, String comment, long submitTime) {
+        ConversationMessageDO message = loadAssistantMessage(messageId, userId);
+        doUpsertFeedback(messageId, userId, message.getConversationId(), vote, reason, comment, submitTime);
     }
 
     private ConversationMessageDO loadAssistantMessage(String messageId, String userId) {
@@ -143,7 +148,7 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
                     .build();
             feedbackMapper.insert(feedback);
         } else {
-            // 仅当本次提交时间晚于记录最后更新时间时才覆盖，避免多节点并行消费乱序
+            // 仅当本次提交时间晚于记录最后更新时间时才覆盖，避免并发乱序
             feedbackMapper.update(
                     MessageFeedbackDO.builder()
                             .vote(vote)
@@ -155,25 +160,5 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
                             .lt(MessageFeedbackDO::getUpdateTime, new Date(submitTime))
             );
         }
-    }
-
-    @Override
-    public void submitFeedbackByEvent(MessageFeedbackEvent event) {
-        String messageId = event.getMessageId();
-        String userId = event.getUserId();
-        Assert.notBlank(messageId, () -> new ClientException("消息ID不能为空"));
-        Assert.notBlank(userId, () -> new ClientException("用户ID不能为空"));
-        Assert.notNull(event.getVote(), () -> new ClientException("反馈值不能为空"));
-
-        ConversationMessageDO message = loadAssistantMessage(messageId, userId);
-        doUpsertFeedback(
-                messageId,
-                userId,
-                message.getConversationId(),
-                event.getVote(),
-                event.getReason(),
-                event.getComment(),
-                event.getSubmitTime())
-        ;
     }
 }
