@@ -28,14 +28,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 依赖 bootstrap 模块（RAGChatService）- provided scope -->
-        <dependency>
-            <groupId>com.nageoffer.ai</groupId>
-            <artifactId>bootstrap</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- OkHttp -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
@@ -58,6 +50,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- MyBatis Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
     </dependencies>
 </project>

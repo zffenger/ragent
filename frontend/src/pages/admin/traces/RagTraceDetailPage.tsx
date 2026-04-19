@@ -66,7 +66,7 @@ const STATUS_COLORS: Record<StatusType, { dot: string; bar: string }> = {
 
 const getStatusColors = (status?: string | null) => {
   const normalized = normalizeStatus(status) as StatusType | null;
-  return STATUS_COLORS[normalized || "default"];
+  return STATUS_COLORS[normalized && STATUS_COLORS[normalized] ? normalized : "default"];
 };
 
 // ============ 子组件 ============

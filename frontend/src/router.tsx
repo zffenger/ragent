@@ -15,6 +15,8 @@ import { IngestionPage } from "@/pages/admin/ingestion/IngestionPage";
 import { RagTracePage } from "@/pages/admin/traces/RagTracePage";
 import { RagTraceDetailPage } from "@/pages/admin/traces/RagTraceDetailPage";
 import { SystemSettingsPage } from "@/pages/admin/settings/SystemSettingsPage";
+import { ModelSettingsPage } from "@/pages/admin/settings/ModelSettingsPage";
+import { BotSettingsPage } from "@/pages/admin/settings/BotSettingsPage";
 import { SampleQuestionPage } from "@/pages/admin/sample-questions/SampleQuestionPage";
 import { QueryTermMappingPage } from "@/pages/admin/query-term-mapping/QueryTermMappingPage";
 import { UserListPage } from "@/pages/admin/users/UserListPage";
@@ -140,6 +142,14 @@ export const router = createBrowserRouter([
       {
         path: "settings",
         element: <SystemSettingsPage />
+      },
+      {
+        path: "settings/models",
+        element: <ModelSettingsPage />
+      },
+      {
+        path: "settings/bot",
+        element: <BotSettingsPage />
       },
       {
         path: "sample-questions",

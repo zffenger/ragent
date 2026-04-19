@@ -26,6 +26,9 @@ import com.nageoffer.ai.ragent.chatbot.feishu.FeishuMessageHandler;
 import com.nageoffer.ai.ragent.chatbot.feishu.FeishuSignatureValidator;
 import com.nageoffer.ai.ragent.chatbot.service.AnswerGenerator;
 import com.nageoffer.ai.ragent.chatbot.service.LlmAnswerGenerator;
+import com.nageoffer.ai.ragent.chatbot.settings.controller.BotConfigController;
+import com.nageoffer.ai.ragent.chatbot.settings.service.BotConfigService;
+import com.nageoffer.ai.ragent.chatbot.settings.service.impl.BotConfigServiceImpl;
 import com.nageoffer.ai.ragent.chatbot.wework.WeWorkApiClient;
 import com.nageoffer.ai.ragent.chatbot.wework.WeWorkMessageHandler;
 import com.nageoffer.ai.ragent.chatbot.wework.WeWorkSignatureValidator;
@@ -179,4 +182,10 @@ public class ChatbotAutoConfiguration {
         log.info("初始化企微消息处理器");
         return new WeWorkMessageHandler(questionDetector, answerGenerator, weWorkApiClient, properties);
     }
+
+    // ==================== 机器人配置管理 ====================
+
+    // BotConfigService 和 BotConfigController 通过 @Service 和 @RestController 注解
+    // 由 Spring 自动扫描并注册，不需要在这里手动创建
+
 }

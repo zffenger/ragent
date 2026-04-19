@@ -20,7 +20,9 @@ import {
   Upload,
   Users,
   FolderKanban,
-  Workflow
+  Workflow,
+  Cpu,
+  Bot
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -133,6 +135,16 @@ const menuGroups: MenuGroup[] = [
     title: "设置",
     items: [
       {
+        path: "/admin/settings/models",
+        label: "模型配置",
+        icon: Cpu
+      },
+      {
+        path: "/admin/settings/bot",
+        label: "机器人配置",
+        icon: Bot
+      },
+      {
         path: "/admin/users",
         label: "用户管理",
         icon: Users
@@ -161,7 +173,9 @@ const breadcrumbMap: Record<string, string> = {
   "sample-questions": "示例问题",
   mappings: "关键词映射",
   settings: "系统设置",
-  users: "用户管理"
+  users: "用户管理",
+  models: "模型配置",
+  bot: "机器人配置"
 };
 
 export function AdminLayout() {
