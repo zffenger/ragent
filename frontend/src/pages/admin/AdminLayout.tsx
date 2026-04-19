@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -15,7 +15,6 @@ import {
   Menu,
   MessageSquare,
   KeyRound,
-  Search,
   Settings,
   Upload,
   Users,
@@ -38,12 +37,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { changePassword } from "@/services/userService";
-import {
-  getKnowledgeBases,
-  searchKnowledgeDocuments,
-  type KnowledgeBase,
-  type KnowledgeDocumentSearchItem
-} from "@/services/knowledgeService";
 import { Avatar } from "@/components/common/Avatar";
 
 type MenuChild = {
@@ -82,14 +75,22 @@ const menuGroups: MenuGroup[] = [
         icon: MessageSquare
       },
       {
+        id: "knowledge",
         path: "/admin/knowledge",
         label: "知识库管理",
-        icon: Database
-      },
-      {
-        path: "/admin/settings/retrieval-domains",
-        label: "检索域管理",
-        icon: Layers
+        icon: Database,
+        children: [
+          {
+            path: "/admin/knowledge",
+            label: "知识库",
+            icon: Database
+          },
+          {
+            path: "/admin/settings/retrieval-domains",
+            label: "检索域",
+            icon: Layers
+          }
+        ]
       },
       {
         id: "intent",
@@ -203,60 +204,12 @@ export function AdminLayout() {
     confirmPassword: ""
   });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ ingestion: true, intent: true });
-  const [kbQuery, setKbQuery] = useState("");
-  const [kbOptions, setKbOptions] = useState<KnowledgeBase[]>([]);
-  const [docOptions, setDocOptions] = useState<KnowledgeDocumentSearchItem[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const blurTimeoutRef = useRef<number | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const isDashboardRoute = location.pathname.startsWith("/admin/dashboard");
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
-
-  useEffect(() => {
-    if (!searchFocused) return;
-    const keyword = kbQuery.trim();
-    if (!keyword) {
-      setKbOptions([]);
-      setDocOptions([]);
-      setSearchLoading(false);
-      return;
-    }
-
-    let active = true;
-    const handle = window.setTimeout(() => {
-      setSearchLoading(true);
-      Promise.all([
-        getKnowledgeBases(1, 6, keyword),
-        searchKnowledgeDocuments(keyword, 6)
-      ])
-        .then(([kbData, docData]) => {
-          if (!active) return;
-          setKbOptions(kbData || []);
-          setDocOptions(docData || []);
-        })
-        .catch(() => {
-          if (active) {
-            setKbOptions([]);
-            setDocOptions([]);
-          }
-        })
-        .finally(() => {
-          if (active) {
-            setSearchLoading(false);
-          }
-        });
-    }, 200);
-
-    return () => {
-      active = false;
-      window.clearTimeout(handle);
-    };
-  }, [kbQuery, searchFocused]);
 
   const breadcrumbs = useMemo(() => {
     const segments = location.pathname.split("/").filter(Boolean);
@@ -267,7 +220,28 @@ export function AdminLayout() {
     if (segments[0] !== "admin") return items;
     const section = segments[1];
     if (section) {
-      if (section === "intent-tree" || section === "intent-list") {
+      // 知识库管理菜单
+      if (section === "knowledge") {
+        items.push({
+          label: "知识库管理",
+          to: "/admin/knowledge"
+        });
+        if (segments.length > 2) {
+          items.push({ label: "文档管理" });
+        }
+        if (segments.includes("docs")) {
+          items.push({ label: "切片管理" });
+        }
+      } else if (section === "settings" && segments[2] === "retrieval-domains") {
+        // 检索域管理
+        items.push({
+          label: "知识库管理",
+          to: "/admin/knowledge"
+        });
+        items.push({
+          label: "检索域"
+        });
+      } else if (section === "intent-tree" || section === "intent-list") {
         items.push({
           label: "意图管理",
           to: "/admin/intent-tree"
@@ -303,14 +277,6 @@ export function AdminLayout() {
       }
     }
 
-    if (section === "knowledge" && segments.length > 2) {
-      items.push({ label: "文档管理" });
-    }
-
-    if (section === "knowledge" && segments.includes("docs")) {
-      items.push({ label: "切片管理" });
-    }
-
     if (section === "traces" && segments.length > 2) {
       items.push({ label: "链路详情" });
     }
@@ -324,6 +290,8 @@ export function AdminLayout() {
   const isIngestionActive = location.pathname.startsWith("/admin/ingestion");
   const isIntentActive =
     location.pathname.startsWith("/admin/intent-tree") || location.pathname.startsWith("/admin/intent-list");
+  const isKnowledgeActive =
+    location.pathname.startsWith("/admin/knowledge") || location.pathname.startsWith("/admin/settings/retrieval-domains");
   const isChatbotActive = location.pathname.startsWith("/admin/settings/chat-bots");
 
   useEffect(() => {
@@ -331,9 +299,10 @@ export function AdminLayout() {
       ...prev,
       ingestion: prev.ingestion || isIngestionActive,
       intent: prev.intent || isIntentActive,
+      knowledge: prev.knowledge || isKnowledgeActive,
       chatbot: prev.chatbot || isChatbotActive
     }));
-  }, [isIngestionActive, isIntentActive, isChatbotActive]);
+  }, [isIngestionActive, isIntentActive, isKnowledgeActive, isChatbotActive]);
 
   const handlePasswordSubmit = async () => {
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
@@ -360,65 +329,6 @@ export function AdminLayout() {
     }
   };
 
-  const handleSearchSelect = (kb: KnowledgeBase) => {
-    searchInputRef.current?.blur();
-    navigate(`/admin/knowledge/${kb.id}`);
-    setSearchFocused(false);
-    setKbQuery("");
-    setKbOptions([]);
-    setDocOptions([]);
-  };
-
-  const handleDocumentSelect = (doc: KnowledgeDocumentSearchItem) => {
-    searchInputRef.current?.blur();
-    navigate(`/admin/knowledge/${doc.kbId}/docs/${doc.id}`);
-    setSearchFocused(false);
-    setKbQuery("");
-    setKbOptions([]);
-    setDocOptions([]);
-  };
-
-  const handleSearchFocus = () => {
-    if (blurTimeoutRef.current) {
-      window.clearTimeout(blurTimeoutRef.current);
-      blurTimeoutRef.current = null;
-    }
-    setSearchFocused(true);
-  };
-
-  const handleSearchBlur = () => {
-    if (blurTimeoutRef.current) {
-      window.clearTimeout(blurTimeoutRef.current);
-    }
-    blurTimeoutRef.current = window.setTimeout(() => {
-      setSearchFocused(false);
-    }, 150);
-  };
-
-  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      const keyword = kbQuery.trim();
-      if (kbOptions.length > 0) {
-        handleSearchSelect(kbOptions[0]);
-        return;
-      }
-      if (docOptions.length > 0) {
-        handleDocumentSelect(docOptions[0]);
-        return;
-      }
-      if (keyword) {
-        searchInputRef.current?.blur();
-        navigate(`/admin/knowledge?name=${encodeURIComponent(keyword)}`);
-        setSearchFocused(false);
-        return;
-      }
-    }
-    if (event.key === "Escape") {
-      searchInputRef.current?.blur();
-      setSearchFocused(false);
-    }
-  };
-
   const isLeafActive = (path: string, search?: string) => {
     if (location.pathname !== path && !location.pathname.startsWith(`${path}/`)) {
       return false;
@@ -429,15 +339,11 @@ export function AdminLayout() {
     return true;
   };
 
-  const hasQuery = kbQuery.trim().length > 0;
-  const showSuggest = searchFocused && hasQuery;
-
   return (
     <div className="admin-layout flex h-screen">
       <aside className={cn("admin-sidebar", collapsed && "admin-sidebar--collapsed")}>
         <div className="admin-sidebar__brand">
           <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
-            <div className="admin-sidebar__logo">R</div>
             {!collapsed && (
               <div className="min-w-0">
                 <h1 className="admin-sidebar__title">Ragent AI 管理后台</h1>
@@ -602,82 +508,6 @@ export function AdminLayout() {
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              <div className="admin-topbar-search">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  ref={searchInputRef}
-                  value={kbQuery}
-                  onChange={(event) => {
-                    setKbQuery(event.target.value);
-                  }}
-                  onFocus={handleSearchFocus}
-                  onBlur={handleSearchBlur}
-                  onKeyDown={handleSearchKeyDown}
-                  name="kb-search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
-                  placeholder="筛选知识库..."
-                  className="pl-10 pr-16"
-                />
-                <span className="admin-topbar-kbd">Ctrl K</span>
-                {showSuggest ? (
-                  <div
-                    className="admin-topbar-suggest"
-                    onMouseDown={(event) => event.preventDefault()}
-                  >
-                    {searchLoading && kbOptions.length === 0 && docOptions.length === 0 ? (
-                      <div className="admin-topbar-suggest-item text-slate-400">搜索中...</div>
-                    ) : null}
-                    {kbOptions.length > 0 ? (
-                      <div className="admin-topbar-suggest-section">
-                        <div className="admin-topbar-suggest-group">知识库</div>
-                        {kbOptions.map((kb) => (
-                          <button
-                            key={kb.id}
-                            type="button"
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                              handleSearchSelect(kb);
-                            }}
-                            className="admin-topbar-suggest-item"
-                          >
-                            <span className="font-medium text-slate-900">{kb.name}</span>
-                            <span className="text-xs text-slate-400">
-                              {kb.collectionName || "未设置 Collection"}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    {docOptions.length > 0 ? (
-                      <div className="admin-topbar-suggest-section">
-                        <div className="admin-topbar-suggest-group">文档</div>
-                        {docOptions.map((doc) => (
-                          <button
-                            key={doc.id}
-                            type="button"
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                              handleDocumentSelect(doc);
-                            }}
-                            className="admin-topbar-suggest-item"
-                          >
-                            <span className="font-medium text-slate-900">{doc.docName}</span>
-                            <span className="text-xs text-slate-400">
-                              {doc.kbName || `知识库 ${doc.kbId}`}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    {!searchLoading && kbOptions.length === 0 && docOptions.length === 0 ? (
-                      <div className="admin-topbar-suggest-item text-slate-400">暂无匹配结果</div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
             </div>
             <div className="flex items-center gap-2">
               <DropdownMenu>

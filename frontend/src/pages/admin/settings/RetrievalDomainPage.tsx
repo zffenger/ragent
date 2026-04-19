@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -278,8 +278,8 @@ export function RetrievalDomainPage() {
                 domains.map((domain) => {
                   const isExpanded = expandedRows.has(domain.id!);
                   return (
-                    <>
-                      <TableRow key={domain.id} className="cursor-pointer hover:bg-muted/50">
+                    <React.Fragment key={domain.id}>
+                      <TableRow className="cursor-pointer hover:bg-muted/50">
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <button
@@ -392,7 +392,7 @@ export function RetrievalDomainPage() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })
               )}
