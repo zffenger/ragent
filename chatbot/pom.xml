@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.nageoffer.ai</groupId>
+        <artifactId>ragent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>chatbot</artifactId>
+    <name>chatbot</name>
+    <description>飞书和企微机器人模块，支持单聊、群聊和智能问答</description>
+
+    <dependencies>
+        <!-- 依赖 framework 模块 -->
+        <dependency>
+            <groupId>com.nageoffer.ai</groupId>
+            <artifactId>framework</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 依赖 infra-ai 模块（LLMService） -->
+        <dependency>
+            <groupId>com.nageoffer.ai</groupId>
+            <artifactId>infra-ai</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 依赖 bootstrap 模块（RAGChatService）- provided scope -->
+        <dependency>
+            <groupId>com.nageoffer.ai</groupId>
+            <artifactId>bootstrap</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- OkHttp -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
+        <!-- Spring Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+</project>

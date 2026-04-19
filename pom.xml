@@ -32,6 +32,7 @@
         <module>framework</module>
         <module>infra-ai</module>
         <module>mcp-server</module>
+        <module>chatbot</module>
     </modules>
 
     <dependencyManagement>
