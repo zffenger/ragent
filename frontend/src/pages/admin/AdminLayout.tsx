@@ -77,6 +77,11 @@ const menuGroups: MenuGroup[] = [
         icon: LayoutDashboard
       },
       {
+        path: "/admin/chat",
+        label: "智能对话",
+        icon: MessageSquare
+      },
+      {
         path: "/admin/knowledge",
         label: "知识库管理",
         icon: Database
@@ -170,6 +175,7 @@ const menuGroups: MenuGroup[] = [
 
 const breadcrumbMap: Record<string, string> = {
   dashboard: "Dashboard",
+  chat: "智能对话",
   knowledge: "知识库管理",
   "intent-tree": "意图树配置",
   "intent-list": "意图列表",
@@ -180,7 +186,6 @@ const breadcrumbMap: Record<string, string> = {
   settings: "系统设置",
   users: "用户管理",
   models: "模型配置",
-  bot: "机器人配置",
   "chat-bots": "机器人管理",
   "retrieval-domains": "检索域管理"
 };
@@ -675,14 +680,6 @@ export function AdminLayout() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                className="hidden items-center gap-2 sm:inline-flex"
-                onClick={() => navigate("/chat")}
-              >
-                <MessageSquare className="h-4 w-4" />
-                返回聊天
-              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

@@ -1,13 +1,14 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { LoginPage } from "@/pages/LoginPage";
-import { ChatPage } from "@/pages/ChatPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { DashboardPage } from "@/pages/admin/dashboard/DashboardPage";
+import { AdminChatPage } from "@/pages/admin/chat/ChatPage";
 import { KnowledgeListPage } from "@/pages/admin/knowledge/KnowledgeListPage";
 import { KnowledgeDocumentsPage } from "@/pages/admin/knowledge/KnowledgeDocumentsPage";
 import { KnowledgeChunksPage } from "@/pages/admin/knowledge/KnowledgeChunksPage";
+import { RetrievalDomainPage } from "@/pages/admin/settings/RetrievalDomainPage";
 import { IntentTreePage } from "@/pages/admin/intent-tree/IntentTreePage";
 import { IntentListPage } from "@/pages/admin/intent-tree/IntentListPage";
 import { IntentEditPage } from "@/pages/admin/intent-tree/IntentEditPage";
@@ -16,7 +17,6 @@ import { RagTracePage } from "@/pages/admin/traces/RagTracePage";
 import { RagTraceDetailPage } from "@/pages/admin/traces/RagTraceDetailPage";
 import { SystemSettingsPage } from "@/pages/admin/settings/SystemSettingsPage";
 import { ModelSettingsPage } from "@/pages/admin/settings/ModelSettingsPage";
-import { RetrievalDomainPage } from "@/pages/admin/settings/RetrievalDomainPage";
 import { ChatBotManagePage } from "@/pages/admin/settings/ChatBotManagePage";
 import { SampleQuestionPage } from "@/pages/admin/sample-questions/SampleQuestionPage";
 import { QueryTermMappingPage } from "@/pages/admin/query-term-mapping/QueryTermMappingPage";
@@ -40,7 +40,7 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   }
 
   if (user?.role !== "admin") {
-    return <Navigate to="/chat" replace />;
+    return <Navigate to="/admin/chat" replace />;
   }
 
   return children;
@@ -49,14 +49,14 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
 function RedirectIfAuth({ children }: { children: JSX.Element }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   if (isAuthenticated) {
-    return <Navigate to="/chat" replace />;
+    return <Navigate to="/admin/chat" replace />;
   }
   return children;
 }
 
 function HomeRedirect() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return <Navigate to={isAuthenticated ? "/chat" : "/login"} replace />;
+  return <Navigate to={isAuthenticated ? "/admin/chat" : "/login"} replace />;
 }
 
 export const router = createBrowserRouter([
@@ -73,32 +73,24 @@ export const router = createBrowserRouter([
     )
   },
   {
-    path: "/chat",
-    element: (
-      <RequireAuth>
-        <ChatPage />
-      </RequireAuth>
-    )
-  },
-  {
-    path: "/chat/:sessionId",
-    element: (
-      <RequireAuth>
-        <ChatPage />
-      </RequireAuth>
-    )
-  },
-  {
     path: "/admin",
     element: (
-      <RequireAdmin>
+      <RequireAuth>
         <AdminLayout />
-      </RequireAdmin>
+      </RequireAuth>
     ),
     children: [
       {
         index: true,
-        element: <Navigate to="/admin/dashboard" replace />
+        element: <Navigate to="/admin/chat" replace />
+      },
+      {
+        path: "chat",
+        element: <AdminChatPage />
+      },
+      {
+        path: "chat/:sessionId",
+        element: <AdminChatPage />
       },
       {
         path: "dashboard",
@@ -115,6 +107,10 @@ export const router = createBrowserRouter([
       {
         path: "knowledge/:kbId/docs/:docId",
         element: <KnowledgeChunksPage />
+      },
+      {
+        path: "settings/retrieval-domains",
+        element: <RetrievalDomainPage />
       },
       {
         path: "intent-tree",
@@ -151,10 +147,6 @@ export const router = createBrowserRouter([
       {
         path: "settings/chat-bots",
         element: <ChatBotManagePage />
-      },
-      {
-        path: "settings/retrieval-domains",
-        element: <RetrievalDomainPage />
       },
       {
         path: "sample-questions",
