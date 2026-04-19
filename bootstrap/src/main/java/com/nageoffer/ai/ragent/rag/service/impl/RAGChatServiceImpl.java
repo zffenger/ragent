@@ -80,11 +80,18 @@ public class RAGChatServiceImpl implements RAGChatService {
     @Override
     @ChatRateLimit
     public void streamChat(String question, String conversationId, Boolean deepThinking, SseEmitter emitter) {
+        streamChat(question, conversationId, deepThinking, null, emitter);
+    }
+
+    @Override
+    @ChatRateLimit
+    public void streamChat(String question, String conversationId, Boolean deepThinking,
+                           List<String> knowledgeBaseIds, SseEmitter emitter) {
         String actualConversationId = StrUtil.isBlank(conversationId) ? IdUtil.getSnowflakeNextIdStr() : conversationId;
         String taskId = StrUtil.isBlank(RagTraceContext.getTaskId())
                 ? IdUtil.getSnowflakeNextIdStr()
                 : RagTraceContext.getTaskId();
-        log.info("开始流式对话，会话ID：{}，任务ID：{}", actualConversationId, taskId);
+        log.info("开始流式对话，会话ID：{}，任务ID：{}，限定知识库：{}", actualConversationId, taskId, knowledgeBaseIds);
         boolean thinkingEnabled = Boolean.TRUE.equals(deepThinking);
 
         StreamCallback callback = callbackFactory.createChatEventHandler(emitter, actualConversationId, taskId);
@@ -116,7 +123,7 @@ public class RAGChatServiceImpl implements RAGChatService {
             return;
         }
 
-        RetrievalContext ctx = retrievalEngine.retrieve(subIntents, DEFAULT_TOP_K);
+        RetrievalContext ctx = retrievalEngine.retrieve(subIntents, DEFAULT_TOP_K, knowledgeBaseIds);
         if (ctx.isEmpty()) {
             String emptyReply = "未检索到与问题相关的文档内容。";
             callback.onContent(emptyReply);

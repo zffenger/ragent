@@ -82,10 +82,15 @@ const menuGroups: MenuGroup[] = [
         icon: Database
       },
       {
+        path: "/admin/settings/retrieval-domains",
+        label: "检索域管理",
+        icon: Layers
+      },
+      {
         id: "intent",
         path: "/admin/intent-tree",
         label: "意图管理",
-        icon: Layers,
+        icon: Lightbulb,
         children: [
           {
             path: "/admin/intent-tree",
@@ -140,8 +145,8 @@ const menuGroups: MenuGroup[] = [
         icon: Cpu
       },
       {
-        path: "/admin/settings/bot",
-        label: "机器人配置",
+        path: "/admin/settings/chat-bots",
+        label: "聊天机器人",
         icon: Bot
       },
       {
@@ -175,7 +180,9 @@ const breadcrumbMap: Record<string, string> = {
   settings: "系统设置",
   users: "用户管理",
   models: "模型配置",
-  bot: "机器人配置"
+  bot: "机器人配置",
+  "chat-bots": "机器人管理",
+  "retrieval-domains": "检索域管理"
 };
 
 export function AdminLayout() {
@@ -312,14 +319,16 @@ export function AdminLayout() {
   const isIngestionActive = location.pathname.startsWith("/admin/ingestion");
   const isIntentActive =
     location.pathname.startsWith("/admin/intent-tree") || location.pathname.startsWith("/admin/intent-list");
+  const isChatbotActive = location.pathname.startsWith("/admin/settings/chat-bots");
 
   useEffect(() => {
     setOpenGroups((prev) => ({
       ...prev,
       ingestion: prev.ingestion || isIngestionActive,
-      intent: prev.intent || isIntentActive
+      intent: prev.intent || isIntentActive,
+      chatbot: prev.chatbot || isChatbotActive
     }));
-  }, [isIngestionActive, isIntentActive]);
+  }, [isIngestionActive, isIntentActive, isChatbotActive]);
 
   const handlePasswordSubmit = async () => {
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {

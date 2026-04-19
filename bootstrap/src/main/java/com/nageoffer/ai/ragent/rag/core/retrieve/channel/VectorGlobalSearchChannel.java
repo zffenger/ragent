@@ -107,8 +107,8 @@ public class VectorGlobalSearchChannel implements SearchChannel {
         try {
             log.info("执行向量全局检索，问题：{}", context.getMainQuestion());
 
-            // 获取所有 KB 类型的 collection
-            List<String> collections = getAllKBCollections();
+            // 获取 KB collection（根据知识库 ID 列表过滤）
+            List<String> collections = getKBCollections(context.getKnowledgeBaseIds());
 
             if (collections.isEmpty()) {
                 log.warn("未找到任何 KB collection，跳过全局检索");
@@ -126,7 +126,8 @@ public class VectorGlobalSearchChannel implements SearchChannel {
             List<RetrievedChunk> allChunks = retrieveFromAllCollections(
                     context.getMainQuestion(),
                     collections,
-                    context.getTopK() * topKMultiplier
+                    context.getTopK() * topKMultiplier,
+                    context.getKnowledgeBaseIds()
             );
 
             long latency = System.currentTimeMillis() - startTime;
@@ -154,12 +155,24 @@ public class VectorGlobalSearchChannel implements SearchChannel {
     }
 
     /**
-     * 获取所有 KB 类型的 collection
+     * 获取 KB 类型的 collection（支持知识库 ID 过滤）
      */
-    private List<String> getAllKBCollections() {
+    private List<String> getKBCollections(List<String> knowledgeBaseIds) {
         Set<String> collections = new HashSet<>();
 
-        // 从知识库表获取全量 collection（全局检索兜底）
+        // 如果指定了知识库 ID 列表，只获取这些知识库的 collection
+        if (CollUtil.isNotEmpty(knowledgeBaseIds)) {
+            List<KnowledgeBaseDO> kbList = knowledgeBaseMapper.selectBatchIds(knowledgeBaseIds);
+            for (KnowledgeBaseDO kb : kbList) {
+                String collectionName = kb.getCollectionName();
+                if (collectionName != null && !collectionName.isBlank()) {
+                    collections.add(collectionName);
+                }
+            }
+            return new ArrayList<>(collections);
+        }
+
+        // 否则从知识库表获取全量 collection（全局检索兜底）
         List<KnowledgeBaseDO> kbList = knowledgeBaseMapper.selectList(
                 Wrappers.lambdaQuery(KnowledgeBaseDO.class)
                         .select(KnowledgeBaseDO::getCollectionName)
@@ -180,9 +193,10 @@ public class VectorGlobalSearchChannel implements SearchChannel {
      */
     private List<RetrievedChunk> retrieveFromAllCollections(String question,
                                                             List<String> collections,
-                                                            int topK) {
-        // 使用模板方法执行并行检索
-        return parallelRetriever.executeParallelRetrieval(question, collections, topK);
+                                                            int topK,
+                                                            List<String> knowledgeBaseIds) {
+        // 使用模板方法执行并行检索，传入知识库 ID 列表用于过滤
+        return parallelRetriever.executeParallelRetrieval(question, collections, topK, knowledgeBaseIds);
     }
 
     @Override

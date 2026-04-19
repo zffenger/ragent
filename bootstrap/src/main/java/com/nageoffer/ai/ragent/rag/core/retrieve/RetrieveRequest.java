@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +54,13 @@ public class RetrieveRequest {
      * - 非空时按指定 Collection 检索
      */
     private String collectionName;
+
+    /**
+     * 限定的知识库 ID 列表：
+     * - 为空时不限制
+     * - 非空时只在这些知识库中检索
+     */
+    private List<String> knowledgeBaseIds;
 
     /**
      * 元数据等值过滤条件（扩展项）：

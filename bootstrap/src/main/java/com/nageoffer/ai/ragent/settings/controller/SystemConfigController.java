@@ -123,7 +123,7 @@ public class SystemConfigController {
      */
     @PutMapping("/model-providers/{id}")
     public Result<ModelProviderVO> updateModelProvider(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody ModelProviderVO vo) {
         return Results.success(systemConfigService.updateModelProvider(id, vo));
     }
@@ -132,7 +132,7 @@ public class SystemConfigController {
      * 删除模型提供商
      */
     @DeleteMapping("/model-providers/{id}")
-    public Result<Void> deleteModelProvider(@PathVariable Long id) {
+    public Result<Void> deleteModelProvider(@PathVariable String id) {
         systemConfigService.deleteModelProvider(id);
         return Results.success();
     }
@@ -142,7 +142,7 @@ public class SystemConfigController {
      */
     @PutMapping("/model-candidates/{id}/default")
     public Result<Void> setDefaultModel(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody SetDefaultModelRequest request) {
         systemConfigService.setDefaultModel(id, ModelCandidateDO.ModelType.valueOf(request.getModelType()));
         return Results.success();
@@ -152,7 +152,7 @@ public class SystemConfigController {
      * 设置深度思考模型
      */
     @PutMapping("/model-candidates/{id}/deep-thinking")
-    public Result<Void> setDeepThinkingModel(@PathVariable Long id) {
+    public Result<Void> setDeepThinkingModel(@PathVariable String id) {
         systemConfigService.setDeepThinkingModel(id);
         return Results.success();
     }

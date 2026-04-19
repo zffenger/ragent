@@ -15,51 +15,15 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.settings.controller.vo;
+package com.nageoffer.ai.ragent.settings.dao.mapper;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Map;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.ai.ragent.settings.dao.entity.RetrievalDomainDO;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 模型提供商 VO
+ * 检索域 Mapper
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class ModelProviderVO {
-
-    /**
-     * 主键 ID
-     */
-    private String id;
-
-    /**
-     * 提供商名称
-     */
-    private String name;
-
-    /**
-     * 基础 URL
-     */
-    private String url;
-
-    /**
-     * API 密钥
-     */
-    private String apiKey;
-
-    /**
-     * 端点配置
-     */
-    private Map<String, String> endpoints;
-
-    /**
-     * 是否启用
-     */
-    private Boolean enabled;
+@Mapper
+public interface RetrievalDomainMapper extends BaseMapper<RetrievalDomainDO> {
 }

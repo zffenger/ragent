@@ -215,8 +215,8 @@ function ModelConfigCard({
   providers: ModelProvider[];
   showDimension?: boolean;
   showDeepThinking?: boolean;
-  onSetDefault: (id: number, type: "CHAT" | "EMBEDDING" | "RERANK") => void;
-  onSetDeepThinking?: (id: number) => void;
+  onSetDefault: (id: string, type: "CHAT" | "EMBEDDING" | "RERANK") => void;
+  onSetDeepThinking?: (id: string) => void;
   onRefresh: () => void;
 }) {
   const candidates = config?.candidates || [];

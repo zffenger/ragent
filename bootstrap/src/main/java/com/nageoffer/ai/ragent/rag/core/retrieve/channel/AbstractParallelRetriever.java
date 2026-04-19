@@ -44,7 +44,7 @@ import java.util.concurrent.Executor;
 @Slf4j
 public abstract class AbstractParallelRetriever<T> {
 
-    private final Executor executor;
+    protected final Executor executor;
 
     protected AbstractParallelRetriever(Executor executor) {
         this.executor = executor;

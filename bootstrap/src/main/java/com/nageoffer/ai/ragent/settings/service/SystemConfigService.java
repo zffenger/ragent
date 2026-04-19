@@ -70,14 +70,14 @@ public interface SystemConfigService {
      * @param vo 提供商配置
      * @return 更新后的提供商
      */
-    ModelProviderVO updateModelProvider(Long id, ModelProviderVO vo);
+    ModelProviderVO updateModelProvider(String id, ModelProviderVO vo);
 
     /**
      * 删除模型提供商
      *
      * @param id 提供商 ID
      */
-    void deleteModelProvider(Long id);
+    void deleteModelProvider(String id);
 
     /**
      * 设置默认模型
@@ -85,14 +85,14 @@ public interface SystemConfigService {
      * @param candidateId 模型候选 ID
      * @param modelType   模型类型
      */
-    void setDefaultModel(Long candidateId, ModelCandidateDO.ModelType modelType);
+    void setDefaultModel(String candidateId, ModelCandidateDO.ModelType modelType);
 
     /**
      * 设置深度思考模型
      *
      * @param candidateId 模型候选 ID
      */
-    void setDeepThinkingModel(Long candidateId);
+    void setDeepThinkingModel(String candidateId);
 
     // ==================== 配置刷新 ====================
 

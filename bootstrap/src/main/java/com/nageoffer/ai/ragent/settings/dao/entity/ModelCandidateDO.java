@@ -43,7 +43,7 @@ import java.util.Date;
 public class ModelCandidateDO {
 
     @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
+    private String id;
 
     /**
      * 模型标识

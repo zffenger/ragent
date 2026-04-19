@@ -15,51 +15,60 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.settings.controller.vo;
+package com.nageoffer.ai.ragent.settings.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.Date;
 
 /**
- * 模型提供商 VO
+ * 检索域实体
+ * <p>
+ * 定义机器人的检索范围，一个检索域可以包含多个知识库
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ModelProviderVO {
+@TableName("t_retrieval_domain")
+public class RetrievalDomainDO {
 
-    /**
-     * 主键 ID
-     */
+    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
-     * 提供商名称
+     * 检索域名称
      */
     private String name;
 
     /**
-     * 基础 URL
+     * 检索域描述
      */
-    private String url;
+    private String description;
 
     /**
-     * API 密钥
+     * 是否启用：0-禁用，1-启用
      */
-    private String apiKey;
+    private Integer enabled;
+
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
 
     /**
-     * 端点配置
+     * 是否删除：0-正常，1-删除
      */
-    private Map<String, String> endpoints;
-
-    /**
-     * 是否启用
-     */
-    private Boolean enabled;
+    @TableLogic
+    private Integer deleted;
 }

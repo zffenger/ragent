@@ -17,6 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.core.retrieve.channel.strategy;
 
+import cn.hutool.core.collection.CollUtil;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.rag.core.retrieve.RetrieveRequest;
 import com.nageoffer.ai.ragent.rag.core.retrieve.RetrieverService;
@@ -24,6 +25,7 @@ import com.nageoffer.ai.ragent.rag.core.retrieve.channel.AbstractParallelRetriev
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
@@ -40,6 +42,47 @@ public class CollectionParallelRetriever extends AbstractParallelRetriever<Strin
         this.retrieverService = retrieverService;
     }
 
+    /**
+     * 并行检索（支持知识库 ID 过滤）
+     */
+    public List<RetrievedChunk> executeParallelRetrieval(String question,
+                                                         List<String> collections,
+                                                         int topK,
+                                                         List<String> knowledgeBaseIds) {
+        // 如果没有知识库 ID 限制，使用原有方法
+        if (CollUtil.isEmpty(knowledgeBaseIds)) {
+            return executeParallelRetrieval(question, collections, topK);
+        }
+
+        // 创建带知识库 ID 过滤的检索任务
+        record RetrievalFuture(String collection, CompletableFuture<List<RetrievedChunk>> future) {
+        }
+
+        List<RetrievalFuture> futures = collections.stream()
+                .map(collection -> {
+                    CompletableFuture<List<RetrievedChunk>> future = CompletableFuture.supplyAsync(
+                            () -> createRetrievalTaskWithKbFilter(question, collection, topK, knowledgeBaseIds),
+                            getExecutor()
+                    );
+                    return new RetrievalFuture(collection, future);
+                })
+                .toList();
+
+        // 收集结果
+        List<RetrievedChunk> allChunks = new java.util.ArrayList<>();
+        for (RetrievalFuture future : futures) {
+            try {
+                List<RetrievedChunk> chunks = future.future.join();
+                allChunks.addAll(chunks);
+            } catch (Exception e) {
+                log.error("全局检索获取结果失败 - Collection: {}", future.collection, e);
+            }
+        }
+
+        log.info("全局检索完成（知识库过滤），检索到 Chunk 总数: {}", allChunks.size());
+        return allChunks;
+    }
+
     @Override
     protected List<RetrievedChunk> createRetrievalTask(String question, String collectionName, int topK) {
         try {
@@ -54,6 +97,33 @@ public class CollectionParallelRetriever extends AbstractParallelRetriever<Strin
             log.error("在 collection {} 中检索失败，错误: {}", collectionName, e.getMessage(), e);
             return List.of();
         }
+    }
+
+    /**
+     * 创建带知识库 ID 过滤的检索任务
+     */
+    private List<RetrievedChunk> createRetrievalTaskWithKbFilter(String question, String collectionName,
+                                                                  int topK, List<String> knowledgeBaseIds) {
+        try {
+            return retrieverService.retrieve(
+                    RetrieveRequest.builder()
+                            .collectionName(collectionName)
+                            .query(question)
+                            .topK(topK)
+                            .knowledgeBaseIds(knowledgeBaseIds)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("在 collection {} 中检索失败（知识库过滤），错误: {}", collectionName, e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    /**
+     * 获取执行器（供子类使用）
+     */
+    protected Executor getExecutor() {
+        return executor;
     }
 
     @Override

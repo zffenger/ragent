@@ -61,7 +61,7 @@ public class ModelGroupConfigVO {
         /**
          * 主键 ID
          */
-        private Long id;
+        private String id;
 
         /**
          * 模型标识

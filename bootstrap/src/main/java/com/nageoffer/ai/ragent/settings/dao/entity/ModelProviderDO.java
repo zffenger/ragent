@@ -43,7 +43,7 @@ import java.util.Date;
 public class ModelProviderDO {
 
     @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
+    private String id;
 
     /**
      * 提供商名称

@@ -211,7 +211,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ModelProviderVO updateModelProvider(Long id, ModelProviderVO vo) {
+    public ModelProviderVO updateModelProvider(String id, ModelProviderVO vo) {
         ModelProviderDO entity = modelProviderMapper.selectById(id);
         if (entity == null) {
             throw new ServiceException("提供商不存在: " + id);
@@ -237,14 +237,14 @@ public class SystemConfigServiceImpl implements SystemConfigService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteModelProvider(Long id) {
+    public void deleteModelProvider(String id) {
         modelProviderMapper.deleteById(id);
         refreshConfigCache();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void setDefaultModel(Long candidateId, ModelCandidateDO.ModelType modelType) {
+    public void setDefaultModel(String candidateId, ModelCandidateDO.ModelType modelType) {
         // 清除同类型其他模型的默认标记
         modelCandidateMapper.update(null,
                 new LambdaUpdateWrapper<ModelCandidateDO>()
@@ -263,7 +263,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void setDeepThinkingModel(Long candidateId) {
+    public void setDeepThinkingModel(String candidateId) {
         // 清除其他模型的深度思考标记
         modelCandidateMapper.update(null,
                 new LambdaUpdateWrapper<ModelCandidateDO>()

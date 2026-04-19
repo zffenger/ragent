@@ -133,6 +133,10 @@ export const getKnowledgeBases = async (current = 1, size = 200, name?: string):
   return page?.records || [];
 };
 
+export const listKnowledgeBases = async (): Promise<KnowledgeBase[]> => {
+  return getKnowledgeBases(1, 200);
+};
+
 export const getKnowledgeBasesPage = async (
   current = 1,
   size = 10,

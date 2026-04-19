@@ -22,16 +22,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 /**
- * 模型提供商 VO
+ * 检索域 VO
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ModelProviderVO {
+public class RetrievalDomainVO {
 
     /**
      * 主键 ID
@@ -39,27 +39,45 @@ public class ModelProviderVO {
     private String id;
 
     /**
-     * 提供商名称
+     * 检索域名称
      */
     private String name;
 
     /**
-     * 基础 URL
+     * 检索域描述
      */
-    private String url;
-
-    /**
-     * API 密钥
-     */
-    private String apiKey;
-
-    /**
-     * 端点配置
-     */
-    private Map<String, String> endpoints;
+    private String description;
 
     /**
      * 是否启用
      */
     private Boolean enabled;
+
+    /**
+     * 关联的知识库 ID 列表
+     */
+    private List<String> knowledgeIds;
+
+    /**
+     * 关联的知识库简要信息
+     */
+    private List<KnowledgeBrief> knowledges;
+
+    /**
+     * 绑定的机器人数量
+     */
+    private Integer botCount;
+
+    /**
+     * 知识库简要信息
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class KnowledgeBrief {
+        private String id;
+        private String name;
+        private Integer documentCount;
+    }
 }

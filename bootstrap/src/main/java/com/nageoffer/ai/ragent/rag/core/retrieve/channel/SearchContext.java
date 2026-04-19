@@ -60,6 +60,12 @@ public class SearchContext {
     private int topK;
 
     /**
+     * 限定的知识库 ID 列表
+     * 如果非空，则只在这些知识库中检索
+     */
+    private List<String> knowledgeBaseIds;
+
+    /**
      * 扩展元数据
      */
     @Builder.Default

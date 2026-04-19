@@ -16,7 +16,8 @@ import { RagTracePage } from "@/pages/admin/traces/RagTracePage";
 import { RagTraceDetailPage } from "@/pages/admin/traces/RagTraceDetailPage";
 import { SystemSettingsPage } from "@/pages/admin/settings/SystemSettingsPage";
 import { ModelSettingsPage } from "@/pages/admin/settings/ModelSettingsPage";
-import { BotSettingsPage } from "@/pages/admin/settings/BotSettingsPage";
+import { RetrievalDomainPage } from "@/pages/admin/settings/RetrievalDomainPage";
+import { ChatBotManagePage } from "@/pages/admin/settings/ChatBotManagePage";
 import { SampleQuestionPage } from "@/pages/admin/sample-questions/SampleQuestionPage";
 import { QueryTermMappingPage } from "@/pages/admin/query-term-mapping/QueryTermMappingPage";
 import { UserListPage } from "@/pages/admin/users/UserListPage";
@@ -148,8 +149,12 @@ export const router = createBrowserRouter([
         element: <ModelSettingsPage />
       },
       {
-        path: "settings/bot",
-        element: <BotSettingsPage />
+        path: "settings/chat-bots",
+        element: <ChatBotManagePage />
+      },
+      {
+        path: "settings/retrieval-domains",
+        element: <RetrievalDomainPage />
       },
       {
         path: "sample-questions",

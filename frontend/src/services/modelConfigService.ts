@@ -9,7 +9,7 @@ export interface ModelGroupConfig {
 }
 
 export interface ModelCandidate {
-  id?: number | null;
+  id?: string | null;
   modelId: string;
   provider: string;
   model: string;
@@ -23,7 +23,7 @@ export interface ModelCandidate {
 }
 
 export interface ModelProvider {
-  id?: number | null;
+  id?: string | null;
   name: string;
   url?: string | null;
   apiKey?: string | null;
@@ -99,19 +99,19 @@ export async function createModelProvider(provider: ModelProvider): Promise<Mode
   return api.post<ModelProvider, ModelProvider>("/admin/settings/model-providers", provider);
 }
 
-export async function updateModelProvider(id: number, provider: ModelProvider): Promise<ModelProvider> {
+export async function updateModelProvider(id: string, provider: ModelProvider): Promise<ModelProvider> {
   return api.put<ModelProvider, ModelProvider>(`/admin/settings/model-providers/${id}`, provider);
 }
 
-export async function deleteModelProvider(id: number): Promise<void> {
+export async function deleteModelProvider(id: string): Promise<void> {
   return api.delete<void, void>(`/admin/settings/model-providers/${id}`);
 }
 
-export async function setDefaultModel(id: number, modelType: "CHAT" | "EMBEDDING" | "RERANK"): Promise<void> {
+export async function setDefaultModel(id: string, modelType: "CHAT" | "EMBEDDING" | "RERANK"): Promise<void> {
   return api.put<void, void>(`/admin/settings/model-candidates/${id}/default`, { modelType });
 }
 
-export async function setDeepThinkingModel(id: number): Promise<void> {
+export async function setDeepThinkingModel(id: string): Promise<void> {
   return api.put<void, void>(`/admin/settings/model-candidates/${id}/deep-thinking`);
 }
 
