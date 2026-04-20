@@ -63,6 +63,14 @@ CREATE TABLE t_conversation_summary (
 );
 CREATE INDEX idx_conv_user ON t_conversation_summary (conversation_id, user_id);
 COMMENT ON TABLE t_conversation_summary IS '会话摘要表（与消息表分离存储）';
+COMMENT ON COLUMN t_conversation_summary.id IS '主键ID';
+COMMENT ON COLUMN t_conversation_summary.conversation_id IS '会话ID';
+COMMENT ON COLUMN t_conversation_summary.user_id IS '用户ID';
+COMMENT ON COLUMN t_conversation_summary.last_message_id IS '摘要最后消息ID';
+COMMENT ON COLUMN t_conversation_summary.content IS '会话摘要内容';
+COMMENT ON COLUMN t_conversation_summary.create_time IS '创建时间';
+COMMENT ON COLUMN t_conversation_summary.update_time IS '更新时间';
+COMMENT ON COLUMN t_conversation_summary.deleted IS '是否删除 0：正常 1：删除';
 
 CREATE TABLE t_message (
     id                VARCHAR(20)      NOT NULL PRIMARY KEY,
@@ -79,6 +87,16 @@ CREATE TABLE t_message (
 CREATE INDEX idx_conversation_user_time ON t_message (conversation_id, user_id, create_time);
 CREATE INDEX idx_conversation_summary ON t_message (conversation_id, user_id, create_time);
 COMMENT ON TABLE t_message IS '会话消息记录表';
+COMMENT ON COLUMN t_message.id IS '主键ID';
+COMMENT ON COLUMN t_message.conversation_id IS '会话ID';
+COMMENT ON COLUMN t_message.user_id IS '用户ID';
+COMMENT ON COLUMN t_message.role IS '角色：user/assistant';
+COMMENT ON COLUMN t_message.content IS '消息内容';
+COMMENT ON COLUMN t_message.thinking_content IS '深度思考内容';
+COMMENT ON COLUMN t_message.thinking_duration IS '深度思考耗时（秒）';
+COMMENT ON COLUMN t_message.create_time IS '创建时间';
+COMMENT ON COLUMN t_message.update_time IS '更新时间';
+COMMENT ON COLUMN t_message.deleted IS '是否删除 0：正常 1：删除';
 
 CREATE TABLE t_message_feedback (
     id              VARCHAR(20)       NOT NULL PRIMARY KEY,
@@ -96,6 +114,16 @@ CREATE TABLE t_message_feedback (
 CREATE INDEX idx_conversation_id ON t_message_feedback (conversation_id);
 CREATE INDEX idx_user_id ON t_message_feedback (user_id);
 COMMENT ON TABLE t_message_feedback IS '会话消息反馈表';
+COMMENT ON COLUMN t_message_feedback.id IS '主键ID';
+COMMENT ON COLUMN t_message_feedback.message_id IS '消息ID';
+COMMENT ON COLUMN t_message_feedback.conversation_id IS '会话ID';
+COMMENT ON COLUMN t_message_feedback.user_id IS '用户ID';
+COMMENT ON COLUMN t_message_feedback.vote IS '投票 1：赞 -1：踩';
+COMMENT ON COLUMN t_message_feedback.reason IS '反馈原因';
+COMMENT ON COLUMN t_message_feedback.comment IS '反馈评论';
+COMMENT ON COLUMN t_message_feedback.create_time IS '创建时间';
+COMMENT ON COLUMN t_message_feedback.update_time IS '更新时间';
+COMMENT ON COLUMN t_message_feedback.deleted IS '是否删除 0：正常 1：删除';
 
 CREATE TABLE t_sample_question (
     id          VARCHAR(20)        NOT NULL PRIMARY KEY,
@@ -108,6 +136,13 @@ CREATE TABLE t_sample_question (
 );
 CREATE INDEX idx_sample_question_deleted ON t_sample_question (deleted);
 COMMENT ON TABLE t_sample_question IS '示例问题表';
+COMMENT ON COLUMN t_sample_question.id IS 'ID';
+COMMENT ON COLUMN t_sample_question.title IS '展示标题';
+COMMENT ON COLUMN t_sample_question.description IS '描述或提示';
+COMMENT ON COLUMN t_sample_question.question IS '示例问题内容';
+COMMENT ON COLUMN t_sample_question.create_time IS '创建时间';
+COMMENT ON COLUMN t_sample_question.update_time IS '更新时间';
+COMMENT ON COLUMN t_sample_question.deleted IS '是否删除 0：正常 1：删除';
 
 -- ============================================
 -- Knowledge Base Tables
@@ -127,6 +162,15 @@ CREATE TABLE t_knowledge_base (
 );
 CREATE INDEX idx_kb_name ON t_knowledge_base (name);
 COMMENT ON TABLE t_knowledge_base IS '知识库表';
+COMMENT ON COLUMN t_knowledge_base.id IS '主键 ID';
+COMMENT ON COLUMN t_knowledge_base.name IS '知识库名称';
+COMMENT ON COLUMN t_knowledge_base.embedding_model IS '嵌入模型标识';
+COMMENT ON COLUMN t_knowledge_base.collection_name IS 'Collection名称';
+COMMENT ON COLUMN t_knowledge_base.created_by IS '创建人';
+COMMENT ON COLUMN t_knowledge_base.updated_by IS '修改人';
+COMMENT ON COLUMN t_knowledge_base.create_time IS '创建时间';
+COMMENT ON COLUMN t_knowledge_base.update_time IS '更新时间';
+COMMENT ON COLUMN t_knowledge_base.deleted IS '是否删除 0：正常 1：删除';
 
 CREATE TABLE t_knowledge_document (
     id               VARCHAR(20)        NOT NULL PRIMARY KEY,
@@ -154,6 +198,28 @@ CREATE TABLE t_knowledge_document (
 );
 CREATE INDEX idx_kb_id ON t_knowledge_document (kb_id);
 COMMENT ON TABLE t_knowledge_document IS '知识库文档表';
+COMMENT ON COLUMN t_knowledge_document.id IS 'ID';
+COMMENT ON COLUMN t_knowledge_document.kb_id IS '知识库ID';
+COMMENT ON COLUMN t_knowledge_document.doc_name IS '文档名称';
+COMMENT ON COLUMN t_knowledge_document.enabled IS '是否启用 1：启用 0：禁用';
+COMMENT ON COLUMN t_knowledge_document.chunk_count IS '分块数量';
+COMMENT ON COLUMN t_knowledge_document.file_url IS '文件存储路径';
+COMMENT ON COLUMN t_knowledge_document.file_type IS '文件类型';
+COMMENT ON COLUMN t_knowledge_document.file_size IS '文件大小（字节）';
+COMMENT ON COLUMN t_knowledge_document.process_mode IS '处理模式：chunk/pipeline';
+COMMENT ON COLUMN t_knowledge_document.status IS '状态：pending/running/success/failed';
+COMMENT ON COLUMN t_knowledge_document.source_type IS '来源类型：file/url';
+COMMENT ON COLUMN t_knowledge_document.source_location IS '来源地址';
+COMMENT ON COLUMN t_knowledge_document.schedule_enabled IS '是否启用定时刷新';
+COMMENT ON COLUMN t_knowledge_document.schedule_cron IS '定时表达式';
+COMMENT ON COLUMN t_knowledge_document.chunk_strategy IS '分块策略';
+COMMENT ON COLUMN t_knowledge_document.chunk_config IS '分块配置JSON';
+COMMENT ON COLUMN t_knowledge_document.pipeline_id IS 'Pipeline ID';
+COMMENT ON COLUMN t_knowledge_document.created_by IS '创建人';
+COMMENT ON COLUMN t_knowledge_document.updated_by IS '修改人';
+COMMENT ON COLUMN t_knowledge_document.create_time IS '创建时间';
+COMMENT ON COLUMN t_knowledge_document.update_time IS '更新时间';
+COMMENT ON COLUMN t_knowledge_document.deleted IS '是否删除 0：正常 1：删除';
 
 CREATE TABLE t_knowledge_chunk (
     id           VARCHAR(20)      NOT NULL PRIMARY KEY,
@@ -173,6 +239,20 @@ CREATE TABLE t_knowledge_chunk (
 );
 CREATE INDEX idx_doc_id ON t_knowledge_chunk (doc_id);
 COMMENT ON TABLE t_knowledge_chunk IS '知识库文档分块表';
+COMMENT ON COLUMN t_knowledge_chunk.id IS 'ID';
+COMMENT ON COLUMN t_knowledge_chunk.kb_id IS '知识库ID';
+COMMENT ON COLUMN t_knowledge_chunk.doc_id IS '文档ID';
+COMMENT ON COLUMN t_knowledge_chunk.chunk_index IS '分块序号';
+COMMENT ON COLUMN t_knowledge_chunk.content IS '分块内容';
+COMMENT ON COLUMN t_knowledge_chunk.content_hash IS '内容哈希';
+COMMENT ON COLUMN t_knowledge_chunk.char_count IS '字符数';
+COMMENT ON COLUMN t_knowledge_chunk.token_count IS 'Token数';
+COMMENT ON COLUMN t_knowledge_chunk.enabled IS '是否启用';
+COMMENT ON COLUMN t_knowledge_chunk.created_by IS '创建人';
+COMMENT ON COLUMN t_knowledge_chunk.updated_by IS '修改人';
+COMMENT ON COLUMN t_knowledge_chunk.create_time IS '创建时间';
+COMMENT ON COLUMN t_knowledge_chunk.update_time IS '更新时间';
+COMMENT ON COLUMN t_knowledge_chunk.deleted IS '是否删除 0：正常 1：删除';
 
 CREATE TABLE t_knowledge_document_chunk_log (
     id                 VARCHAR(20)      NOT NULL PRIMARY KEY,
@@ -195,6 +275,23 @@ CREATE TABLE t_knowledge_document_chunk_log (
 );
 CREATE INDEX idx_doc_id_log ON t_knowledge_document_chunk_log (doc_id);
 COMMENT ON TABLE t_knowledge_document_chunk_log IS '知识库文档分块日志表';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.id IS 'ID';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.doc_id IS '文档ID';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.status IS '状态';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.process_mode IS '处理模式';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.chunk_strategy IS '分块策略';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.pipeline_id IS 'Pipeline ID';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.extract_duration IS '提取耗时（毫秒）';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.chunk_duration IS '分块耗时（毫秒）';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.embed_duration IS '向量化耗时（毫秒）';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.persist_duration IS 'DB持久化耗时（毫秒）';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.total_duration IS '总耗时（毫秒）';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.chunk_count IS '分块数量';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.error_message IS '错误信息';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.start_time IS '开始时间';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.end_time IS '结束时间';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.create_time IS '创建时间';
+COMMENT ON COLUMN t_knowledge_document_chunk_log.update_time IS '更新时间';
 
 CREATE TABLE t_knowledge_document_schedule (
     id                VARCHAR(20)       NOT NULL PRIMARY KEY,
@@ -219,6 +316,23 @@ CREATE TABLE t_knowledge_document_schedule (
 CREATE INDEX idx_next_run ON t_knowledge_document_schedule (next_run_time);
 CREATE INDEX idx_lock_until ON t_knowledge_document_schedule (lock_until);
 COMMENT ON TABLE t_knowledge_document_schedule IS '知识库文档定时刷新任务表';
+COMMENT ON COLUMN t_knowledge_document_schedule.id IS 'ID';
+COMMENT ON COLUMN t_knowledge_document_schedule.doc_id IS '文档ID';
+COMMENT ON COLUMN t_knowledge_document_schedule.kb_id IS '知识库ID';
+COMMENT ON COLUMN t_knowledge_document_schedule.cron_expr IS 'Cron表达式';
+COMMENT ON COLUMN t_knowledge_document_schedule.enabled IS '是否启用';
+COMMENT ON COLUMN t_knowledge_document_schedule.next_run_time IS '下次执行时间';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_run_time IS '上次执行时间';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_success_time IS '上次成功时间';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_status IS '上次状态';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_error IS '上次错误';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_etag IS '上次ETag';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_modified IS '上次修改时间';
+COMMENT ON COLUMN t_knowledge_document_schedule.last_content_hash IS '上次内容哈希';
+COMMENT ON COLUMN t_knowledge_document_schedule.lock_owner IS '锁持有者';
+COMMENT ON COLUMN t_knowledge_document_schedule.lock_until IS '锁过期时间';
+COMMENT ON COLUMN t_knowledge_document_schedule.create_time IS '创建时间';
+COMMENT ON COLUMN t_knowledge_document_schedule.update_time IS '更新时间';
 
 CREATE TABLE t_knowledge_document_schedule_exec (
     id            VARCHAR(20)       NOT NULL PRIMARY KEY,
@@ -240,6 +354,21 @@ CREATE TABLE t_knowledge_document_schedule_exec (
 CREATE INDEX idx_schedule_time ON t_knowledge_document_schedule_exec (schedule_id, start_time);
 CREATE INDEX idx_doc_id_exec ON t_knowledge_document_schedule_exec (doc_id);
 COMMENT ON TABLE t_knowledge_document_schedule_exec IS '知识库文档定时刷新执行记录';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.id IS 'ID';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.schedule_id IS '调度ID';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.doc_id IS '文档ID';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.kb_id IS '知识库ID';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.status IS '状态';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.message IS '消息';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.start_time IS '开始时间';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.end_time IS '结束时间';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.file_name IS '文件名';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.file_size IS '文件大小';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.content_hash IS '内容哈希';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.etag IS 'ETag';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.last_modified IS '最后修改时间';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.create_time IS '创建时间';
+COMMENT ON COLUMN t_knowledge_document_schedule_exec.update_time IS '更新时间';
 
 -- ============================================
 -- RAG Intent & Query Tables
@@ -270,324 +399,6 @@ CREATE TABLE t_intent_node (
     deleted               SMALLINT     NOT NULL DEFAULT 0
 );
 COMMENT ON TABLE t_intent_node IS '意图树节点配置表';
-
-CREATE TABLE t_query_term_mapping (
-    id          VARCHAR(20)       NOT NULL PRIMARY KEY,
-    domain      VARCHAR(64),
-    source_term VARCHAR(128) NOT NULL,
-    target_term VARCHAR(128) NOT NULL,
-    match_type  SMALLINT     NOT NULL DEFAULT 1,
-    priority    INTEGER      NOT NULL DEFAULT 100,
-    enabled     SMALLINT     NOT NULL DEFAULT 1,
-    remark      VARCHAR(255),
-    create_by   VARCHAR(20),
-    update_by   VARCHAR(20),
-    create_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted     SMALLINT     NOT NULL DEFAULT 0
-);
-CREATE INDEX idx_domain ON t_query_term_mapping (domain);
-CREATE INDEX idx_source ON t_query_term_mapping (source_term);
-COMMENT ON TABLE t_query_term_mapping IS '关键词归一化映射表';
-
-CREATE TABLE t_rag_trace_run (
-    id              VARCHAR(20)           NOT NULL PRIMARY KEY,
-    trace_id        VARCHAR(64)      NOT NULL,
-    trace_name      VARCHAR(128),
-    entry_method    VARCHAR(256),
-    conversation_id VARCHAR(20),
-    task_id         VARCHAR(20),
-    user_id         VARCHAR(20),
-    status          VARCHAR(16)      NOT NULL DEFAULT 'RUNNING',
-    error_message   VARCHAR(1000),
-    start_time      TIMESTAMP(3),
-    end_time        TIMESTAMP(3),
-    duration_ms     BIGINT,
-    extra_data      TEXT,
-    create_time     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
-    update_time     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
-    deleted         SMALLINT         DEFAULT 0,
-    CONSTRAINT uk_run_id UNIQUE (trace_id)
-);
-CREATE INDEX idx_task_id ON t_rag_trace_run (task_id);
-CREATE INDEX idx_user_id_trace ON t_rag_trace_run (user_id);
-COMMENT ON TABLE t_rag_trace_run IS 'Trace 运行记录表';
-
-CREATE TABLE t_rag_trace_node (
-    id             VARCHAR(20)           NOT NULL PRIMARY KEY,
-    trace_id       VARCHAR(20)      NOT NULL,
-    node_id        VARCHAR(20)      NOT NULL,
-    parent_node_id VARCHAR(20),
-    depth          INTEGER          DEFAULT 0,
-    node_type      VARCHAR(16),
-    node_name      VARCHAR(128),
-    class_name     VARCHAR(256),
-    method_name    VARCHAR(128),
-    status         VARCHAR(16)      NOT NULL DEFAULT 'RUNNING',
-    error_message  VARCHAR(1000),
-    start_time     TIMESTAMP(3),
-    end_time       TIMESTAMP(3),
-    duration_ms    BIGINT,
-    extra_data     TEXT,
-    create_time    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
-    update_time    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
-    deleted        SMALLINT         DEFAULT 0,
-    CONSTRAINT uk_run_node UNIQUE (trace_id, node_id)
-);
-COMMENT ON TABLE t_rag_trace_node IS 'Trace 节点记录表';
-
--- ============================================
--- Ingestion Pipeline Tables
--- ============================================
-
-CREATE TABLE t_ingestion_pipeline (
-    id          VARCHAR(20)      NOT NULL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    description TEXT,
-    created_by  VARCHAR(20) DEFAULT '',
-    updated_by  VARCHAR(20) DEFAULT '',
-    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted     SMALLINT    NOT NULL DEFAULT 0,
-    CONSTRAINT uk_ingestion_pipeline_name UNIQUE (name, deleted)
-);
-COMMENT ON TABLE t_ingestion_pipeline IS '摄取流水线表';
-
-CREATE TABLE t_ingestion_pipeline_node (
-    id             VARCHAR(20)      NOT NULL PRIMARY KEY,
-    pipeline_id    VARCHAR(20)      NOT NULL,
-    node_id        VARCHAR(20) NOT NULL,
-    node_type      VARCHAR(16) NOT NULL,
-    next_node_id   VARCHAR(20),
-    settings_json  JSONB,
-    condition_json JSONB,
-    created_by     VARCHAR(20) DEFAULT '',
-    updated_by     VARCHAR(20) DEFAULT '',
-    create_time    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted        SMALLINT    NOT NULL DEFAULT 0,
-    CONSTRAINT uk_ingestion_pipeline_node UNIQUE (pipeline_id, node_id, deleted)
-);
-CREATE INDEX idx_ingestion_pipeline_node_pipeline ON t_ingestion_pipeline_node (pipeline_id);
-COMMENT ON TABLE t_ingestion_pipeline_node IS '摄取流水线节点表';
-
-CREATE TABLE t_ingestion_task (
-    id               VARCHAR(20)      NOT NULL PRIMARY KEY,
-    pipeline_id      VARCHAR(20)      NOT NULL,
-    source_type      VARCHAR(20) NOT NULL,
-    source_location  TEXT,
-    source_file_name VARCHAR(255),
-    status           VARCHAR(16) NOT NULL,
-    chunk_count      INTEGER     DEFAULT 0,
-    error_message    TEXT,
-    logs_json        JSONB,
-    metadata_json    JSONB,
-    started_at       TIMESTAMP,
-    completed_at     TIMESTAMP,
-    created_by       VARCHAR(20) DEFAULT '',
-    updated_by       VARCHAR(20) DEFAULT '',
-    create_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted          SMALLINT    NOT NULL DEFAULT 0
-);
-CREATE INDEX idx_ingestion_task_pipeline ON t_ingestion_task (pipeline_id);
-CREATE INDEX idx_ingestion_task_status ON t_ingestion_task (status);
-COMMENT ON TABLE t_ingestion_task IS '摄取任务表';
-
-CREATE TABLE t_ingestion_task_node (
-    id            VARCHAR(20)      NOT NULL PRIMARY KEY,
-    task_id       VARCHAR(20)      NOT NULL,
-    pipeline_id   VARCHAR(20)      NOT NULL,
-    node_id       VARCHAR(20) NOT NULL,
-    node_type     VARCHAR(16) NOT NULL,
-    node_order    INTEGER     NOT NULL DEFAULT 0,
-    status        VARCHAR(16) NOT NULL,
-    duration_ms   BIGINT      NOT NULL DEFAULT 0,
-    message       TEXT,
-    error_message TEXT,
-    output_json   TEXT,
-    create_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted       SMALLINT    NOT NULL DEFAULT 0
-);
-CREATE INDEX idx_ingestion_task_node_task ON t_ingestion_task_node (task_id);
-CREATE INDEX idx_ingestion_task_node_pipeline ON t_ingestion_task_node (pipeline_id);
-CREATE INDEX idx_ingestion_task_node_status ON t_ingestion_task_node (status);
-COMMENT ON TABLE t_ingestion_task_node IS '摄取任务节点表';
-
--- ============================================
--- Vector Storage Table (pgvector)
--- ============================================
-
-CREATE TABLE t_knowledge_vector (
-    id          VARCHAR(20) PRIMARY KEY,
-    content     TEXT,
-    metadata    JSONB,
-    embedding   vector(1536)
-);
-
-CREATE INDEX idx_kv_metadata ON t_knowledge_vector USING gin(metadata);
-CREATE INDEX idx_kv_embedding ON t_knowledge_vector USING hnsw (embedding vector_cosine_ops);
-COMMENT ON TABLE t_knowledge_vector IS '知识库向量存储表';
-COMMENT ON COLUMN t_knowledge_vector.id IS '分块ID';
-COMMENT ON COLUMN t_knowledge_vector.content IS '分块文本内容';
-COMMENT ON COLUMN t_knowledge_vector.metadata IS '元数据';
-COMMENT ON COLUMN t_knowledge_vector.embedding IS '向量';
-
--- ============================================
--- Column Comments
--- ============================================
-
--- t_conversation_summary
-COMMENT ON COLUMN t_conversation_summary.id IS '主键ID';
-COMMENT ON COLUMN t_conversation_summary.conversation_id IS '会话ID';
-COMMENT ON COLUMN t_conversation_summary.user_id IS '用户ID';
-COMMENT ON COLUMN t_conversation_summary.last_message_id IS '摘要最后消息ID';
-COMMENT ON COLUMN t_conversation_summary.content IS '会话摘要内容';
-COMMENT ON COLUMN t_conversation_summary.create_time IS '创建时间';
-COMMENT ON COLUMN t_conversation_summary.update_time IS '更新时间';
-COMMENT ON COLUMN t_conversation_summary.deleted IS '是否删除 0：正常 1：删除';
-
--- t_message
-COMMENT ON COLUMN t_message.id IS '主键ID';
-COMMENT ON COLUMN t_message.conversation_id IS '会话ID';
-COMMENT ON COLUMN t_message.user_id IS '用户ID';
-COMMENT ON COLUMN t_message.role IS '角色：user/assistant';
-COMMENT ON COLUMN t_message.content IS '消息内容';
-COMMENT ON COLUMN t_message.thinking_content IS '深度思考内容';
-COMMENT ON COLUMN t_message.thinking_duration IS '深度思考耗时（秒）';
-COMMENT ON COLUMN t_message.create_time IS '创建时间';
-COMMENT ON COLUMN t_message.update_time IS '更新时间';
-COMMENT ON COLUMN t_message.deleted IS '是否删除 0：正常 1：删除';
-
--- t_message_feedback
-COMMENT ON COLUMN t_message_feedback.id IS '主键ID';
-COMMENT ON COLUMN t_message_feedback.message_id IS '消息ID';
-COMMENT ON COLUMN t_message_feedback.conversation_id IS '会话ID';
-COMMENT ON COLUMN t_message_feedback.user_id IS '用户ID';
-COMMENT ON COLUMN t_message_feedback.vote IS '投票 1：赞 -1：踩';
-COMMENT ON COLUMN t_message_feedback.reason IS '反馈原因';
-COMMENT ON COLUMN t_message_feedback.comment IS '反馈评论';
-COMMENT ON COLUMN t_message_feedback.create_time IS '创建时间';
-COMMENT ON COLUMN t_message_feedback.update_time IS '更新时间';
-COMMENT ON COLUMN t_message_feedback.deleted IS '是否删除 0：正常 1：删除';
-
--- t_sample_question
-COMMENT ON COLUMN t_sample_question.id IS 'ID';
-COMMENT ON COLUMN t_sample_question.title IS '展示标题';
-COMMENT ON COLUMN t_sample_question.description IS '描述或提示';
-COMMENT ON COLUMN t_sample_question.question IS '示例问题内容';
-COMMENT ON COLUMN t_sample_question.create_time IS '创建时间';
-COMMENT ON COLUMN t_sample_question.update_time IS '更新时间';
-COMMENT ON COLUMN t_sample_question.deleted IS '是否删除 0：正常 1：删除';
-
--- t_knowledge_base
-COMMENT ON COLUMN t_knowledge_base.id IS '主键 ID';
-COMMENT ON COLUMN t_knowledge_base.name IS '知识库名称';
-COMMENT ON COLUMN t_knowledge_base.embedding_model IS '嵌入模型标识';
-COMMENT ON COLUMN t_knowledge_base.collection_name IS 'Collection名称';
-COMMENT ON COLUMN t_knowledge_base.created_by IS '创建人';
-COMMENT ON COLUMN t_knowledge_base.updated_by IS '修改人';
-COMMENT ON COLUMN t_knowledge_base.create_time IS '创建时间';
-COMMENT ON COLUMN t_knowledge_base.update_time IS '更新时间';
-COMMENT ON COLUMN t_knowledge_base.deleted IS '是否删除 0：正常 1：删除';
-
--- t_knowledge_document
-COMMENT ON COLUMN t_knowledge_document.id IS 'ID';
-COMMENT ON COLUMN t_knowledge_document.kb_id IS '知识库ID';
-COMMENT ON COLUMN t_knowledge_document.doc_name IS '文档名称';
-COMMENT ON COLUMN t_knowledge_document.enabled IS '是否启用 1：启用 0：禁用';
-COMMENT ON COLUMN t_knowledge_document.chunk_count IS '分块数量';
-COMMENT ON COLUMN t_knowledge_document.file_url IS '文件存储路径';
-COMMENT ON COLUMN t_knowledge_document.file_type IS '文件类型';
-COMMENT ON COLUMN t_knowledge_document.file_size IS '文件大小（字节）';
-COMMENT ON COLUMN t_knowledge_document.process_mode IS '处理模式：chunk/pipeline';
-COMMENT ON COLUMN t_knowledge_document.status IS '状态：pending/running/success/failed';
-COMMENT ON COLUMN t_knowledge_document.source_type IS '来源类型：file/url';
-COMMENT ON COLUMN t_knowledge_document.source_location IS '来源地址';
-COMMENT ON COLUMN t_knowledge_document.schedule_enabled IS '是否启用定时刷新';
-COMMENT ON COLUMN t_knowledge_document.schedule_cron IS '定时表达式';
-COMMENT ON COLUMN t_knowledge_document.chunk_strategy IS '分块策略';
-COMMENT ON COLUMN t_knowledge_document.chunk_config IS '分块配置JSON';
-COMMENT ON COLUMN t_knowledge_document.pipeline_id IS 'Pipeline ID';
-COMMENT ON COLUMN t_knowledge_document.created_by IS '创建人';
-COMMENT ON COLUMN t_knowledge_document.updated_by IS '修改人';
-COMMENT ON COLUMN t_knowledge_document.create_time IS '创建时间';
-COMMENT ON COLUMN t_knowledge_document.update_time IS '更新时间';
-COMMENT ON COLUMN t_knowledge_document.deleted IS '是否删除 0：正常 1：删除';
-
--- t_knowledge_chunk
-COMMENT ON COLUMN t_knowledge_chunk.id IS 'ID';
-COMMENT ON COLUMN t_knowledge_chunk.kb_id IS '知识库ID';
-COMMENT ON COLUMN t_knowledge_chunk.doc_id IS '文档ID';
-COMMENT ON COLUMN t_knowledge_chunk.chunk_index IS '分块序号';
-COMMENT ON COLUMN t_knowledge_chunk.content IS '分块内容';
-COMMENT ON COLUMN t_knowledge_chunk.content_hash IS '内容哈希';
-COMMENT ON COLUMN t_knowledge_chunk.char_count IS '字符数';
-COMMENT ON COLUMN t_knowledge_chunk.token_count IS 'Token数';
-COMMENT ON COLUMN t_knowledge_chunk.enabled IS '是否启用';
-COMMENT ON COLUMN t_knowledge_chunk.created_by IS '创建人';
-COMMENT ON COLUMN t_knowledge_chunk.updated_by IS '修改人';
-COMMENT ON COLUMN t_knowledge_chunk.create_time IS '创建时间';
-COMMENT ON COLUMN t_knowledge_chunk.update_time IS '更新时间';
-COMMENT ON COLUMN t_knowledge_chunk.deleted IS '是否删除 0：正常 1：删除';
-
--- t_knowledge_document_chunk_log
-COMMENT ON COLUMN t_knowledge_document_chunk_log.id IS 'ID';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.doc_id IS '文档ID';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.status IS '状态';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.process_mode IS '处理模式';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.chunk_strategy IS '分块策略';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.pipeline_id IS 'Pipeline ID';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.extract_duration IS '提取耗时（毫秒）';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.chunk_duration IS '分块耗时（毫秒）';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.embed_duration IS '向量化耗时（毫秒）';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.persist_duration IS 'DB持久化耗时（毫秒）';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.total_duration IS '总耗时（毫秒）';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.chunk_count IS '分块数量';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.error_message IS '错误信息';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.start_time IS '开始时间';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.end_time IS '结束时间';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.create_time IS '创建时间';
-COMMENT ON COLUMN t_knowledge_document_chunk_log.update_time IS '更新时间';
-
--- t_knowledge_document_schedule
-COMMENT ON COLUMN t_knowledge_document_schedule.id IS 'ID';
-COMMENT ON COLUMN t_knowledge_document_schedule.doc_id IS '文档ID';
-COMMENT ON COLUMN t_knowledge_document_schedule.kb_id IS '知识库ID';
-COMMENT ON COLUMN t_knowledge_document_schedule.cron_expr IS 'Cron表达式';
-COMMENT ON COLUMN t_knowledge_document_schedule.enabled IS '是否启用';
-COMMENT ON COLUMN t_knowledge_document_schedule.next_run_time IS '下次执行时间';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_run_time IS '上次执行时间';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_success_time IS '上次成功时间';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_status IS '上次状态';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_error IS '上次错误';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_etag IS '上次ETag';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_modified IS '上次修改时间';
-COMMENT ON COLUMN t_knowledge_document_schedule.last_content_hash IS '上次内容哈希';
-COMMENT ON COLUMN t_knowledge_document_schedule.lock_owner IS '锁持有者';
-COMMENT ON COLUMN t_knowledge_document_schedule.lock_until IS '锁过期时间';
-COMMENT ON COLUMN t_knowledge_document_schedule.create_time IS '创建时间';
-COMMENT ON COLUMN t_knowledge_document_schedule.update_time IS '更新时间';
-
--- t_knowledge_document_schedule_exec
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.id IS 'ID';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.schedule_id IS '调度ID';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.doc_id IS '文档ID';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.kb_id IS '知识库ID';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.status IS '状态';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.message IS '消息';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.start_time IS '开始时间';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.end_time IS '结束时间';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.file_name IS '文件名';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.file_size IS '文件大小';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.content_hash IS '内容哈希';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.etag IS 'ETag';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.last_modified IS '最后修改时间';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.create_time IS '创建时间';
-COMMENT ON COLUMN t_knowledge_document_schedule_exec.update_time IS '更新时间';
-
--- t_intent_node
 COMMENT ON COLUMN t_intent_node.id IS '自增主键';
 COMMENT ON COLUMN t_intent_node.kb_id IS '知识库ID';
 COMMENT ON COLUMN t_intent_node.intent_code IS '业务唯一标识';
@@ -611,7 +422,24 @@ COMMENT ON COLUMN t_intent_node.create_time IS '创建时间';
 COMMENT ON COLUMN t_intent_node.update_time IS '修改时间';
 COMMENT ON COLUMN t_intent_node.deleted IS '是否删除 0：正常 1：删除';
 
--- t_query_term_mapping
+CREATE TABLE t_query_term_mapping (
+    id          VARCHAR(20)       NOT NULL PRIMARY KEY,
+    domain      VARCHAR(64),
+    source_term VARCHAR(128) NOT NULL,
+    target_term VARCHAR(128) NOT NULL,
+    match_type  SMALLINT     NOT NULL DEFAULT 1,
+    priority    INTEGER      NOT NULL DEFAULT 100,
+    enabled     SMALLINT     NOT NULL DEFAULT 1,
+    remark      VARCHAR(255),
+    create_by   VARCHAR(20),
+    update_by   VARCHAR(20),
+    create_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted     SMALLINT     NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_domain ON t_query_term_mapping (domain);
+CREATE INDEX idx_source ON t_query_term_mapping (source_term);
+COMMENT ON TABLE t_query_term_mapping IS '关键词归一化映射表';
 COMMENT ON COLUMN t_query_term_mapping.id IS 'ID';
 COMMENT ON COLUMN t_query_term_mapping.domain IS '领域';
 COMMENT ON COLUMN t_query_term_mapping.source_term IS '源词';
@@ -626,7 +454,28 @@ COMMENT ON COLUMN t_query_term_mapping.create_time IS '创建时间';
 COMMENT ON COLUMN t_query_term_mapping.update_time IS '修改时间';
 COMMENT ON COLUMN t_query_term_mapping.deleted IS '是否删除 0：正常 1：删除';
 
--- t_rag_trace_run
+CREATE TABLE t_rag_trace_run (
+    id              VARCHAR(20)           NOT NULL PRIMARY KEY,
+    trace_id        VARCHAR(64)      NOT NULL,
+    trace_name      VARCHAR(128),
+    entry_method    VARCHAR(256),
+    conversation_id VARCHAR(20),
+    task_id         VARCHAR(20),
+    user_id         VARCHAR(20),
+    status          VARCHAR(16)      NOT NULL DEFAULT 'RUNNING',
+    error_message   VARCHAR(1000),
+    start_time      TIMESTAMP(3),
+    end_time        TIMESTAMP(3),
+    duration_ms     BIGINT,
+    extra_data      TEXT,
+    create_time     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    update_time     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    deleted         SMALLINT         DEFAULT 0,
+    CONSTRAINT uk_run_id UNIQUE (trace_id)
+);
+CREATE INDEX idx_task_id ON t_rag_trace_run (task_id);
+CREATE INDEX idx_user_id_trace ON t_rag_trace_run (user_id);
+COMMENT ON TABLE t_rag_trace_run IS 'Trace 运行记录表';
 COMMENT ON COLUMN t_rag_trace_run.id IS 'ID';
 COMMENT ON COLUMN t_rag_trace_run.trace_id IS '全局链路ID';
 COMMENT ON COLUMN t_rag_trace_run.trace_name IS '链路名称';
@@ -644,7 +493,28 @@ COMMENT ON COLUMN t_rag_trace_run.create_time IS '创建时间';
 COMMENT ON COLUMN t_rag_trace_run.update_time IS '更新时间';
 COMMENT ON COLUMN t_rag_trace_run.deleted IS '是否删除';
 
--- t_rag_trace_node
+CREATE TABLE t_rag_trace_node (
+    id             VARCHAR(20)           NOT NULL PRIMARY KEY,
+    trace_id       VARCHAR(20)      NOT NULL,
+    node_id        VARCHAR(20)      NOT NULL,
+    parent_node_id VARCHAR(20),
+    depth          INTEGER          DEFAULT 0,
+    node_type      VARCHAR(16),
+    node_name      VARCHAR(128),
+    class_name     VARCHAR(256),
+    method_name    VARCHAR(128),
+    status         VARCHAR(16)      NOT NULL DEFAULT 'RUNNING',
+    error_message  VARCHAR(1000),
+    start_time     TIMESTAMP(3),
+    end_time       TIMESTAMP(3),
+    duration_ms    BIGINT,
+    extra_data     TEXT,
+    create_time    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    update_time    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    deleted        SMALLINT         DEFAULT 0,
+    CONSTRAINT uk_run_node UNIQUE (trace_id, node_id)
+);
+COMMENT ON TABLE t_rag_trace_node IS 'Trace 节点记录表';
 COMMENT ON COLUMN t_rag_trace_node.id IS 'ID';
 COMMENT ON COLUMN t_rag_trace_node.trace_id IS '所属链路ID';
 COMMENT ON COLUMN t_rag_trace_node.node_id IS '节点ID';
@@ -664,7 +534,22 @@ COMMENT ON COLUMN t_rag_trace_node.create_time IS '创建时间';
 COMMENT ON COLUMN t_rag_trace_node.update_time IS '更新时间';
 COMMENT ON COLUMN t_rag_trace_node.deleted IS '是否删除';
 
--- t_ingestion_pipeline
+-- ============================================
+-- Ingestion Pipeline Tables
+-- ============================================
+
+CREATE TABLE t_ingestion_pipeline (
+    id          VARCHAR(20)      NOT NULL PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_by  VARCHAR(20) DEFAULT '',
+    updated_by  VARCHAR(20) DEFAULT '',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted     SMALLINT    NOT NULL DEFAULT 0,
+    CONSTRAINT uk_ingestion_pipeline_name UNIQUE (name, deleted)
+);
+COMMENT ON TABLE t_ingestion_pipeline IS '摄取流水线表';
 COMMENT ON COLUMN t_ingestion_pipeline.id IS 'ID';
 COMMENT ON COLUMN t_ingestion_pipeline.name IS '流水线名称';
 COMMENT ON COLUMN t_ingestion_pipeline.description IS '流水线描述';
@@ -674,7 +559,23 @@ COMMENT ON COLUMN t_ingestion_pipeline.create_time IS '创建时间';
 COMMENT ON COLUMN t_ingestion_pipeline.update_time IS '更新时间';
 COMMENT ON COLUMN t_ingestion_pipeline.deleted IS '是否删除 0：正常 1：删除';
 
--- t_ingestion_pipeline_node
+CREATE TABLE t_ingestion_pipeline_node (
+    id             VARCHAR(20)      NOT NULL PRIMARY KEY,
+    pipeline_id    VARCHAR(20)      NOT NULL,
+    node_id        VARCHAR(20) NOT NULL,
+    node_type      VARCHAR(16) NOT NULL,
+    next_node_id   VARCHAR(20),
+    settings_json  JSONB,
+    condition_json JSONB,
+    created_by     VARCHAR(20) DEFAULT '',
+    updated_by     VARCHAR(20) DEFAULT '',
+    create_time    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted        SMALLINT    NOT NULL DEFAULT 0,
+    CONSTRAINT uk_ingestion_pipeline_node UNIQUE (pipeline_id, node_id, deleted)
+);
+CREATE INDEX idx_ingestion_pipeline_node_pipeline ON t_ingestion_pipeline_node (pipeline_id);
+COMMENT ON TABLE t_ingestion_pipeline_node IS '摄取流水线节点表';
 COMMENT ON COLUMN t_ingestion_pipeline_node.id IS 'ID';
 COMMENT ON COLUMN t_ingestion_pipeline_node.pipeline_id IS '流水线ID';
 COMMENT ON COLUMN t_ingestion_pipeline_node.node_id IS '节点标识(同一流水线内唯一)';
@@ -688,7 +589,28 @@ COMMENT ON COLUMN t_ingestion_pipeline_node.create_time IS '创建时间';
 COMMENT ON COLUMN t_ingestion_pipeline_node.update_time IS '更新时间';
 COMMENT ON COLUMN t_ingestion_pipeline_node.deleted IS '是否删除 0：正常 1：删除';
 
--- t_ingestion_task
+CREATE TABLE t_ingestion_task (
+    id               VARCHAR(20)      NOT NULL PRIMARY KEY,
+    pipeline_id      VARCHAR(20)      NOT NULL,
+    source_type      VARCHAR(20) NOT NULL,
+    source_location  TEXT,
+    source_file_name VARCHAR(255),
+    status           VARCHAR(16) NOT NULL,
+    chunk_count      INTEGER     DEFAULT 0,
+    error_message    TEXT,
+    logs_json        JSONB,
+    metadata_json    JSONB,
+    started_at       TIMESTAMP,
+    completed_at     TIMESTAMP,
+    created_by       VARCHAR(20) DEFAULT '',
+    updated_by       VARCHAR(20) DEFAULT '',
+    create_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted          SMALLINT    NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_ingestion_task_pipeline ON t_ingestion_task (pipeline_id);
+CREATE INDEX idx_ingestion_task_status ON t_ingestion_task (status);
+COMMENT ON TABLE t_ingestion_task IS '摄取任务表';
 COMMENT ON COLUMN t_ingestion_task.id IS 'ID';
 COMMENT ON COLUMN t_ingestion_task.pipeline_id IS '流水线ID';
 COMMENT ON COLUMN t_ingestion_task.source_type IS '来源类型';
@@ -707,7 +629,26 @@ COMMENT ON COLUMN t_ingestion_task.create_time IS '创建时间';
 COMMENT ON COLUMN t_ingestion_task.update_time IS '更新时间';
 COMMENT ON COLUMN t_ingestion_task.deleted IS '是否删除 0：正常 1：删除';
 
--- t_ingestion_task_node
+CREATE TABLE t_ingestion_task_node (
+    id            VARCHAR(20)      NOT NULL PRIMARY KEY,
+    task_id       VARCHAR(20)      NOT NULL,
+    pipeline_id   VARCHAR(20)      NOT NULL,
+    node_id       VARCHAR(20) NOT NULL,
+    node_type     VARCHAR(16) NOT NULL,
+    node_order    INTEGER     NOT NULL DEFAULT 0,
+    status        VARCHAR(16) NOT NULL,
+    duration_ms   BIGINT      NOT NULL DEFAULT 0,
+    message       TEXT,
+    error_message TEXT,
+    output_json   TEXT,
+    create_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted       SMALLINT    NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_ingestion_task_node_task ON t_ingestion_task_node (task_id);
+CREATE INDEX idx_ingestion_task_node_pipeline ON t_ingestion_task_node (pipeline_id);
+CREATE INDEX idx_ingestion_task_node_status ON t_ingestion_task_node (status);
+COMMENT ON TABLE t_ingestion_task_node IS '摄取任务节点表';
 COMMENT ON COLUMN t_ingestion_task_node.id IS 'ID';
 COMMENT ON COLUMN t_ingestion_task_node.task_id IS '任务ID';
 COMMENT ON COLUMN t_ingestion_task_node.pipeline_id IS '流水线ID';
@@ -722,3 +663,22 @@ COMMENT ON COLUMN t_ingestion_task_node.output_json IS '节点输出JSON(全量)
 COMMENT ON COLUMN t_ingestion_task_node.create_time IS '创建时间';
 COMMENT ON COLUMN t_ingestion_task_node.update_time IS '更新时间';
 COMMENT ON COLUMN t_ingestion_task_node.deleted IS '是否删除 0：正常 1：删除';
+
+-- ============================================
+-- Vector Storage Table (pgvector)
+-- ============================================
+
+CREATE TABLE t_knowledge_vector (
+    id          VARCHAR(20) PRIMARY KEY,
+    content     TEXT,
+    metadata    JSONB,
+    embedding   vector(1536)
+);
+
+CREATE INDEX idx_kv_metadata ON t_knowledge_vector USING gin(metadata);
+CREATE INDEX idx_kv_embedding ON t_knowledge_vector USING hnsw (embedding vector_cosine_ops);
+COMMENT ON TABLE t_knowledge_vector IS '知识库向量存储表';
+COMMENT ON COLUMN t_knowledge_vector.id IS '分块ID';
+COMMENT ON COLUMN t_knowledge_vector.content IS '分块文本内容';
+COMMENT ON COLUMN t_knowledge_vector.metadata IS '元数据';
+COMMENT ON COLUMN t_knowledge_vector.embedding IS '向量';
