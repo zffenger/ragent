@@ -15,19 +15,49 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.user.controller.request;
+package com.nageoffer.ai.ragent.user.controller.vo;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+/**
+ * 飞书用户信息 VO
+ */
 @Data
-public class LoginRequest {
-
-    private String username;
-
-    private String password;
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FeishuUserVO {
 
     /**
-     * 滑块验证码 token
+     * 飞书 Open ID
      */
-    private String captchaToken;
+    private String openId;
+
+    /**
+     * 飞书 User ID
+     */
+    private String userId;
+
+    /**
+     * 飞书用户名
+     */
+    private String name;
+
+    /**
+     * 飞书头像 URL
+     */
+    private String avatar;
+
+    /**
+     * 是否已绑定系统账号
+     */
+    private Boolean bound;
+
+    /**
+     * 绑定的系统用户名（如果已绑定）
+     */
+    private String username;
 }

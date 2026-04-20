@@ -181,6 +181,12 @@ storage:
 #    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET:}
 #    bucket-name: ${ALIYUN_OSS_BUCKET:ragent}
 
+feishu:
+  oauth:
+    enabled: true
+    app-id: cli_x
+    app-secret: x
+
 sa-token:
   token-name: Authorization
   timeout: 2592000

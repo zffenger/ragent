@@ -19,15 +19,19 @@ package com.nageoffer.ai.ragent.user.controller.request;
 
 import lombok.Data;
 
+/**
+ * 飞书 OAuth 回调请求
+ */
 @Data
-public class LoginRequest {
-
-    private String username;
-
-    private String password;
+public class FeishuOAuthRequest {
 
     /**
-     * 滑块验证码 token
+     * 授权码
      */
-    private String captchaToken;
+    private String code;
+
+    /**
+     * 状态参数（用于防 CSRF）
+     */
+    private String state;
 }

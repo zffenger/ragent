@@ -24,9 +24,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@lombok.Builder
 public class LoginVO {
 
     private String userId;
+
+    private String username;
 
     private String role;
 

@@ -15,19 +15,15 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.user.controller.request;
+package com.nageoffer.ai.ragent.user.dao.mapper;
 
-import lombok.Data;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.ai.ragent.user.dao.entity.FeishuBindingDO;
+import org.apache.ibatis.annotations.Mapper;
 
-@Data
-public class LoginRequest {
-
-    private String username;
-
-    private String password;
-
-    /**
-     * 滑块验证码 token
-     */
-    private String captchaToken;
+/**
+ * 飞书账号绑定 Mapper
+ */
+@Mapper
+public interface FeishuBindingMapper extends BaseMapper<FeishuBindingDO> {
 }

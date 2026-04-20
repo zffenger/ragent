@@ -20,6 +20,7 @@ package com.nageoffer.ai.ragent.user.service.impl;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.captcha.service.CaptchaTokenService;
 import com.nageoffer.ai.ragent.user.controller.request.LoginRequest;
 import com.nageoffer.ai.ragent.user.controller.vo.LoginVO;
 import com.nageoffer.ai.ragent.user.dao.entity.UserDO;
@@ -36,9 +37,16 @@ public class AuthServiceImpl implements AuthService {
     private static final String DEFAULT_AVATAR_URL = "https://avatars.githubusercontent.com/u/583231?v=4";
 
     private final UserMapper userMapper;
+    private final CaptchaTokenService captchaTokenService;
 
     @Override
     public LoginVO login(LoginRequest requestParam) {
+        // 验证滑块验证码
+        String captchaToken = requestParam.getCaptchaToken();
+        if (StrUtil.isBlank(captchaToken) || !captchaTokenService.verifyAndConsumeToken(captchaToken)) {
+            throw new ClientException("请先完成滑块验证");
+        }
+
         String username = requestParam.getUsername();
         String password = requestParam.getPassword();
         if (StrUtil.isBlank(username) || StrUtil.isBlank(password)) {
@@ -54,7 +62,13 @@ public class AuthServiceImpl implements AuthService {
         String loginId = user.getId().toString();
         StpUtil.login(loginId);
         String avatar = StrUtil.isBlank(user.getAvatar()) ? DEFAULT_AVATAR_URL : user.getAvatar();
-        return new LoginVO(loginId, user.getRole(), StpUtil.getTokenValue(), avatar);
+        return LoginVO.builder()
+                .userId(loginId)
+                .username(user.getUsername())
+                .role(user.getRole())
+                .token(StpUtil.getTokenValue())
+                .avatar(avatar)
+                .build();
     }
 
     @Override

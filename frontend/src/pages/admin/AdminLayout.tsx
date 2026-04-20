@@ -146,6 +146,11 @@ const menuGroups: MenuGroup[] = [
     title: "设置",
     items: [
       {
+        path: "/admin/settings/user",
+        label: "个人设置",
+        icon: Users
+      },
+      {
         path: "/admin/settings/models",
         label: "模型配置",
         icon: Cpu
@@ -188,7 +193,8 @@ const breadcrumbMap: Record<string, string> = {
   users: "用户管理",
   models: "模型配置",
   "chat-bots": "机器人管理",
-  "retrieval-domains": "检索域管理"
+  "retrieval-domains": "检索域",
+  user: "个人设置"
 };
 
 export function AdminLayout() {

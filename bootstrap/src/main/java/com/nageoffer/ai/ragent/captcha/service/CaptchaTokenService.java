@@ -15,19 +15,26 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.user.controller.request;
+package com.nageoffer.ai.ragent.captcha.service;
 
-import lombok.Data;
-
-@Data
-public class LoginRequest {
-
-    private String username;
-
-    private String password;
+/**
+ * 验证码令牌服务
+ */
+public interface CaptchaTokenService {
 
     /**
-     * 滑块验证码 token
+     * 缓存验证成功的令牌
+     *
+     * @param token 令牌
+     * @param expireSeconds 过期时间（秒）
      */
-    private String captchaToken;
+    void storeToken(String token, long expireSeconds);
+
+    /**
+     * 验证并消费令牌
+     *
+     * @param token 令牌
+     * @return 是否验证通过
+     */
+    boolean verifyAndConsumeToken(String token);
 }
