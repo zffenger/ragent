@@ -45,7 +45,9 @@
       "Bash(jar xf:*)",
       "Bash(mvn test:*)",
       "Bash(mvn test-compile:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home)",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")"
     ]
   },
   "sandbox": {
