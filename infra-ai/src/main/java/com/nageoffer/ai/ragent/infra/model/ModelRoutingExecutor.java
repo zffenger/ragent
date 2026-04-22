@@ -19,13 +19,13 @@ package com.nageoffer.ai.ragent.infra.model;
 
 import com.nageoffer.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
+import com.nageoffer.ai.ragent.infra.core.LLMClient;
 import com.nageoffer.ai.ragent.infra.enums.ModelCapability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * 模型路由执行器
@@ -38,10 +38,10 @@ public class ModelRoutingExecutor {
 
     private final ModelHealthStore healthStore;
 
-    public <C, T> T executeWithFallback(
+    public <C extends LLMClient, T> T executeWithFallback(
             ModelCapability capability,
             List<ModelTarget> targets,
-            Function<ModelTarget, C> clientResolver,
+            ModelClientResolver<C> modelClientResolver,
             ModelCaller<C, T> caller) {
         String label = capability.getDisplayName();
         if (targets == null || targets.isEmpty()) {
@@ -50,7 +50,7 @@ public class ModelRoutingExecutor {
 
         Throwable last = null;
         for (ModelTarget target : targets) {
-            C client = clientResolver.apply(target);
+            C client = modelClientResolver.resolve(target);
             if (client == null) {
                 log.warn("{} provider client missing: provider={}, modelId={}", label, target.candidate().getProvider(), target.id());
                 continue;

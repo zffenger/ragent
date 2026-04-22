@@ -11,7 +11,7 @@ import {
   updateEmbeddingModelConfig,
   updateRerankModelConfig,
   type ModelCandidate,
-  type ModelProvider,
+  type SupportedProvider,
 } from "@/services/modelConfigService";
 import { getErrorMessage } from "@/utils/error";
 import { Button } from "@/components/ui/button";
@@ -59,14 +59,14 @@ type FormValues = z.infer<typeof formSchema>;
 interface ModelCandidateDialogProps {
   candidate?: ModelCandidate;
   modelType: "CHAT" | "EMBEDDING" | "RERANK";
-  providers: ModelProvider[];
+  supportedProviders: SupportedProvider[];
   onRefresh: () => void;
 }
 
 export function ModelCandidateDialog({
   candidate,
   modelType,
-  providers,
+  supportedProviders,
   onRefresh,
 }: ModelCandidateDialogProps) {
   const [open, setOpen] = useState(false);
@@ -241,8 +241,8 @@ export function ModelCandidateDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {providers.map((p) => (
-                          <SelectItem key={p.name} value={p.name}>
+                        {supportedProviders.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
                             {p.name}
                           </SelectItem>
                         ))}

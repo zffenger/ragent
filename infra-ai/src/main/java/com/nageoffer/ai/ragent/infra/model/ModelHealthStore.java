@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.infra.model;
 
-import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
+import com.nageoffer.ai.ragent.infra.config.AISelectionProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ModelHealthStore {
 
-    private final AIModelProperties properties;
+    private final AISelectionProperties selectionProperties;
 
     private final Map<String, ModelHealth> healthById = new ConcurrentHashMap<>();
 
@@ -109,15 +109,15 @@ public class ModelHealthStore {
             }
             if (v.state == State.HALF_OPEN) {
                 v.state = State.OPEN;
-                v.openUntil = now + properties.getSelection().getOpenDurationMs();
+                v.openUntil = now + selectionProperties.getOpenDurationMs();
                 v.consecutiveFailures = 0;
                 v.halfOpenInFlight = false;
                 return v;
             }
             v.consecutiveFailures++;
-            if (v.consecutiveFailures >= properties.getSelection().getFailureThreshold()) {
+            if (v.consecutiveFailures >= selectionProperties.getFailureThreshold()) {
                 v.state = State.OPEN;
-                v.openUntil = now + properties.getSelection().getOpenDurationMs();
+                v.openUntil = now + selectionProperties.getOpenDurationMs();
                 v.consecutiveFailures = 0;
             }
             return v;

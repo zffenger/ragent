@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.infra.chat;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.infra.core.LLMClient;
 import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
 
@@ -25,7 +26,7 @@ import com.nageoffer.ai.ragent.infra.model.ModelTarget;
  * 聊天客户端接口
  * 定义了与AI模型进行对话的核心方法
  */
-public interface ChatClient {
+public interface ChatClient extends LLMClient {
 
     /**
      * 获取服务提供商名称

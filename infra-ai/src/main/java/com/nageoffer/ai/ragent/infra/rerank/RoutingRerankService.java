@@ -19,6 +19,8 @@ package com.nageoffer.ai.ragent.infra.rerank;
 
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.infra.enums.ModelCapability;
+import com.nageoffer.ai.ragent.infra.model.DefaultClientResolver;
+import com.nageoffer.ai.ragent.infra.model.ModelClientResolver;
 import com.nageoffer.ai.ragent.infra.model.ModelRoutingExecutor;
 import com.nageoffer.ai.ragent.infra.model.ModelSelector;
 import org.springframework.context.annotation.Primary;
@@ -41,13 +43,12 @@ public class RoutingRerankService implements RerankService {
 
     private final ModelSelector selector;
     private final ModelRoutingExecutor executor;
-    private final Map<String, RerankClient> clientsByProvider;
+	private final ModelClientResolver<RerankClient> clientResolver;
 
     public RoutingRerankService(ModelSelector selector, ModelRoutingExecutor executor, List<RerankClient> clients) {
         this.selector = selector;
         this.executor = executor;
-        this.clientsByProvider = clients.stream()
-                .collect(Collectors.toMap(RerankClient::provider, Function.identity()));
+		this.clientResolver = new DefaultClientResolver<>(clients);
     }
 
     @Override
@@ -55,7 +56,7 @@ public class RoutingRerankService implements RerankService {
         return executor.executeWithFallback(
                 ModelCapability.RERANK,
                 selector.selectRerankCandidates(),
-                target -> clientsByProvider.get(target.candidate().getProvider()),
+                this.clientResolver,
                 (client, target) -> client.rerank(query, candidates, topN, target)
         );
     }

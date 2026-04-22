@@ -17,6 +17,7 @@
 
 package com.nageoffer.ai.ragent.infra.embedding;
 
+import com.nageoffer.ai.ragent.infra.core.LLMClient;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
 
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.List;
  * 文本嵌入客户端接口
  * 用于将文本转换为向量表示，支持单个文本和批量文本的嵌入操作
  */
-public interface EmbeddingClient {
+public interface EmbeddingClient extends LLMClient {
 
     /**
      * 获取嵌入服务提供商名称

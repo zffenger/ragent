@@ -20,6 +20,8 @@ package com.nageoffer.ai.ragent.rag.controller;
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
+import com.nageoffer.ai.ragent.infra.config.AISelectionProperties;
+import com.nageoffer.ai.ragent.infra.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.config.RAGConfigProperties;
 import com.nageoffer.ai.ragent.rag.config.RAGDefaultProperties;
@@ -50,6 +52,8 @@ public class RAGSettingsController {
     private final RAGRateLimitProperties ragRateLimitProperties;
     private final MemoryProperties memoryProperties;
     private final AIModelProperties aiModelProperties;
+    private final AISelectionProperties selectionProperties;
+    private final AIStreamProperties streamProperties;
 
     @Value("${spring.servlet.multipart.max-file-size:50MB}")
     private DataSize maxFileSize;
@@ -85,7 +89,7 @@ public class RAGSettingsController {
                                 .build())
                         .memory(toMemorySettings(memoryProperties))
                         .build())
-                .ai(toAISettings(aiModelProperties))
+                .ai(toAISettings(aiModelProperties, selectionProperties, streamProperties))
                 .build();
         return Results.success(response);
     }
@@ -109,7 +113,9 @@ public class RAGSettingsController {
                 .build();
     }
 
-    private AISettings toAISettings(AIModelProperties props) {
+    private AISettings toAISettings(AIModelProperties props,
+                                    AISelectionProperties selectionProps,
+                                    AIStreamProperties streamProps) {
         Map<String, AISettings.ProviderConfig> providers = new HashMap<>();
         if (props.getProviders() != null) {
             props.getProviders().forEach((k, v) -> providers.put(k, AISettings.ProviderConfig.builder()
@@ -124,12 +130,12 @@ public class RAGSettingsController {
                 .chat(toModelGroup(props.getChat()))
                 .embedding(toModelGroup(props.getEmbedding()))
                 .rerank(toModelGroup(props.getRerank()))
-                .selection(props.getSelection() == null ? null : AISettings.Selection.builder()
-                        .failureThreshold(props.getSelection().getFailureThreshold())
-                        .openDurationMs(props.getSelection().getOpenDurationMs())
+                .selection(selectionProps == null ? null : AISettings.Selection.builder()
+                        .failureThreshold(selectionProps.getFailureThreshold())
+                        .openDurationMs(selectionProps.getOpenDurationMs())
                         .build())
-                .stream(props.getStream() == null ? null : AISettings.Stream.builder()
-                        .messageChunkSize(props.getStream().getMessageChunkSize())
+                .stream(streamProps == null ? null : AISettings.Stream.builder()
+                        .messageChunkSize(streamProps.getMessageChunkSize())
                         .build())
                 .build();
     }

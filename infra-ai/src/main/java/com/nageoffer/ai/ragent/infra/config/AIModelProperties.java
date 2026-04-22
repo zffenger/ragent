@@ -18,8 +18,7 @@
 package com.nageoffer.ai.ragent.infra.config;
 
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,43 +27,42 @@ import java.util.Map;
 
 /**
  * AI 模型配置属性类
- * 用于从配置文件中读取 AI 相关的配置信息，包括提供商配置、模型组配置等
+ * <p>
+ * 模型配置（providers、chat、embedding、rerank）从数据库加载，
+ * 由 DynamicConfigRefresher 在启动时填充。
+ * <p>
+ * 策略配置由独立的配置类管理：
+ * - AISelectionProperties: 模型选择策略（ai.selection）
+ * - AIStreamProperties: 流式响应配置（ai.stream）
  */
 @Data
-@Configuration
-@ConfigurationProperties(prefix = "ai")
+@Component
 public class AIModelProperties {
 
     /**
      * AI 提供商配置映射
      * key: 提供商名称，value: 提供商配置信息
+     * 从数据库加载
      */
     private Map<String, ProviderConfig> providers = new HashMap<>();
 
     /**
      * 聊天模型组配置
+     * 从数据库加载
      */
     private ModelGroup chat = new ModelGroup();
 
     /**
      * 向量嵌入模型组配置
+     * 从数据库加载
      */
     private ModelGroup embedding = new ModelGroup();
 
     /**
      * 重排序模型组配置
+     * 从数据库加载
      */
     private ModelGroup rerank = new ModelGroup();
-
-    /**
-     * 模型选择策略配置
-     */
-    private Selection selection = new Selection();
-
-    /**
-     * 流式响应配置
-     */
-    private Stream stream = new Stream();
 
     /**
      * 模型组配置类
@@ -158,36 +156,5 @@ public class AIModelProperties {
          * key: 端点类型，value: 端点路径
          */
         private Map<String, String> endpoints = new HashMap<>();
-    }
-
-    /**
-     * 模型选择策略配置类
-     * 用于配置模型故障转移和熔断策略
-     */
-    @Data
-    public static class Selection {
-
-        /**
-         * 失败阈值，超过该值将触发熔断
-         */
-        private Integer failureThreshold = 2;
-
-        /**
-         * 熔断器打开持续时间（毫秒）
-         */
-        private Long openDurationMs = 30000L;
-    }
-
-    /**
-     * 流式响应配置类
-     * 用于配置流式输出的相关参数
-     */
-    @Data
-    public static class Stream {
-
-        /**
-         * 消息分块大小
-         */
-        private Integer messageChunkSize = 5;
     }
 }

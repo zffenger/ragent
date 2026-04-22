@@ -19,6 +19,8 @@ package com.nageoffer.ai.ragent.infra.embedding;
 
 import com.nageoffer.ai.ragent.infra.enums.ModelCapability;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
+import com.nageoffer.ai.ragent.infra.model.DefaultClientResolver;
+import com.nageoffer.ai.ragent.infra.model.ModelClientResolver;
 import com.nageoffer.ai.ragent.infra.model.ModelRoutingExecutor;
 import com.nageoffer.ai.ragent.infra.model.ModelSelector;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
@@ -43,7 +45,7 @@ public class RoutingEmbeddingService implements EmbeddingService {
 
     private final ModelSelector selector;
     private final ModelRoutingExecutor executor;
-    private final Map<String, EmbeddingClient> clientsByProvider;
+	private final ModelClientResolver<EmbeddingClient> clientResolver;
 
     public RoutingEmbeddingService(
             ModelSelector selector,
@@ -51,8 +53,7 @@ public class RoutingEmbeddingService implements EmbeddingService {
             List<EmbeddingClient> clients) {
         this.selector = selector;
         this.executor = executor;
-        this.clientsByProvider = clients.stream()
-                .collect(Collectors.toMap(EmbeddingClient::provider, Function.identity()));
+		this.clientResolver = new DefaultClientResolver<>(clients);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class RoutingEmbeddingService implements EmbeddingService {
         return executor.executeWithFallback(
                 ModelCapability.EMBEDDING,
                 selector.selectEmbeddingCandidates(),
-                this::resolveClient,
+                this.clientResolver,
                 (client, target) -> client.embed(text, target)
         );
     }
@@ -70,7 +71,7 @@ public class RoutingEmbeddingService implements EmbeddingService {
         return executor.executeWithFallback(
                 ModelCapability.EMBEDDING,
                 List.of(resolveTarget(modelId)),
-                this::resolveClient,
+                this.clientResolver,
                 (client, target) -> client.embed(text, target)
         );
     }
@@ -80,7 +81,7 @@ public class RoutingEmbeddingService implements EmbeddingService {
         return executor.executeWithFallback(
                 ModelCapability.EMBEDDING,
                 selector.selectEmbeddingCandidates(),
-                this::resolveClient,
+                this.clientResolver,
                 (client, target) -> client.embedBatch(texts, target)
         );
     }
@@ -90,13 +91,9 @@ public class RoutingEmbeddingService implements EmbeddingService {
         return executor.executeWithFallback(
                 ModelCapability.EMBEDDING,
                 List.of(resolveTarget(modelId)),
-                this::resolveClient,
+                this.clientResolver,
                 (client, target) -> client.embedBatch(texts, target)
         );
-    }
-
-    private EmbeddingClient resolveClient(ModelTarget target) {
-        return clientsByProvider.get(target.candidate().getProvider());
     }
 
     private ModelTarget resolveTarget(String modelId) {

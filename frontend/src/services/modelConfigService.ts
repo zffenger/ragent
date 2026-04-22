@@ -91,6 +91,18 @@ export async function updateRerankModelConfig(config: ModelGroupConfig): Promise
 
 // ==================== 模型提供商 API ====================
 
+export interface SupportedProvider {
+  id: string;
+  name: string;
+}
+
+/**
+ * 获取系统支持的模型提供商类型
+ */
+export async function getSupportedProviders(): Promise<SupportedProvider[]> {
+  return api.get<SupportedProvider[], SupportedProvider[]>("/admin/settings/supported-providers");
+}
+
 export async function listModelProviders(): Promise<ModelProvider[]> {
   return api.get<ModelProvider[], ModelProvider[]>("/admin/settings/model-providers");
 }

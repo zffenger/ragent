@@ -10,9 +10,11 @@ import {
   listModelProviders,
   setDefaultModel,
   setDeepThinkingModel,
+  getSupportedProviders,
   type ModelGroupConfig,
   type ModelCandidate,
   type ModelProvider,
+  type SupportedProvider,
 } from "@/services/modelConfigService";
 import { getErrorMessage } from "@/utils/error";
 import { Badge } from "@/components/ui/badge";
@@ -29,21 +31,24 @@ export function ModelSettingsPage() {
   const [embeddingConfig, setEmbeddingConfig] = useState<ModelGroupConfig | null>(null);
   const [rerankConfig, setRerankConfig] = useState<ModelGroupConfig | null>(null);
   const [providers, setProviders] = useState<ModelProvider[]>([]);
+  const [supportedProviders, setSupportedProviders] = useState<SupportedProvider[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [chat, embedding, rerank, provs] = await Promise.all([
+      const [chat, embedding, rerank, provs, supported] = await Promise.all([
         getChatModelConfig(),
         getEmbeddingModelConfig(),
         getRerankModelConfig(),
         listModelProviders(),
+        getSupportedProviders(),
       ]);
       setChatConfig(chat);
       setEmbeddingConfig(embedding);
       setRerankConfig(rerank);
       setProviders(provs);
+      setSupportedProviders(supported);
     } catch (error) {
       toast.error(getErrorMessage(error, "加载模型配置失败"));
     } finally {
@@ -111,7 +116,7 @@ export function ModelSettingsPage() {
             description="用于对话生成的模型列表"
             config={chatConfig}
             modelType="CHAT"
-            providers={providers}
+            supportedProviders={supportedProviders}
             onSetDefault={handleSetDefault}
             onSetDeepThinking={handleSetDeepThinking}
             onRefresh={loadData}
@@ -124,7 +129,7 @@ export function ModelSettingsPage() {
             description="用于向量嵌入的模型列表"
             config={embeddingConfig}
             modelType="EMBEDDING"
-            providers={providers}
+            supportedProviders={supportedProviders}
             showDimension
             onSetDefault={handleSetDefault}
             onRefresh={loadData}
@@ -137,7 +142,7 @@ export function ModelSettingsPage() {
             description="用于重排序的模型列表"
             config={rerankConfig}
             modelType="RERANK"
-            providers={providers}
+            supportedProviders={supportedProviders}
             onSetDefault={handleSetDefault}
             onRefresh={loadData}
           />
@@ -156,6 +161,7 @@ export function ModelSettingsPage() {
                 <TableHead>名称</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead>API Key</TableHead>
+                <TableHead>端点</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="w-[120px]">操作</TableHead>
               </TableRow>
@@ -164,8 +170,19 @@ export function ModelSettingsPage() {
               {providers.map((provider) => (
                 <TableRow key={provider.id}>
                   <TableCell className="font-medium">{provider.name}</TableCell>
-                  <TableCell className="max-w-[300px] truncate">{provider.url || "-"}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{provider.url || "-"}</TableCell>
                   <TableCell>{provider.apiKey ? "已配置" : "-"}</TableCell>
+                  <TableCell className="max-w-[200px]">
+                    {provider.endpoints && Object.keys(provider.endpoints).length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(provider.endpoints).map(([key, value]) => (
+                          <Badge key={key} variant="secondary" className="text-xs">
+                            {key}: {value}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : "-"}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={provider.enabled ? "default" : "outline"}>
                       {provider.enabled ? "启用" : "禁用"}
@@ -182,7 +199,7 @@ export function ModelSettingsPage() {
               ))}
               {providers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     暂无提供商，点击上方按钮添加
                   </TableCell>
                 </TableRow>
@@ -201,7 +218,7 @@ function ModelConfigCard({
   description,
   config,
   modelType,
-  providers,
+  supportedProviders,
   showDimension = false,
   showDeepThinking = true,
   onSetDefault,
@@ -212,7 +229,7 @@ function ModelConfigCard({
   description: string;
   config: ModelGroupConfig | null;
   modelType: "CHAT" | "EMBEDDING" | "RERANK";
-  providers: ModelProvider[];
+  supportedProviders: SupportedProvider[];
   showDimension?: boolean;
   showDeepThinking?: boolean;
   onSetDefault: (id: string, type: "CHAT" | "EMBEDDING" | "RERANK") => void;
@@ -230,7 +247,7 @@ function ModelConfigCard({
         </div>
         <ModelCandidateDialog
           modelType={modelType}
-          providers={providers}
+          supportedProviders={supportedProviders}
           onRefresh={onRefresh}
         />
       </CardHeader>
@@ -303,7 +320,7 @@ function ModelConfigCard({
                     <ModelCandidateDialog
                       candidate={item}
                       modelType={modelType}
-                      providers={providers}
+                      supportedProviders={supportedProviders}
                       onRefresh={onRefresh}
                     />
                   </div>

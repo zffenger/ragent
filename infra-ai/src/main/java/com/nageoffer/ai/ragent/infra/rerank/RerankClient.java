@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.infra.rerank;
 
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
+import com.nageoffer.ai.ragent.infra.core.LLMClient;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
 
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.List;
  * Rerank客户端接口
  * 用于对检索到的文档片段进行重新排序，以提高检索结果的相关性
  */
-public interface RerankClient {
+public interface RerankClient extends LLMClient {
 
     /**
      * 获取Rerank服务提供商名称

@@ -19,6 +19,7 @@ package com.nageoffer.ai.ragent.settings.controller;
 
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
+import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
 import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;
@@ -33,7 +34,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 系统配置管理控制器
@@ -101,6 +104,20 @@ public class SystemConfigController {
     }
 
     // ==================== 模型提供商 API ====================
+
+    /**
+     * 获取系统支持的模型提供商类型
+     * <p>
+     * 返回系统内置支持的提供商列表，前端创建模型时只能从中选择
+     */
+    @GetMapping("/supported-providers")
+    public Result<List<SupportedProviderVO>> getSupportedProviders() {
+        List<SupportedProviderVO> providers = Arrays.stream(ModelProvider.values())
+                .filter(p -> p != ModelProvider.NOOP)  // 排除 NOOP
+                .map(p -> new SupportedProviderVO(p.getId(), p.getId()))
+                .collect(Collectors.toList());
+        return Results.success(providers);
+    }
 
     /**
      * 获取模型提供商列表
@@ -172,5 +189,22 @@ public class SystemConfigController {
     @lombok.Data
     public static class SetDefaultModelRequest {
         private String modelType;
+    }
+
+    /**
+     * 支持的提供商 VO
+     */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class SupportedProviderVO {
+        /**
+         * 提供商标识
+         */
+        private String id;
+
+        /**
+         * 提供商名称
+         */
+        private String name;
     }
 }

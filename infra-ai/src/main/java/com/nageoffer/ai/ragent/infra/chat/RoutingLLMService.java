@@ -23,6 +23,8 @@ import com.nageoffer.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceNode;
 import com.nageoffer.ai.ragent.infra.enums.ModelCapability;
+import com.nageoffer.ai.ragent.infra.model.DefaultClientResolver;
+import com.nageoffer.ai.ragent.infra.model.ModelClientResolver;
 import com.nageoffer.ai.ragent.infra.model.ModelHealthStore;
 import com.nageoffer.ai.ragent.infra.model.ModelRoutingExecutor;
 import com.nageoffer.ai.ragent.infra.model.ModelSelector;
@@ -57,7 +59,7 @@ public class RoutingLLMService implements LLMService {
     private final ModelSelector selector;
     private final ModelHealthStore healthStore;
     private final ModelRoutingExecutor executor;
-    private final Map<String, ChatClient> clientsByProvider;
+	private final ModelClientResolver<ChatClient> clientResolver;
 
     public RoutingLLMService(
             ModelSelector selector,
@@ -67,8 +69,7 @@ public class RoutingLLMService implements LLMService {
         this.selector = selector;
         this.healthStore = healthStore;
         this.executor = executor;
-        this.clientsByProvider = clients.stream()
-                .collect(Collectors.toMap(ChatClient::provider, Function.identity()));
+		this.clientResolver = new DefaultClientResolver<>(clients);
     }
 
     @Override
@@ -77,7 +78,7 @@ public class RoutingLLMService implements LLMService {
         return executor.executeWithFallback(
                 ModelCapability.CHAT,
                 selector.selectChatCandidates(Boolean.TRUE.equals(request.getThinking())),
-                target -> clientsByProvider.get(target.candidate().getProvider()),
+                this.clientResolver,
                 (client, target) -> client.chat(request, target)
         );
     }
@@ -90,7 +91,7 @@ public class RoutingLLMService implements LLMService {
         return executor.executeWithFallback(
                 ModelCapability.CHAT,
                 List.of(resolveTarget(modelId, Boolean.TRUE.equals(request.getThinking()))),
-                target -> clientsByProvider.get(target.candidate().getProvider()),
+                this.clientResolver,
                 (client, target) -> client.chat(request, target)
         );
     }
@@ -154,7 +155,7 @@ public class RoutingLLMService implements LLMService {
     }
 
     private ChatClient resolveClient(ModelTarget target, String label) {
-        ChatClient client = clientsByProvider.get(target.candidate().getProvider());
+        ChatClient client = clientResolver.resolve(target);
         if (client == null) {
             log.warn("{} 提供商客户端缺失: provider：{}，modelId：{}",
                     label, target.candidate().getProvider(), target.id());
