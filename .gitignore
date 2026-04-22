@@ -45,6 +45,3 @@ dist/
 /.idea/
 /.idea/*
 /.idea/**
-/.mvn/
-/.mvn/*
-/.mvn/**

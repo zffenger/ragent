@@ -16,19 +16,12 @@ export DB_HOST=127.0.0.1
 export DB_PORT=5432
 export DB_NAME=ragent
 export DB_USERNAME=postgres
-export DB_PASSWORD=your_db_password
+export DB_PASSWORD=postgres
 
 # ============ Redis 配置 ============
 export REDIS_HOST=127.0.0.1
 export REDIS_PORT=6379
-export REDIS_PASSWORD=your_redis_password
-
-# ============ AI 服务 API Key ============
-export BAILIAN_API_KEY=your_bailian_api_key
-export SILICONFLOW_API_KEY=your_siliconflow_api_key
-
-# ============ Ollama 配置 ============
-export OLLAMA_URL=http://localhost:11434
+export REDIS_PASSWORD=123456
 
 # ============ 存储配置 ============
 export STORAGE_TYPE=local
@@ -45,6 +38,3 @@ export FEISHU_APP_SECRET=
 
 # ============ MCP 服务器 ============
 export MCP_SERVER_URL=http://localhost:9099
-
-# ============ 其他配置 ============
-export DEFAULT_CHAT_MODEL=qwen3-max
