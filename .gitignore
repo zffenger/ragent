@@ -45,3 +45,4 @@ dist/
 /.idea/
 /.idea/*
 /.idea/**
+/resources/docker/nginx/logs/error.log
