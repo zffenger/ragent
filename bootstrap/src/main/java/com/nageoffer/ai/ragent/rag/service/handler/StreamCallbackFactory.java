@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.rag.service.handler;
 
-import com.nageoffer.ai.ragent.infra.chat.StreamCallback;
-import com.nageoffer.ai.ragent.infra.config.AIStreamProperties;
+import com.nageoffer.ai.ragent.infra.ai.domain.service.StreamCallback;
+import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.core.memory.ConversationMemoryService;
 import com.nageoffer.ai.ragent.rag.service.ConversationGroupService;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +47,8 @@ public class StreamCallbackFactory {
      * @return StreamCallback 实例
      */
     public StreamCallback createChatEventHandler(SseEmitter emitter,
-                                                 String conversationId,
-                                                 String taskId) {
+												 String conversationId,
+												 String taskId) {
         StreamChatHandlerParams params = StreamChatHandlerParams.builder()
                 .emitter(emitter)
                 .conversationId(conversationId)

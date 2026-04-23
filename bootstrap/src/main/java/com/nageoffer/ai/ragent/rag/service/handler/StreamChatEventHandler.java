@@ -18,6 +18,8 @@
 package com.nageoffer.ai.ragent.rag.service.handler;
 
 import cn.hutool.core.util.StrUtil;
+import com.nageoffer.ai.ragent.infra.ai.domain.service.StreamCallback;
+import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.dao.entity.ConversationDO;
 import com.nageoffer.ai.ragent.rag.dto.CompletionPayload;
 import com.nageoffer.ai.ragent.rag.dto.MessageDelta;
@@ -26,8 +28,6 @@ import com.nageoffer.ai.ragent.rag.enums.SSEEventType;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.web.SseEmitterSender;
-import com.nageoffer.ai.ragent.infra.chat.StreamCallback;
-import com.nageoffer.ai.ragent.infra.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.core.memory.ConversationMemoryService;
 import lombok.extern.slf4j.Slf4j;
 import com.nageoffer.ai.ragent.rag.service.ConversationGroupService;

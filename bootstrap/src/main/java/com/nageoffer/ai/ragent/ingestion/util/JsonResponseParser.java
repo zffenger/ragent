@@ -20,12 +20,10 @@ package com.nageoffer.ai.ragent.ingestion.util;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONObject;
-import com.nageoffer.ai.ragent.infra.util.LLMResponseCleaner;
+import com.nageoffer.ai.ragent.infra.ai.infra.util.LLMResponseCleaner;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 

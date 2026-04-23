@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nageoffer.ai.ragent.core.chunk.VectorChunk;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
 import com.nageoffer.ai.ragent.ingestion.domain.context.IngestionContext;
 import com.nageoffer.ai.ragent.ingestion.domain.enums.ChunkEnrichType;
 import com.nageoffer.ai.ragent.ingestion.domain.enums.IngestionNodeType;
@@ -31,7 +32,6 @@ import com.nageoffer.ai.ragent.ingestion.domain.settings.EnricherSettings;
 import com.nageoffer.ai.ragent.ingestion.prompt.EnricherPromptManager;
 import com.nageoffer.ai.ragent.ingestion.util.JsonResponseParser;
 import com.nageoffer.ai.ragent.ingestion.util.PromptTemplateRenderer;
-import com.nageoffer.ai.ragent.infra.chat.LLMService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 

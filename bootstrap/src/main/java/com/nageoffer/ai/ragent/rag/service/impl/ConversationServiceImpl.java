@@ -19,6 +19,7 @@ package com.nageoffer.ai.ragent.rag.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.controller.request.ConversationUpdateRequest;
 import com.nageoffer.ai.ragent.rag.controller.vo.ConversationVO;
@@ -32,7 +33,6 @@ import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
-import com.nageoffer.ai.ragent.infra.chat.LLMService;
 import com.nageoffer.ai.ragent.rag.core.prompt.PromptTemplateLoader;
 import com.nageoffer.ai.ragent.rag.service.ConversationService;
 import com.nageoffer.ai.ragent.rag.service.bo.ConversationCreateBO;

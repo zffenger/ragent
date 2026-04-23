@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.settings.controller;
 
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
-import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
+import com.nageoffer.ai.ragent.infra.ai.domain.vo.ModelProvider;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
 import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;

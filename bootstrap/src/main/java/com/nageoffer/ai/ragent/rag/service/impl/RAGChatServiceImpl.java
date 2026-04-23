@@ -23,7 +23,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceContext;
-import com.nageoffer.ai.ragent.infra.chat.StreamCallback;
+import com.nageoffer.ai.ragent.infra.ai.domain.service.StreamCallback;
 import com.nageoffer.ai.ragent.rag.aop.ChatRateLimit;
 import com.nageoffer.ai.ragent.rag.service.RAGChatService;
 import com.nageoffer.ai.ragent.rag.service.handler.StreamCallbackFactory;
