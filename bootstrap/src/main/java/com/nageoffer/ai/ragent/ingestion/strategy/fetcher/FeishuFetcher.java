@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.ingestion.strategy.fetcher;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.ingestion.domain.context.DocumentSource;
 import com.nageoffer.ai.ragent.ingestion.domain.enums.SourceType;
@@ -130,24 +130,21 @@ public class FeishuFetcher implements DocumentFetcher {
 
     private String requestTenantAccessToken(String appId, String appSecret) {
         try {
-            JsonObject payload = new JsonObject();
-            payload.addProperty("app_id", appId);
-            payload.addProperty("app_secret", appSecret);
+            JSONObject payload = new JSONObject();
+            payload.put("app_id", appId);
+            payload.put("app_secret", appSecret);
 
             Request request = new Request.Builder()
                     .url(TOKEN_URL)
-                    .post(RequestBody.create(payload.toString(), MediaType.parse("application/json")))
+                    .post(RequestBody.create(payload.toJSONString(), MediaType.parse("application/json")))
                     .build();
             try (Response response = okHttpClient.newCall(request).execute()) {
                 if (!response.isSuccessful() || response.body() == null) {
                     throw new ServiceException("飞书令牌请求失败: " + response.code());
                 }
                 String raw = response.body().string();
-                JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
-                if (json.has("tenant_access_token")) {
-                    return json.get("tenant_access_token").getAsString();
-                }
-                return null;
+                JSONObject json = JSON.parseObject(raw);
+                return json.getString("tenant_access_token");
             }
         } catch (Exception e) {
             throw new ServiceException("飞书令牌请求失败: " + e.getMessage());
@@ -156,11 +153,11 @@ public class FeishuFetcher implements DocumentFetcher {
 
     private String extractDocxContent(byte[] bytes) {
         try {
-            JsonObject root = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
-            if (root.has("data")) {
-                JsonObject data = root.getAsJsonObject("data");
-                if (data.has("content")) {
-                    return data.get("content").getAsString();
+            JSONObject root = JSON.parseObject(new String(bytes, StandardCharsets.UTF_8));
+            if (root != null && root.containsKey("data")) {
+                JSONObject data = root.getJSONObject("data");
+                if (data != null) {
+                    return data.getString("content");
                 }
             }
             return null;

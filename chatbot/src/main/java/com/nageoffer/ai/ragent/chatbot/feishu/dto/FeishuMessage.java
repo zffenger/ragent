@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.chatbot.feishu.dto;
 
-import com.google.gson.annotations.SerializedName;
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
 
 /**
@@ -32,7 +32,7 @@ public class FeishuMessage {
      * 消息类型
      * 如：text, post, image, file 等
      */
-    @SerializedName("message_type")
+    @JSONField(name = "message_type")
     private String msgType;
 
     /**
@@ -44,19 +44,19 @@ public class FeishuMessage {
     /**
      * 消息 ID
      */
-    @SerializedName("message_id")
+    @JSONField(name = "message_id")
     private String messageId;
 
     /**
      * 根消息 ID（回复消息时）
      */
-    @SerializedName("root_id")
+    @JSONField(name = "root_id")
     private String rootId;
 
     /**
      * 父消息 ID（回复消息时）
      */
-    @SerializedName("parent_id")
+    @JSONField(name = "parent_id")
     private String parentId;
 
     /**
@@ -64,25 +64,25 @@ public class FeishuMessage {
      * p2p: 单聊
      * group: 群聊
      */
-    @SerializedName("chat_type")
+    @JSONField(name = "chat_type")
     private String chatType;
 
     /**
      * 聊天 ID
      */
-    @SerializedName("chat_id")
+    @JSONField(name = "chat_id")
     private String chatId;
 
     /**
      * 消息创建时间戳
      */
-    @SerializedName("create_time")
+    @JSONField(name = "create_time")
     private Long createTime;
 
     /**
      * 消息更新时间戳
      */
-    @SerializedName("update_time")
+    @JSONField(name = "update_time")
     private Long updateTime;
 
     /**
@@ -129,20 +129,20 @@ public class FeishuMessage {
         /**
          * 发送者 ID
          */
-        @SerializedName("sender_id")
+        @JSONField(name = "sender_id")
         private String senderId;
 
         /**
          * 发送者类型
          * open_id, user_id, union_id, app_id 等
          */
-        @SerializedName("sender_type")
+        @JSONField(name = "sender_type")
         private String senderType;
 
         /**
          * 租户 Key
          */
-        @SerializedName("tenant_key")
+        @JSONField(name = "tenant_key")
         private String tenantKey;
     }
 }

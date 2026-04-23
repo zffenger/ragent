@@ -19,8 +19,8 @@ package com.nageoffer.ai.ragent.user.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.user.controller.vo.FeishuUserVO;
 import com.nageoffer.ai.ragent.user.controller.vo.LoginVO;
@@ -69,10 +69,10 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
     @Value("${feishu.oauth.enabled:false}")
     private Boolean enabled;
 
-    private static final Gson GSON = new Gson();
     private static final String TOKEN_CACHE_KEY = "feishu:access_token";
     private static final String AUTHORIZE_URL = "https://open.feishu.cn/open-apis/authen/v1/authorize";
-    private static final String ACCESS_TOKEN_URL = "https://open.feishu.cn/open-apis/authen/v1/accessible_token";
+    // OAuth 2.0 模式
+    private static final String ACCESS_TOKEN_URL = "https://open.feishu.cn/open-apis/authen/v2/oauth/token";
     private static final String USER_INFO_URL = "https://open.feishu.cn/open-apis/authen/v1/user_info";
 
     @Override
@@ -84,28 +84,28 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
     }
 
     @Override
-    public FeishuUserVO handleOAuthCallback(String code) {
+    public FeishuUserVO handleOAuthCallback(String code, String redirectUri) {
         checkEnabled();
-        JsonObject tokenResult = getAccessToken(code);
-        String accessToken = tokenResult.get("access_token").getAsString();
+        JSONObject tokenResult = getAccessToken(code, redirectUri);
+        String accessToken = tokenResult.getString("access_token");
 
         // 获取用户信息
-        JsonObject userInfo = getUserInfo(accessToken);
+        JSONObject userInfo = getUserInfo(accessToken);
         return FeishuUserVO.builder()
-                .openId(userInfo.get("open_id").getAsString())
-                .userId(userInfo.has("user_id") ? userInfo.get("user_id").getAsString() : null)
-                .name(userInfo.has("name") ? userInfo.get("name").getAsString() : null)
-                .avatar(userInfo.has("avatar_url") ? userInfo.get("avatar_url").getAsString() : null)
+                .openId(userInfo.getString("open_id"))
+                .userId(userInfo.getString("user_id"))
+                .name(userInfo.getString("name"))
+                .avatar(userInfo.getString("avatar_url"))
                 .build();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void bindFeishuAccount(String code) {
+    public void bindFeishuAccount(String code, String redirectUri) {
         checkEnabled();
         String currentUserId = StpUtil.getLoginIdAsString();
 
-        FeishuUserVO feishuUser = handleOAuthCallback(code);
+        FeishuUserVO feishuUser = handleOAuthCallback(code, redirectUri);
 
         // 检查该飞书账号是否已被其他用户绑定
         FeishuBindingDO existingBinding = feishuBindingMapper.selectOne(
@@ -203,10 +203,10 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public LoginVO loginWithFeishu(String code) {
+    public LoginVO loginWithFeishu(String code, String redirectUri) {
         checkEnabled();
 
-        FeishuUserVO feishuUser = handleOAuthCallback(code);
+        FeishuUserVO feishuUser = handleOAuthCallback(code, redirectUri);
 
         // 查找绑定了该飞书账号的用户
         FeishuBindingDO binding = feishuBindingMapper.selectOne(
@@ -255,32 +255,39 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
     }
 
     /**
-     * 获取飞书 Access Token
+     * 获取飞书 Access Token（OAuth 2.0 模式）
      */
-    private JsonObject getAccessToken(String code) {
-        // 先获取 tenant_access_token
-        String tenantAccessToken = getTenantAccessToken();
+    private JSONObject getAccessToken(String code, String redirectUri) {
+        JSONObject bodyJson = new JSONObject();
+        bodyJson.put("grant_type", "authorization_code");
+        bodyJson.put("client_id", appId);
+        bodyJson.put("client_secret", appSecret);
+        bodyJson.put("code", code);
+        bodyJson.put("redirect_uri", redirectUri);
 
-        RequestBody body = new FormBody.Builder()
-                .add("grant_type", "authorization_code")
-                .add("code", code)
-                .build();
+        RequestBody body = RequestBody.create(
+                bodyJson.toJSONString(),
+                MediaType.parse("application/json")
+        );
 
         Request request = new Request.Builder()
                 .url(ACCESS_TOKEN_URL)
-                .header("Authorization", "Bearer " + tenantAccessToken)
                 .post(body)
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
+            String respBody = response.body() != null ? response.body().string() : "";
+            log.info("飞书 OAuth Access Token 响应: {}", respBody);
+
             if (!response.isSuccessful()) {
+                log.error("获取飞书 Access Token 失败, code: {}, body: {}", response.code(), respBody);
                 throw new ServiceException("获取飞书 Access Token 失败: " + response.code());
             }
-            JsonObject result = GSON.fromJson(response.body().string(), JsonObject.class);
-            if (result.get("code").getAsInt() != 0) {
-                throw new ServiceException("飞书 API 错误: " + result.get("msg").getAsString());
+            JSONObject result = JSON.parseObject(respBody);
+            if (result.getIntValue("code") != 0) {
+                throw new ServiceException("飞书 API 错误: " + result.getString("msg"));
             }
-            return result.getAsJsonObject("data");
+            return result;
         } catch (Exception e) {
             log.error("获取飞书 Access Token 失败", e);
             throw new ServiceException("获取飞书 Access Token 失败: " + e.getMessage());
@@ -290,7 +297,7 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
     /**
      * 获取飞书用户信息
      */
-    private JsonObject getUserInfo(String accessToken) {
+    private JSONObject getUserInfo(String accessToken) {
         Request request = new Request.Builder()
                 .url(USER_INFO_URL)
                 .header("Authorization", "Bearer " + accessToken)
@@ -301,11 +308,11 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
             if (!response.isSuccessful()) {
                 throw new ServiceException("获取飞书用户信息失败: " + response.code());
             }
-            JsonObject result = GSON.fromJson(response.body().string(), JsonObject.class);
-            if (result.get("code").getAsInt() != 0) {
-                throw new ServiceException("飞书 API 错误: " + result.get("msg").getAsString());
+            JSONObject result = JSON.parseObject(response.body().string());
+            if (result.getIntValue("code") != 0) {
+                throw new ServiceException("飞书 API 错误: " + result.getString("msg"));
             }
-            return result.getAsJsonObject("data");
+            return result.getJSONObject("data");
         } catch (Exception e) {
             log.error("获取飞书用户信息失败", e);
             throw new ServiceException("获取飞书用户信息失败: " + e.getMessage());
@@ -322,12 +329,12 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
             return cached;
         }
 
-        JsonObject bodyJson = new JsonObject();
-        bodyJson.addProperty("app_id", appId);
-        bodyJson.addProperty("app_secret", appSecret);
+        JSONObject bodyJson = new JSONObject();
+        bodyJson.put("app_id", appId);
+        bodyJson.put("app_secret", appSecret);
 
         RequestBody body = RequestBody.create(
-                bodyJson.toString(),
+                bodyJson.toJSONString(),
                 MediaType.parse("application/json")
         );
 
@@ -340,13 +347,13 @@ public class FeishuOAuthServiceImpl implements FeishuOAuthService {
             if (!response.isSuccessful()) {
                 throw new ServiceException("获取飞书 Tenant Access Token 失败: " + response.code());
             }
-            JsonObject result = GSON.fromJson(response.body().string(), JsonObject.class);
-            if (result.get("code").getAsInt() != 0) {
-                throw new ServiceException("飞书 API 错误: " + result.get("msg").getAsString());
+            JSONObject result = JSON.parseObject(response.body().string());
+            if (result.getIntValue("code") != 0) {
+                throw new ServiceException("飞书 API 错误: " + result.getString("msg"));
             }
 
-            String token = result.get("tenant_access_token").getAsString();
-            int expire = result.get("expire").getAsInt();
+            String token = result.getString("tenant_access_token");
+            int expire = result.getIntValue("expire");
 
             // 缓存 token（提前 5 分钟过期）
             redisTemplate.opsForValue().set(TOKEN_CACHE_KEY, token, expire - 300, TimeUnit.SECONDS);

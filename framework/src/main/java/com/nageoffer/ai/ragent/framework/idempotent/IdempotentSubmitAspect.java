@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.framework.idempotent;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
-import com.google.gson.Gson;
+import com.alibaba.fastjson2.JSON;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,6 @@ import java.util.Objects;
 public final class IdempotentSubmitAspect {
 
     private final RedissonClient redissonClient;
-    private final Gson gson = new Gson();
 
     /**
      * 增强方法标记 {@link IdempotentSubmit} 注解逻辑
@@ -99,7 +98,7 @@ public final class IdempotentSubmitAspect {
      * @return joinPoint md5
      */
     private String calcArgsMD5(ProceedingJoinPoint joinPoint) {
-        return DigestUtil.md5Hex(gson.toJson(joinPoint.getArgs()).getBytes(StandardCharsets.UTF_8));
+        return DigestUtil.md5Hex(JSON.toJSONString(joinPoint.getArgs()).getBytes(StandardCharsets.UTF_8));
     }
 
     private String buildLockKey(ProceedingJoinPoint joinPoint, IdempotentSubmit idempotentSubmit) {

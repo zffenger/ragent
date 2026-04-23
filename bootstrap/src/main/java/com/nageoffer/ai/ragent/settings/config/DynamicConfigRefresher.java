@@ -18,7 +18,8 @@
 package com.nageoffer.ai.ragent.settings.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.google.gson.Gson;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
 import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;
 import com.nageoffer.ai.ragent.settings.dao.entity.ModelProviderDO;
@@ -50,8 +51,6 @@ public class DynamicConfigRefresher {
     private final ModelProviderMapper modelProviderMapper;
     private final ModelCandidateMapper modelCandidateMapper;
     private final AIModelProperties aiModelProperties;
-
-    private static final Gson GSON = new Gson();
 
 	/**
 	 * -- GETTER --
@@ -102,7 +101,7 @@ public class DynamicConfigRefresher {
         for (ModelProviderDO provider : providers) {
             Map<String, String> endpoints = new HashMap<>();
             if (provider.getEndpoints() != null && !provider.getEndpoints().isBlank()) {
-                endpoints = GSON.fromJson(provider.getEndpoints(), Map.class);
+                endpoints = JSON.parseObject(provider.getEndpoints(), new TypeReference<Map<String, String>>() {});
             }
             AIModelProperties.ProviderConfig providerConfig = new AIModelProperties.ProviderConfig();
             providerConfig.setUrl(provider.getUrl());

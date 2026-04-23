@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.rag.Intent;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +40,6 @@ public class SimpleIntentClassifierTests {
 
     private final LLMService llmService;
 
-    private final Gson gson = new Gson();
-
     @Test
     public void intentClassifier() {
         String question = "Mac电脑打印机怎么连？";
@@ -60,18 +58,18 @@ public class SimpleIntentClassifierTests {
                 你是一个企业内部知识库 RAG 系统中的【意图识别模块】。
                 你的任务是：根据用户提出的问题，判断该问题属于哪一类业务意图，
                 并给出推荐的集合名称和元数据过滤条件，以便向量数据库检索。
-                
+
                 请特别注意：
                 1. 需要支持【模糊问法和同义词】，例如：
-                   - “上班时间”“几点上班”“每天要工作多久” → 归类为 ATTENDANCE（考勤/工作时间）
-                   - “能不能多休几天”“休假怎么安排” → ATTENDANCE
-                   - “发工资时间”“年终奖怎么算”“涨工资流程” → COMPENSATION
-                   - “面试流程是怎样的”“校招社招流程”“投递简历后会怎样” → RECRUITMENT
-                   - “VPN 连接”“企业邮箱”“打印机连不上网” → IT_SUPPORT
-                   - “员工手册里关于xxx的规定”“违纪怎么处理” → POLICY
+                   - "上班时间""几点上班""每天要工作多久" → 归类为 ATTENDANCE（考勤/工作时间）
+                   - "能不能多休几天""休假怎么安排" → ATTENDANCE
+                   - "发工资时间""年终奖怎么算""涨工资流程" → COMPENSATION
+                   - "面试流程是怎样的""校招社招流程""投递简历后会怎样" → RECRUITMENT
+                   - "VPN 连接""企业邮箱""打印机连不上网" → IT_SUPPORT
+                   - "员工手册里关于xxx的规定""违纪怎么处理" → POLICY
                 2. 用户问题可能同时涉及多个内容时，选择【对用户当前核心问题最重要】的那个意图作为主意图。
                 3. 如果无法明显归类，使用 GENERAL。
-                
+
                 请从下面这些意图中选择一个作为主意图（intent）：
                 - RECRUITMENT: 招聘、校招、社招、面试流程等
                 - COMPENSATION: 薪资、年终奖、福利、调薪、绩效等
@@ -79,7 +77,7 @@ public class SimpleIntentClassifierTests {
                 - POLICY: 一般公司制度、规章、行为规范等
                 - IT_SUPPORT: VPN、邮箱、打印机、网络、账号密码等 IT 使用问题
                 - GENERAL: 无法归类或属于以上多种的综合问题
-                
+
                 同时，你需要给出：
                 - 对应的推荐向量集合（collectionName），例如：
                   - 大部分人事/制度类问题：rag_hr_collection
@@ -95,7 +93,7 @@ public class SimpleIntentClassifierTests {
                    - filterExpr: 字符串或 null，元数据过滤条件，如 "biz_type in [\\"ATTENDANCE\\"]"
                    - confidence: 0 到 1 之间的小数，表示你对该分类的信心度
                    - reason: 字符串，简要说明你这样分类的理由
-                
+
                 示例输出：
                 {
                   "intent": "ATTENDANCE",
@@ -104,9 +102,9 @@ public class SimpleIntentClassifierTests {
                   "confidence": 0.92,
                   "reason": "问题询问工作时间和加班制度，属于考勤与工作时间相关"
                 }
-                
+
                 现在开始，请根据下方【用户问题】进行判断，并严格按上述 JSON 格式输出。
-                
+
                 【用户问题】
                 %s
                 """.formatted(question);
@@ -169,11 +167,9 @@ public class SimpleIntentClassifierTests {
         // 期望返回：
         // {"score":0.95,"reason":"问题是 Mac 打印机连接，属于 IT 支持场景"}
         try {
-            JsonObject obj = gson.fromJson(resp, JsonObject.class);
-            double score = obj.get("score").getAsDouble();
-            String reason = obj.has("reason") && !obj.get("reason").isJsonNull()
-                    ? obj.get("reason").getAsString()
-                    : "";
+            JSONObject obj = JSON.parseObject(resp);
+            double score = obj != null ? obj.getDoubleValue("score") : 0.0;
+            String reason = obj != null && obj.containsKey("reason") ? obj.getString("reason") : "";
             return new CategoryScore(category, score, reason, resp);
         } catch (Exception e) {
             log.warn("parse category score failed, category={}, resp={}", category.code(), resp, e);
@@ -189,36 +185,36 @@ public class SimpleIntentClassifierTests {
 
         return """
                 你是一个企业内部知识库 RAG 系统中的【意图评分模块】。
-                现在你只负责判断：当前这个“用户问题”，和下面这个【单一分类】是否属于同一类问题。
-                
+                现在你只负责判断：当前这个"用户问题"，和下面这个【单一分类】是否属于同一类问题。
+
                 请根据分类的说明和典型问题示例，判断该用户问题与该分类的相关度，并打一个 0~1 的分数。
-                
+
                 评分说明：
                 - 0.0：完全无关
                 - 0.3：略有关系，但大概率不是这个分类
                 - 0.6：有一定关系，可以考虑作为候选
                 - 0.8~1.0：高度相关，几乎可以认为就是这个分类的问题
-                
+
                 请注意：
-                - 需要支持模糊问法和同义表达（例如“上班时间”“几点打卡”“每天工作多久”，都归入考勤/工作时间类）。
+                - 需要支持模糊问法和同义表达（例如"上班时间""几点打卡""每天工作多久"，都归入考勤/工作时间类）。
                 - 不需要和其他分类比较，只评估「当前分类 vs 当前问题」这一对的相关度。
-                
+
                 【当前分类】
                 编码：%s
                 说明：%s
-                
+
                 【该分类的典型问题示例（仅示例，并不完整）】
                 %s
-                
+
                 【用户问题】
                 %s
-                
+
                 【输出格式要求】：
                 1. 只输出一个 JSON对象，不要包含任何多余文字。
                 2. 必须包含字段：
                    - score: 0~1 的小数，例如 0.85
                    - reason: 简要中文说明你打这个分的原因
-                
+
                 示例输出：
                 {
                   "score": 0.93,

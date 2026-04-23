@@ -59,7 +59,7 @@ public class FeishuOAuthController {
      */
     @PostMapping("/callback")
     public Result<LoginVO> callback(@RequestBody FeishuOAuthCallbackRequest request) {
-        return Results.success(feishuOAuthService.loginWithFeishu(request.getCode()));
+        return Results.success(feishuOAuthService.loginWithFeishu(request.getCode(), request.getRedirectUri()));
     }
 
     /**
@@ -67,7 +67,7 @@ public class FeishuOAuthController {
      */
     @PostMapping("/bind")
     public Result<Void> bind(@RequestBody FeishuOAuthCallbackRequest request) {
-        feishuOAuthService.bindFeishuAccount(request.getCode());
+        feishuOAuthService.bindFeishuAccount(request.getCode(), request.getRedirectUri());
         return Results.success();
     }
 
@@ -95,5 +95,6 @@ public class FeishuOAuthController {
     public static class FeishuOAuthCallbackRequest {
         private String code;
         private String state;
+        private String redirectUri;
     }
 }

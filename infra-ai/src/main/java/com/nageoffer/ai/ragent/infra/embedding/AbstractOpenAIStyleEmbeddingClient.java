@@ -18,9 +18,9 @@
 package com.nageoffer.ai.ragent.infra.embedding;
 
 import cn.hutool.core.collection.CollUtil;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
 import com.nageoffer.ai.ragent.infra.enums.ModelCapability;
 import com.nageoffer.ai.ragent.infra.http.HttpMediaTypes;
@@ -66,8 +66,8 @@ public abstract class AbstractOpenAIStyleEmbeddingClient implements EmbeddingCli
      * 子类可覆写此方法添加提供商特有的请求体字段
      * 默认实现：添加 encoding_format=float
      */
-    protected void customizeRequestBody(JsonObject body, ModelTarget target) {
-        body.addProperty("encoding_format", "float");
+    protected void customizeRequestBody(JSONObject body, ModelTarget target) {
+        body.put("encoding_format", "float");
     }
 
     /**
@@ -120,25 +120,23 @@ public abstract class AbstractOpenAIStyleEmbeddingClient implements EmbeddingCli
 
         String url = ModelUrlResolver.resolveUrl(provider, target.candidate(), ModelCapability.EMBEDDING);
 
-        JsonObject body = new JsonObject();
-        body.addProperty("model", HttpResponseHelper.requireModel(target, provider()));
-        JsonArray inputArray = new JsonArray();
-        for (String text : texts) {
-            inputArray.add(text);
-        }
-        body.add("input", inputArray);
-        body.addProperty("dimensions", target.candidate().getDimension());
+        JSONObject body = new JSONObject();
+        body.put("model", HttpResponseHelper.requireModel(target, provider()));
+        JSONArray inputArray = new JSONArray();
+        inputArray.addAll(texts);
+        body.put("input", inputArray);
+        body.put("dimensions", target.candidate().getDimension());
         customizeRequestBody(body, target);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(body.toString(), HttpMediaTypes.JSON));
+                .post(RequestBody.create(body.toJSONString(), HttpMediaTypes.JSON));
         if (requiresApiKey()) {
             requestBuilder.addHeader("Authorization", "Bearer " + provider.getApiKey());
         }
         Request request = requestBuilder.build();
 
-        JsonObject json;
+        JSONObject json;
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 String errBody = HttpResponseHelper.readBody(response.body());
@@ -156,16 +154,16 @@ public abstract class AbstractOpenAIStyleEmbeddingClient implements EmbeddingCli
                     ModelClientErrorType.NETWORK_ERROR, null, e);
         }
 
-        if (json.has("error")) {
-            JsonObject err = json.getAsJsonObject("error");
-            String code = err.has("code") ? err.get("code").getAsString() : "unknown";
-            String msg = err.has("message") ? err.get("message").getAsString() : "unknown";
+        if (json.containsKey("error")) {
+            JSONObject err = json.getJSONObject("error");
+            String code = err != null && err.containsKey("code") ? err.getString("code") : "unknown";
+            String msg = err != null && err.containsKey("message") ? err.getString("message") : "unknown";
             throw new ModelClientException(
                     provider() + " embedding 错误: " + code + " - " + msg,
                     ModelClientErrorType.PROVIDER_ERROR, null);
         }
 
-        JsonArray data = json.getAsJsonArray("data");
+        JSONArray data = json.getJSONArray("data");
         if (data == null || data.isEmpty()) {
             throw new ModelClientException(
                     provider() + " embedding 响应中缺少 data 数组",
@@ -173,17 +171,17 @@ public abstract class AbstractOpenAIStyleEmbeddingClient implements EmbeddingCli
         }
 
         List<List<Float>> results = new ArrayList<>(data.size());
-        for (JsonElement el : data) {
-            JsonObject obj = el.getAsJsonObject();
-            JsonArray emb = obj.getAsJsonArray("embedding");
+        for (int i = 0; i < data.size(); i++) {
+            JSONObject obj = data.getJSONObject(i);
+            JSONArray emb = obj.getJSONArray("embedding");
             if (emb == null || emb.isEmpty()) {
                 throw new ModelClientException(
                         provider() + " embedding 响应中缺少 embedding 字段",
                         ModelClientErrorType.INVALID_RESPONSE, null);
             }
             List<Float> vector = new ArrayList<>(emb.size());
-            for (JsonElement v : emb) {
-                vector.add(v.getAsFloat());
+            for (int j = 0; j < emb.size(); j++) {
+                vector.add(emb.getFloatValue(j));
             }
             results.add(vector);
         }

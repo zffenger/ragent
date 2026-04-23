@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.chatbot.feishu;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.chatbot.common.BotPlatform;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
@@ -168,9 +168,9 @@ public class FeishuMessageHandler {
         try {
             // 尝试解析 JSON
             if (content.startsWith("{")) {
-                JsonObject json = JsonParser.parseString(content).getAsJsonObject();
-                if (json.has("text")) {
-                    return json.get("text").getAsString();
+                JSONObject json = JSON.parseObject(content);
+                if (json != null && json.containsKey("text")) {
+                    return json.getString("text");
                 }
             }
             // 非 JSON 格式，直接返回

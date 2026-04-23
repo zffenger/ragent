@@ -19,8 +19,8 @@ package com.nageoffer.ai.ragent.settings.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.settings.config.DynamicConfigRefresher;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
@@ -53,8 +53,6 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private final ModelCandidateMapper modelCandidateMapper;
     private final StringRedisTemplate redisTemplate;
     private final DynamicConfigRefresher dynamicConfigRefresher;
-
-    private static final Gson GSON = new Gson();
 
     // 配置键常量
     private static final String CONFIG_KEY_CHAT = "ai.chat";
@@ -163,7 +161,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                 .map(p -> {
                     Map<String, String> endpoints = null;
                     if (p.getEndpoints() != null && !p.getEndpoints().isBlank()) {
-                        endpoints = GSON.fromJson(p.getEndpoints(), new TypeToken<Map<String, String>>() {}.getType());
+                        endpoints = JSON.parseObject(p.getEndpoints(), new TypeReference<Map<String, String>>() {});
                     }
                     return ModelProviderVO.builder()
                             .id(p.getId())
@@ -192,7 +190,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                 .name(vo.getName())
                 .url(vo.getUrl())
                 .apiKey(vo.getApiKey())
-                .endpoints(vo.getEndpoints() != null ? GSON.toJson(vo.getEndpoints()) : null)
+                .endpoints(vo.getEndpoints() != null ? JSON.toJSONString(vo.getEndpoints()) : null)
                 .enabled(vo.getEnabled() != null && vo.getEnabled() ? 1 : 0)
                 .build();
         modelProviderMapper.insert(entity);
@@ -219,7 +217,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
 
         entity.setUrl(vo.getUrl());
         entity.setApiKey(vo.getApiKey());
-        entity.setEndpoints(vo.getEndpoints() != null ? GSON.toJson(vo.getEndpoints()) : null);
+        entity.setEndpoints(vo.getEndpoints() != null ? JSON.toJSONString(vo.getEndpoints()) : null);
         entity.setEnabled(vo.getEnabled() != null && vo.getEnabled() ? 1 : 0);
         modelProviderMapper.updateById(entity);
 

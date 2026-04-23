@@ -17,9 +17,7 @@
 
 package com.nageoffer.ai.ragent.chatbot.feishu;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
 import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.chatbot.feishu.dto.FeishuEvent;
 import com.nageoffer.ai.ragent.chatbot.feishu.dto.FeishuResponse;
@@ -56,8 +54,6 @@ public class FeishuWebhookController {
     @Qualifier("chatbotMessageExecutor")
     private final Executor messageExecutor;
 
-    private static final Gson GSON = new Gson();
-
     /**
      * 处理飞书 Webhook 请求
      *
@@ -88,7 +84,7 @@ public class FeishuWebhookController {
         // 2. 解析事件
         FeishuEvent event;
         try {
-            event = GSON.fromJson(body, FeishuEvent.class);
+            event = JSON.parseObject(body, FeishuEvent.class);
         } catch (Exception e) {
             log.error("解析飞书事件失败: {}", e.getMessage());
             return FeishuResponse.error("解析事件失败");

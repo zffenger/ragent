@@ -17,6 +17,7 @@
 
 package com.nageoffer.ai.ragent.mcp.protocol;
 
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -91,7 +92,7 @@ public class MCPToolSchema {
         /**
          * 枚举候选值，对外序列化字段名为 enum
          */
-        @com.google.gson.annotations.SerializedName("enum")
+        @JSONField(name = "enum")
         private List<String> enumValues;
     }
 }

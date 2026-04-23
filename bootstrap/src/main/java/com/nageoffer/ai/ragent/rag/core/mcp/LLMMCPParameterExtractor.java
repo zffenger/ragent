@@ -19,11 +19,10 @@ package com.nageoffer.ai.ragent.rag.core.mcp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
@@ -52,7 +51,6 @@ public class LLMMCPParameterExtractor implements MCPParameterExtractor {
 
     private final LLMService llmService;
     private final PromptTemplateLoader promptTemplateLoader;
-    private final Gson gson = new Gson();
 
     @Override
     public Map<String, Object> extractParameters(String userQuestion, MCPTool tool) {
@@ -97,7 +95,7 @@ public class LLMMCPParameterExtractor implements MCPParameterExtractor {
                     tool.getToolId(), StrUtil.isNotBlank(customPromptTemplate), extracted);
 
             return extracted;
-        } catch (JsonSyntaxException e) {
+        } catch (JSONException e) {
             log.warn("MCP 参数提取-JSON解析失败, toolId: {}, 响应: {}", tool.getToolId(), raw, e);
             return buildDefaultParameters(tool);
         } catch (Exception e) {
@@ -151,55 +149,51 @@ public class LLMMCPParameterExtractor implements MCPParameterExtractor {
         }
         // 清理可能的 markdown 代码块
         String cleaned = LLMResponseCleaner.stripMarkdownCodeFence(raw);
-        JsonElement element = JsonParser.parseString(cleaned);
-        if (!element.isJsonObject()) {
+        JSONObject obj = JSON.parseObject(cleaned);
+        if (obj == null) {
             log.warn("LLM 返回的不是 JSON 对象: {}", raw);
             return new HashMap<>();
         }
-        JsonObject obj = element.getAsJsonObject();
         Map<String, Object> result = new HashMap<>();
         // 只提取工具定义中声明的参数
         for (String paramName : tool.getParameters().keySet()) {
-            if (obj.has(paramName) && !obj.get(paramName).isJsonNull()) {
-                JsonElement value = obj.get(paramName);
-                result.put(paramName, convertJsonElement(value));
+            if (obj.containsKey(paramName) && obj.get(paramName) != null) {
+                Object value = obj.get(paramName);
+                result.put(paramName, convertValue(value));
             }
         }
         return result;
     }
 
     /**
-     * 转换 JsonElement 为普通 Java 对象
+     * 转换值为普通 Java 对象
      */
-    private Object convertJsonElement(JsonElement element) {
-        if (element.isJsonPrimitive()) {
-            var primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) {
-                double d = primitive.getAsDouble();
-
-                if (Double.isNaN(d)) {
+    private Object convertValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            if (value instanceof Double d) {
+                if (Double.isNaN(d) || Double.isInfinite(d)) {
                     return null;
                 }
-
-                if (d == Math.floor(d) && !Double.isInfinite(d)) {
+                if (d == Math.floor(d)) {
                     if (d >= Integer.MIN_VALUE && d <= Integer.MAX_VALUE) {
-                        return (int) d;
+                        return d.intValue();
                     } else if (d >= Long.MIN_VALUE && d <= Long.MAX_VALUE) {
-                        return (long) d;
+                        return d.longValue();
                     }
                 }
-                return d;
-            } else if (primitive.isBoolean()) {
-                return primitive.getAsBoolean();
-            } else {
-                return primitive.getAsString();
             }
-        } else if (element.isJsonArray()) {
-            return gson.fromJson(element, List.class);
-        } else if (element.isJsonObject()) {
-            return gson.fromJson(element, LinkedHashMap.class);
+            return value;
         }
-        return null;
+        if (value instanceof JSONArray arr) {
+            return arr.toJavaList(Object.class);
+        }
+        if (value instanceof JSONObject jsonObj) {
+            return new LinkedHashMap<>(jsonObj);
+        }
+        return value;
     }
 
 

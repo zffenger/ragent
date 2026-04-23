@@ -20,11 +20,11 @@ package com.nageoffer.ai.ragent.rag.core.intent;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.nageoffer.ai.ragent.infra.util.LLMResponseCleaner;
 import com.nageoffer.ai.ragent.rag.dao.entity.IntentNodeDO;
 import com.nageoffer.ai.ragent.rag.dao.mapper.IntentNodeMapper;
@@ -155,28 +155,32 @@ public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegi
             // 移除可能的 markdown 代码块标记
             String cleanedRaw = LLMResponseCleaner.stripMarkdownCodeFence(raw);
 
-            JsonElement root = JsonParser.parseString(cleanedRaw);
+			Object root = JSON.parse(cleanedRaw);
+			if (root == null) {
+				log.warn("LLM 返回了非预期的 JSON 格式, 原始响应: {}", raw);
+				return List.of();
+			}
 
-            JsonArray arr;
-            if (root.isJsonArray()) {
-                arr = root.getAsJsonArray();
-            } else if (root.isJsonObject() && root.getAsJsonObject().has("results")) {
-                // 容错：如果模型外面又包了一层 { "results": [...] }
-                arr = root.getAsJsonObject().getAsJsonArray("results");
-            } else {
-                log.warn("LLM 返回了非预期的 JSON 格式, 原始响应: {}", raw);
-                return List.of();
-            }
+			JSONArray arr = null;
+			if (root instanceof JSONArray jsonArray){
+				arr = jsonArray;
+			} else if (root instanceof JSONObject obj) {
+				arr = obj.getJSONArray("results");
+			}
+			if (arr == null || arr.isEmpty()) {
+				log.warn("LLM 返回了非预期的 JSON 格式, 原始响应: {}", raw);
+				return List.of();
+			}
 
             List<NodeScore> scores = new ArrayList<>();
-            for (JsonElement el : arr) {
-                if (!el.isJsonObject()) continue;
-                JsonObject obj = el.getAsJsonObject();
+            for (int i = 0; i < arr.size(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                if (obj == null) continue;
 
-                if (!obj.has("id") || !obj.has("score")) continue;
+                if (!obj.containsKey("id") || !obj.containsKey("score")) continue;
 
-                String id = obj.get("id").getAsString();
-                double score = obj.get("score").getAsDouble();
+                String id = obj.getString("id");
+                double score = obj.getDoubleValue("score");
 
                 IntentNode node = data.id2Node.get(id);
                 if (node == null) {

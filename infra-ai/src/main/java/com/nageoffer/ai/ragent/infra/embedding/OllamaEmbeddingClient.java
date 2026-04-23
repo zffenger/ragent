@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.infra.embedding;
 
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
 import okhttp3.OkHttpClient;
@@ -41,7 +41,7 @@ public class OllamaEmbeddingClient extends AbstractOpenAIStyleEmbeddingClient {
     }
 
     @Override
-    protected void customizeRequestBody(JsonObject body, ModelTarget target) {
+    protected void customizeRequestBody(JSONObject body, ModelTarget target) {
         // Ollama 不需要 encoding_format 字段
     }
 }

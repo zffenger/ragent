@@ -19,10 +19,10 @@ package com.nageoffer.ai.ragent.rag.core.rewrite;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.infra.util.LLMResponseCleaner;
 import com.nageoffer.ai.ragent.rag.config.RAGConfigProperties;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
@@ -162,18 +162,21 @@ public class MultiQuestionRewriteService implements QueryRewriteService {
             // 移除可能存在的 Markdown 代码块标记
             String cleaned = LLMResponseCleaner.stripMarkdownCodeFence(raw);
 
-            JsonElement root = JsonParser.parseString(cleaned);
-            if (!root.isJsonObject()) {
+            JSONObject obj = JSON.parseObject(cleaned);
+            if (obj == null) {
                 return null;
             }
-            JsonObject obj = root.getAsJsonObject();
-            String rewrite = obj.has("rewrite") ? obj.get("rewrite").getAsString().trim() : "";
+            String rewrite = obj.getString("rewrite");
+            if (rewrite != null) {
+                rewrite = rewrite.trim();
+            }
             List<String> subs = new ArrayList<>();
-            if (obj.has("sub_questions") && obj.get("sub_questions").isJsonArray()) {
-                JsonArray arr = obj.getAsJsonArray("sub_questions");
-                for (JsonElement el : arr) {
-                    if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
-                        String s = el.getAsString().trim();
+            JSONArray arr = obj.getJSONArray("sub_questions");
+            if (arr != null) {
+                for (int i = 0; i < arr.size(); i++) {
+                    String s = arr.getString(i);
+                    if (s != null) {
+                        s = s.trim();
                         if (StrUtil.isNotBlank(s)) {
                             subs.add(s);
                         }
@@ -187,7 +190,7 @@ public class MultiQuestionRewriteService implements QueryRewriteService {
                 subs = List.of(rewrite);
             }
             return new RewriteResult(rewrite, subs);
-        } catch (Exception e) {
+        } catch (JSONException e) {
             log.warn("解析改写+拆分结果失败，raw={}", raw, e);
             return null;
         }

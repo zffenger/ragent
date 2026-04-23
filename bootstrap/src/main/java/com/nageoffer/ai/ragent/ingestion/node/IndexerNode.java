@@ -18,12 +18,11 @@
 package com.nageoffer.ai.ragent.ingestion.node;
 
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.nageoffer.ai.ragent.rag.config.RAGDefaultProperties;
 import com.nageoffer.ai.ragent.core.chunk.VectorChunk;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
@@ -53,8 +52,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class IndexerNode implements IngestionNode {
-
-    private static final Gson GSON = new Gson();
 
     private final ObjectMapper objectMapper;
     private final VectorStoreAdmin vectorStoreAdmin;
@@ -100,7 +97,7 @@ public class IndexerNode implements IngestionNode {
         }
 
         ensureVectorSpace(collectionName);
-        List<JsonObject> rows = buildRows(context, chunks, vectorArray, settings.getMetadataFields());
+        List<JSONObject> rows = buildRows(context, chunks, vectorArray, settings.getMetadataFields());
 
         if (context.isSkipIndexerWrite()) {
             // 调用方会在事务中统一写向量，此处只做校验和 chunkId/embedding 的填充（buildRows 已完成）
@@ -142,27 +139,25 @@ public class IndexerNode implements IngestionNode {
         vectorStoreAdmin.ensureVectorSpace(spaceSpec);
     }
 
-    private void insertRows(String collectionName, String docId, List<JsonObject> rows) {
+    private void insertRows(String collectionName, String docId, List<JSONObject> rows) {
         if (rows == null || rows.isEmpty()) {
             return;
         }
 
-        // 将 JsonObject 转换为 VectorChunk 列表
+        // 将 JSONObject 转换为 VectorChunk 列表
         List<VectorChunk> chunks = rows.stream().map(row -> {
-            String chunkId = row.get("id").getAsString();
-            String content = row.get("content").getAsString();
-            JsonArray embeddingArray = row.getAsJsonArray("embedding");
+            String chunkId = row.getString("id");
+            String content = row.getString("content");
+            JSONArray embeddingArray = row.getJSONArray("embedding");
             float[] embedding = new float[embeddingArray.size()];
             for (int i = 0; i < embeddingArray.size(); i++) {
-                embedding[i] = embeddingArray.get(i).getAsFloat();
+                embedding[i] = embeddingArray.getFloatValue(i);
             }
 
             Integer chunkIndex = null;
-            if (row.has("metadata") && row.get("metadata").isJsonObject()) {
-                JsonObject metadata = row.getAsJsonObject("metadata");
-                if (metadata.has("chunk_index")) {
-                    chunkIndex = metadata.get("chunk_index").getAsInt();
-                }
+            JSONObject metadata = row.getJSONObject("metadata");
+            if (metadata != null) {
+                chunkIndex = metadata.getInteger("chunk_index");
             }
 
             return VectorChunk.builder()
@@ -206,12 +201,12 @@ public class IndexerNode implements IngestionNode {
         return out;
     }
 
-    private List<JsonObject> buildRows(IngestionContext context,
+    private List<JSONObject> buildRows(IngestionContext context,
                                        List<VectorChunk> chunks,
                                        float[][] vectors,
                                        List<String> metadataFields) {
         Map<String, Object> mergedMetadata = mergeMetadata(context);
-        List<JsonObject> rows = new java.util.ArrayList<>(chunks.size());
+        List<JSONObject> rows = new java.util.ArrayList<>(chunks.size());
         for (int i = 0; i < chunks.size(); i++) {
             VectorChunk chunk = chunks.get(i);
             String chunkId = StringUtils.hasText(chunk.getChunkId()) ? chunk.getChunkId() : IdUtil.getSnowflakeNextIdStr();
@@ -224,16 +219,16 @@ public class IndexerNode implements IngestionNode {
                 content = content.substring(0, 65535);
             }
 
-            JsonObject metadata = new JsonObject();
-            metadata.addProperty("chunk_index", chunk.getIndex());
-            metadata.addProperty("task_id", context.getTaskId());
-            metadata.addProperty("pipeline_id", context.getPipelineId());
+            JSONObject metadata = new JSONObject();
+            metadata.put("chunk_index", chunk.getIndex());
+            metadata.put("task_id", context.getTaskId());
+            metadata.put("pipeline_id", context.getPipelineId());
             DocumentSource source = context.getSource();
             if (source != null && source.getType() != null) {
-                metadata.addProperty("source_type", source.getType().getValue());
+                metadata.put("source_type", source.getType().getValue());
             }
             if (source != null && StringUtils.hasText(source.getLocation())) {
-                metadata.addProperty("source_location", source.getLocation());
+                metadata.put("source_location", source.getLocation());
             }
 
             if (metadataFields != null && !metadataFields.isEmpty()) {
@@ -247,16 +242,16 @@ public class IndexerNode implements IngestionNode {
                     }
                     Object value = combined.get(field);
                     if (value != null) {
-                        addMetadataValue(metadata, field, value);
+                        metadata.put(field, value);
                     }
                 }
             }
 
-            JsonObject row = new JsonObject();
-            row.addProperty("id", chunkId);
-            row.addProperty("content", content);
-            row.add("metadata", metadata);
-            row.add("embedding", toJsonArray(vectors[i]));
+            JSONObject row = new JSONObject();
+            row.put("id", chunkId);
+            row.put("content", content);
+            row.put("metadata", metadata);
+            row.put("embedding", toJsonArray(vectors[i]));
             rows.add(row);
         }
         return rows;
@@ -270,13 +265,8 @@ public class IndexerNode implements IngestionNode {
         return merged;
     }
 
-    private void addMetadataValue(JsonObject metadata, String field, Object value) {
-        JsonElement element = GSON.toJsonTree(value);
-        metadata.add(field, element);
-    }
-
-    private JsonArray toJsonArray(float[] vector) {
-        JsonArray arr = new JsonArray(vector.length);
+    private JSONArray toJsonArray(float[] vector) {
+        JSONArray arr = new JSONArray(vector.length);
         for (float v : vector) {
             arr.add(v);
         }

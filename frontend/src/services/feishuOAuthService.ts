@@ -33,15 +33,15 @@ export async function getFeishuAuthorizeUrl(redirectUri: string, state?: string)
 /**
  * 飞书 OAuth 回调登录
  */
-export async function feishuCallback(code: string, state?: string): Promise<import("./authService").LoginResult> {
-  return api.post("/auth/feishu/callback", { code, state });
+export async function feishuCallback(code: string, redirectUri: string, state?: string): Promise<import("./authService").LoginResult> {
+  return api.post("/auth/feishu/callback", { code, redirectUri, state });
 }
 
 /**
  * 绑定飞书账号
  */
-export async function bindFeishuAccount(code: string, state?: string): Promise<void> {
-  return api.post("/auth/feishu/bind", { code, state });
+export async function bindFeishuAccount(code: string, redirectUri: string, state?: string): Promise<void> {
+  return api.post("/auth/feishu/bind", { code, redirectUri, state });
 }
 
 /**

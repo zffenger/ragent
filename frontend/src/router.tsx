@@ -24,7 +24,7 @@ import { QueryTermMappingPage } from "@/pages/admin/query-term-mapping/QueryTerm
 import { UserListPage } from "@/pages/admin/users/UserListPage";
 import { useAuthStore } from "@/stores/authStore";
 import { bindFeishuAccount } from "@/services/feishuOAuthService";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -68,26 +68,30 @@ function HomeRedirect() {
 function FeishuBindCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const processingRef = React.useRef(false);
 
   useEffect(() => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const redirect = sessionStorage.getItem("feishu_bind_redirect") || "/admin/settings/user";
+    const redirectUri = `${window.location.origin}/admin/settings/user/bind-feishu`;
 
-    if (code) {
-      bindFeishuAccount(code, state || undefined)
-        .then(() => {
-          toast.success("飞书账号绑定成功");
-          sessionStorage.removeItem("feishu_bind_redirect");
-          navigate(redirect, { replace: true });
-        })
-        .catch((err) => {
-          toast.error(err.message || "绑定失败");
-          navigate(redirect, { replace: true });
-        });
-    } else {
-      navigate(redirect, { replace: true });
+    if (!code || processingRef.current) {
+      return;
     }
+
+    processingRef.current = true;
+
+    bindFeishuAccount(code, redirectUri, state || undefined)
+      .then(() => {
+        toast.success("飞书账号绑定成功");
+        sessionStorage.removeItem("feishu_bind_redirect");
+        navigate(redirect, { replace: true });
+      })
+      .catch((err) => {
+        toast.error(err.message || "绑定失败");
+        navigate(redirect, { replace: true });
+      });
   }, [searchParams, navigate]);
 
   return <div className="flex items-center justify-center h-64">正在绑定飞书账号...</div>;

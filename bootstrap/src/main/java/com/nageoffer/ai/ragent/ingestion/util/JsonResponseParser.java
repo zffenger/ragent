@@ -18,10 +18,10 @@
 package com.nageoffer.ai.ragent.ingestion.util;
 
 import cn.hutool.core.util.StrUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.infra.util.LLMResponseCleaner;
 
 import java.util.Collections;
@@ -34,38 +34,39 @@ import java.util.Map;
  */
 public final class JsonResponseParser {
 
-    private static final Gson GSON = new Gson();
-
     private JsonResponseParser() {
     }
 
     public static List<String> parseStringList(String raw) {
-        JsonElement element = parseJsonElement(raw);
-        if (element == null || !element.isJsonArray()) {
+        String cleaned = cleanAndExtractJson(raw);
+        if (cleaned == null) {
             return List.of();
         }
-        return GSON.fromJson(element, List.class);
+		JSONArray array = JSON.parseArray(cleaned);
+		if (array == null) {
+			return List.of();
+		}
+		return array.toJavaList(String.class);
     }
 
     public static Map<String, Object> parseObject(String raw) {
-        JsonElement element = parseJsonElement(raw);
-        if (element == null || !element.isJsonObject()) {
+        String cleaned = cleanAndExtractJson(raw);
+        if (cleaned == null) {
             return Collections.emptyMap();
         }
-        return GSON.fromJson(element, LinkedHashMap.class);
+		JSONObject obj = JSON.parseObject(cleaned);
+		if (obj == null) {
+			return Collections.emptyMap();
+		}
+		return obj;
     }
 
-    private static JsonElement parseJsonElement(String raw) {
+    private static String cleanAndExtractJson(String raw) {
         if (StrUtil.isBlank(raw)) {
             return null;
         }
         String cleaned = LLMResponseCleaner.stripMarkdownCodeFence(raw);
-        String trimmed = extractJsonBody(cleaned);
-        try {
-            return JsonParser.parseString(trimmed);
-        } catch (JsonSyntaxException e) {
-            return null;
-        }
+        return extractJsonBody(cleaned);
     }
 
     private static String extractJsonBody(String raw) {

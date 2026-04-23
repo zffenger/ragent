@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SliderCaptcha } from "@/components/common/SliderCaptcha";
 import { useAuthStore } from "@/stores/authStore";
 import { getFeishuAuthorizeUrl, feishuCallback } from "@/services/feishuOAuthService";
+import { setAuthToken } from "@/services/api";
+import { storage } from "@/utils/storage";
 import { toast } from "sonner";
 
 const FEISHU_OAUTH_ENABLED = import.meta.env.VITE_FEISHU_OAUTH_ENABLED === "true";
@@ -23,22 +25,33 @@ export function LoginPage() {
   const [feishuLoading, setFeishuLoading] = React.useState(false);
   const [captchaVerified, setCaptchaVerified] = React.useState(false);
   const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
+  const feishuProcessingRef = React.useRef(false);
 
   // 处理飞书 OAuth 回调
   React.useEffect(() => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
-    if (code) {
+    if (code && !feishuProcessingRef.current) {
+      feishuProcessingRef.current = true;
       setFeishuLoading(true);
-      feishuCallback(code, state || undefined)
+      const redirectUri = `${window.location.origin}/login`;
+      feishuCallback(code, redirectUri, state || undefined)
         .then((result) => {
           // 使用飞书登录结果
-          useAuthStore.getState().setUser({
+          const user = {
             userId: result.userId,
             username: result.username,
             role: result.role,
             token: result.token,
             avatar: result.avatar,
+          };
+          storage.setToken(user.token);
+          storage.setUser(user);
+          setAuthToken(user.token);
+          useAuthStore.setState({
+            user,
+            token: user.token,
+            isAuthenticated: true
           });
           toast.success("飞书登录成功");
           navigate("/admin/chat", { replace: true });

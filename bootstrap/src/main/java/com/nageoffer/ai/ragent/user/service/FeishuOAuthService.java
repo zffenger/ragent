@@ -37,17 +37,19 @@ public interface FeishuOAuthService {
     /**
      * 处理飞书 OAuth 回调，获取用户信息
      *
-     * @param code 授权码
+     * @param code        授权码
+     * @param redirectUri 回调地址（必须与授权时使用的地址一致）
      * @return 飞书用户信息
      */
-    FeishuUserVO handleOAuthCallback(String code);
+    FeishuUserVO handleOAuthCallback(String code, String redirectUri);
 
     /**
      * 绑定飞书账号到当前登录用户
      *
-     * @param code 授权码
+     * @param code        授权码
+     * @param redirectUri 回调地址
      */
-    void bindFeishuAccount(String code);
+    void bindFeishuAccount(String code, String redirectUri);
 
     /**
      * 解绑当前用户的飞书账号
@@ -64,8 +66,9 @@ public interface FeishuOAuthService {
     /**
      * 使用飞书账号登录
      *
-     * @param code 授权码
+     * @param code        授权码
+     * @param redirectUri 回调地址
      * @return 登录结果
      */
-    LoginVO loginWithFeishu(String code);
+    LoginVO loginWithFeishu(String code, String redirectUri);
 }

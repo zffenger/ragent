@@ -17,9 +17,8 @@
 
 package com.nageoffer.ai.ragent.chatbot.core;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
 import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
@@ -42,8 +41,6 @@ public class LlmQuestionDetector implements QuestionDetector {
 
     private final LLMService llmService;
     private final ChatbotProperties properties;
-
-    private static final Gson GSON = new Gson();
 
     /**
      * LLM 检测的系统提示词
@@ -100,10 +97,10 @@ public class LlmQuestionDetector implements QuestionDetector {
         try {
             // 尝试提取 JSON
             String jsonStr = extractJson(response);
-            JsonObject json = JsonParser.parseString(jsonStr).getAsJsonObject();
+            JSONObject json = JSON.parseObject(jsonStr);
 
-            boolean isQuestion = json.has("is_question") && json.get("is_question").getAsBoolean();
-            double confidence = json.has("confidence") ? json.get("confidence").getAsDouble() : 0.5;
+            boolean isQuestion = json != null && json.getBooleanValue("is_question");
+            double confidence = json != null ? json.getDoubleValue("confidence") : 0.5;
 
             // 检查置信度阈值
             double threshold = properties.getDetection().getLlmThreshold();

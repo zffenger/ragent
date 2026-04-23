@@ -18,9 +18,8 @@
 package com.nageoffer.ai.ragent.infra.rerank;
 
 import cn.hutool.core.collection.CollUtil;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
 import com.nageoffer.ai.ragent.infra.enums.ModelCapability;
@@ -87,32 +86,32 @@ public class BaiLianRerankClient implements RerankClient {
             return List.of();
         }
 
-        JsonObject reqBody = new JsonObject();
-        reqBody.addProperty("model", HttpResponseHelper.requireModel(target, provider()));
+        JSONObject reqBody = new JSONObject();
+        reqBody.put("model", HttpResponseHelper.requireModel(target, provider()));
 
-        JsonObject input = new JsonObject();
-        input.addProperty("query", query);
+        JSONObject input = new JSONObject();
+        input.put("query", query);
 
-        JsonArray documentsArray = new JsonArray();
+        JSONArray documentsArray = new JSONArray();
         for (RetrievedChunk each : candidates) {
             documentsArray.add(each.getText() == null ? "" : each.getText());
         }
-        input.add("documents", documentsArray);
+        input.put("documents", documentsArray);
 
-        JsonObject parameters = new JsonObject();
-        parameters.addProperty("top_n", topN);
-        parameters.addProperty("return_documents", true);
+        JSONObject parameters = new JSONObject();
+        parameters.put("top_n", topN);
+        parameters.put("return_documents", true);
 
-        reqBody.add("input", input);
-        reqBody.add("parameters", parameters);
+        reqBody.put("input", input);
+        reqBody.put("parameters", parameters);
 
         Request request = new Request.Builder()
                 .url(ModelUrlResolver.resolveUrl(provider, target.candidate(), ModelCapability.RERANK))
-                .post(RequestBody.create(reqBody.toString(), HttpMediaTypes.JSON))
+                .post(RequestBody.create(reqBody.toJSONString(), HttpMediaTypes.JSON))
                 .addHeader("Authorization", "Bearer " + provider.getApiKey())
                 .build();
 
-        JsonObject respJson;
+        JSONObject respJson;
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 String body = HttpResponseHelper.readBody(response.body());
@@ -128,9 +127,9 @@ public class BaiLianRerankClient implements RerankClient {
             throw new ModelClientException(provider() + " rerank 请求失败: " + e.getMessage(), ModelClientErrorType.NETWORK_ERROR, null, e);
         }
 
-        JsonObject output = requireOutput(respJson);
+        JSONObject output = requireOutput(respJson);
 
-        JsonArray results = output.getAsJsonArray("results");
+        JSONArray results = output.getJSONArray("results");
         if (CollUtil.isEmpty(results)) {
             throw new ModelClientException(provider() + " rerank results 为空", ModelClientErrorType.INVALID_RESPONSE, null);
         }
@@ -138,16 +137,16 @@ public class BaiLianRerankClient implements RerankClient {
         List<RetrievedChunk> reranked = new ArrayList<>();
         Set<String> addedIds = new HashSet<>();
 
-        for (JsonElement elem : results) {
-            if (!elem.isJsonObject()) {
+        for (int i = 0; i < results.size(); i++) {
+            JSONObject item = results.getJSONObject(i);
+            if (item == null) {
                 continue;
             }
-            JsonObject item = elem.getAsJsonObject();
 
-            if (!item.has("index")) {
+            if (!item.containsKey("index")) {
                 continue;
             }
-            int idx = item.get("index").getAsInt();
+            int idx = item.getIntValue("index");
 
             if (idx < 0 || idx >= candidates.size()) {
                 continue;
@@ -155,10 +154,7 @@ public class BaiLianRerankClient implements RerankClient {
 
             RetrievedChunk src = candidates.get(idx);
 
-            Float score = null;
-            if (item.has("relevance_score") && !item.get("relevance_score").isJsonNull()) {
-                score = item.get("relevance_score").getAsFloat();
-            }
+            Float score = item.getFloat("relevance_score");
 
             RetrievedChunk hit = score != null ? new RetrievedChunk(src.getId(), src.getText(), score) : src;
             reranked.add(hit);
@@ -183,12 +179,12 @@ public class BaiLianRerankClient implements RerankClient {
         return reranked;
     }
 
-    private JsonObject requireOutput(JsonObject respJson) {
-        if (respJson == null || !respJson.has("output")) {
+    private JSONObject requireOutput(JSONObject respJson) {
+        if (respJson == null || !respJson.containsKey("output")) {
             throw new ModelClientException(provider() + " rerank 响应缺少 output", ModelClientErrorType.INVALID_RESPONSE, null);
         }
-        JsonObject output = respJson.getAsJsonObject("output");
-        if (output == null || !output.has("results")) {
+        JSONObject output = respJson.getJSONObject("output");
+        if (output == null || !output.containsKey("results")) {
             throw new ModelClientException(provider() + " rerank 响应缺少 results", ModelClientErrorType.INVALID_RESPONSE, null);
         }
         return output;

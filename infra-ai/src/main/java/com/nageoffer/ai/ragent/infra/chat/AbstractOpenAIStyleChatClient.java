@@ -18,9 +18,9 @@
 package com.nageoffer.ai.ragent.infra.chat;
 
 import cn.hutool.core.collection.CollUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
@@ -54,7 +54,6 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
     protected final OkHttpClient syncHttpClient;
     protected final OkHttpClient streamingHttpClient;
     protected final Executor modelStreamExecutor;
-    protected final Gson gson = new Gson();
 
     protected AbstractOpenAIStyleChatClient(OkHttpClient syncHttpClient,
                                             OkHttpClient streamingHttpClient,
@@ -77,9 +76,9 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
      * 子类可覆写此方法添加提供商特有的请求体字段
      * 默认实现：当请求开启 thinking 时添加 enable_thinking 字段
      */
-    protected void customizeRequestBody(JsonObject body, ChatRequest request) {
+    protected void customizeRequestBody(JSONObject body, ChatRequest request) {
         if (Boolean.TRUE.equals(request.getThinking())) {
-            body.addProperty("enable_thinking", true);
+            body.put("enable_thinking", true);
         }
     }
 
@@ -98,12 +97,12 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
             HttpResponseHelper.requireApiKey(provider, provider());
         }
 
-        JsonObject reqBody = buildRequestBody(request, target, false);
+        JSONObject reqBody = buildRequestBody(request, target, false);
         Request requestHttp = newAuthorizedRequest(provider, target)
-                .post(RequestBody.create(reqBody.toString(), HttpMediaTypes.JSON))
+                .post(RequestBody.create(reqBody.toJSONString(), HttpMediaTypes.JSON))
                 .build();
 
-        JsonObject respJson;
+        JSONObject respJson;
         try (Response response = syncHttpClient.newCall(requestHttp).execute()) {
             if (!response.isSuccessful()) {
                 String body = HttpResponseHelper.readBody(response.body());
@@ -132,9 +131,9 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
             HttpResponseHelper.requireApiKey(provider, provider());
         }
 
-        JsonObject reqBody = buildRequestBody(request, target, true);
+        JSONObject reqBody = buildRequestBody(request, target, true);
         Request streamRequest = newAuthorizedRequest(provider, target)
-                .post(RequestBody.create(reqBody.toString(), HttpMediaTypes.JSON))
+                .post(RequestBody.create(reqBody.toJSONString(), HttpMediaTypes.JSON))
                 .addHeader("Accept", "text/event-stream")
                 .build();
 
@@ -173,7 +172,7 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
                     continue;
                 }
                 try {
-                    OpenAIStyleSseParser.ParsedEvent event = OpenAIStyleSseParser.parseLine(line, gson, reasoningEnabled);
+                    OpenAIStyleSseParser.ParsedEvent event = OpenAIStyleSseParser.parseLine(line, reasoningEnabled);
                     if (event.hasReasoning()) {
                         callback.onThinking(event.reasoning());
                     }
@@ -207,40 +206,40 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
 
     // ==================== 公共构建方法 ====================
 
-    protected JsonObject buildRequestBody(ChatRequest request, ModelTarget target, boolean stream) {
-        JsonObject body = new JsonObject();
-        body.addProperty("model", HttpResponseHelper.requireModel(target, provider()));
+    protected JSONObject buildRequestBody(ChatRequest request, ModelTarget target, boolean stream) {
+        JSONObject body = new JSONObject();
+        body.put("model", HttpResponseHelper.requireModel(target, provider()));
         if (stream) {
-            body.addProperty("stream", true);
+            body.put("stream", true);
         }
 
-        body.add("messages", buildMessages(request));
+        body.put("messages", buildMessages(request));
 
         if (request.getTemperature() != null) {
-            body.addProperty("temperature", request.getTemperature());
+            body.put("temperature", request.getTemperature());
         }
         if (request.getTopP() != null) {
-            body.addProperty("top_p", request.getTopP());
+            body.put("top_p", request.getTopP());
         }
         if (request.getTopK() != null) {
-            body.addProperty("top_k", request.getTopK());
+            body.put("top_k", request.getTopK());
         }
         if (request.getMaxTokens() != null) {
-            body.addProperty("max_tokens", request.getMaxTokens());
+            body.put("max_tokens", request.getMaxTokens());
         }
 
         customizeRequestBody(body, request);
         return body;
     }
 
-    private JsonArray buildMessages(ChatRequest request) {
-        JsonArray arr = new JsonArray();
+    private JSONArray buildMessages(ChatRequest request) {
+        JSONArray arr = new JSONArray();
         List<ChatMessage> messages = request.getMessages();
         if (CollUtil.isNotEmpty(messages)) {
             for (ChatMessage m : messages) {
-                JsonObject msg = new JsonObject();
-                msg.addProperty("role", toOpenAiRole(m.getRole()));
-                msg.addProperty("content", m.getContent());
+                JSONObject msg = new JSONObject();
+                msg.put("role", toOpenAiRole(m.getRole()));
+                msg.put("content", m.getContent());
                 arr.add(msg);
             }
         }
@@ -264,22 +263,22 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
         return builder;
     }
 
-    private String extractChatContent(JsonObject respJson) {
-        if (respJson == null || !respJson.has("choices")) {
+    private String extractChatContent(JSONObject respJson) {
+        if (respJson == null || !respJson.containsKey("choices")) {
             throw new ModelClientException(provider() + " 响应缺少 choices", ModelClientErrorType.INVALID_RESPONSE, null);
         }
-        JsonArray choices = respJson.getAsJsonArray("choices");
+        JSONArray choices = respJson.getJSONArray("choices");
         if (choices == null || choices.isEmpty()) {
             throw new ModelClientException(provider() + " 响应 choices 为空", ModelClientErrorType.INVALID_RESPONSE, null);
         }
-        JsonObject choice0 = choices.get(0).getAsJsonObject();
-        if (choice0 == null || !choice0.has("message")) {
+        JSONObject choice0 = choices.getJSONObject(0);
+        if (choice0 == null || !choice0.containsKey("message")) {
             throw new ModelClientException(provider() + " 响应缺少 message", ModelClientErrorType.INVALID_RESPONSE, null);
         }
-        JsonObject message = choice0.getAsJsonObject("message");
-        if (message == null || !message.has("content") || message.get("content").isJsonNull()) {
+        JSONObject message = choice0.getJSONObject("message");
+        if (message == null || !message.containsKey("content") || message.get("content") == null) {
             throw new ModelClientException(provider() + " 响应缺少 content", ModelClientErrorType.INVALID_RESPONSE, null);
         }
-        return message.get("content").getAsString();
+        return message.getString("content");
     }
 }

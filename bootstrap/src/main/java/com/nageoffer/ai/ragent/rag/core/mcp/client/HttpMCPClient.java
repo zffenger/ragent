@@ -17,10 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.core.mcp.client;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.rag.core.mcp.MCPTool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class HttpMCPClient implements MCPClient {
 
-    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    private static final Gson GSON = new Gson();
+    private static final MediaType JSON_TYPE = MediaType.get("application/json; charset=utf-8");
     private static final String INITIALIZED_NOTIFICATION_METHOD = "notifications/initialized";
 
     private final OkHttpClient httpClient;
@@ -55,14 +53,14 @@ public class HttpMCPClient implements MCPClient {
 
     @Override
     public boolean initialize() {
-        JsonObject params = new JsonObject();
-        params.addProperty("protocolVersion", "2026-02-28");
-        JsonObject clientInfo = new JsonObject();
-        clientInfo.addProperty("name", "ragent-bootstrap");
-        clientInfo.addProperty("version", "1.0.0");
-        params.add("clientInfo", clientInfo);
+        JSONObject params = new JSONObject();
+        params.put("protocolVersion", "2026-02-28");
+        JSONObject clientInfo = new JSONObject();
+        clientInfo.put("name", "ragent-bootstrap");
+        clientInfo.put("version", "1.0.0");
+        params.put("clientInfo", clientInfo);
 
-        JsonObject result = sendRequest("initialize", params);
+        JSONObject result = sendRequest("initialize", params);
         if (result == null) {
             log.error("MCP 初始化失败，跳过 initialized 通知发送");
             return false;
@@ -74,15 +72,18 @@ public class HttpMCPClient implements MCPClient {
 
     @Override
     public List<MCPTool> listTools() {
-        JsonObject result = sendRequest("tools/list", new JsonObject());
+        JSONObject result = sendRequest("tools/list", new JSONObject());
         List<MCPTool> tools = new ArrayList<>();
-        if (result == null || !result.has("tools")) {
+        if (result == null || !result.containsKey("tools")) {
             return tools;
         }
 
-        JsonArray toolsArray = result.getAsJsonArray("tools");
-        for (JsonElement element : toolsArray) {
-            JsonObject toolObj = element.getAsJsonObject();
+        JSONArray toolsArray = result.getJSONArray("tools");
+        if (toolsArray == null) {
+            return tools;
+        }
+        for (int i = 0; i < toolsArray.size(); i++) {
+            JSONObject toolObj = toolsArray.getJSONObject(i);
             MCPTool tool = convertToMcpTool(toolObj);
             tools.add(tool);
         }
@@ -96,17 +97,17 @@ public class HttpMCPClient implements MCPClient {
             return null;
         }
 
-        JsonObject params = new JsonObject();
-        params.addProperty("name", toolName);
-        params.add("arguments", GSON.toJsonTree(arguments != null ? arguments : new HashMap<>()));
+        JSONObject params = new JSONObject();
+        params.put("name", toolName);
+        params.put("arguments", arguments != null ? arguments : new HashMap<>());
 
-        JsonObject result = sendRequest("tools/call", params);
+        JSONObject result = sendRequest("tools/call", params);
         if (result == null) {
             return null;
         }
 
         String textResult = extractTextContent(result);
-        boolean isError = result.has("isError") && result.get("isError").getAsBoolean();
+        boolean isError = result.getBooleanValue("isError");
         if (isError) {
             log.warn("MCP 工具调用返回错误，toolName={}, errorText={}", toolName, textResult);
             return null;
@@ -117,19 +118,19 @@ public class HttpMCPClient implements MCPClient {
     /**
      * 发送 JSON-RPC 2.0 请求
      */
-    private JsonObject sendRequest(String method, JsonObject params) {
-        JsonObject rpcRequest = new JsonObject();
-        rpcRequest.addProperty("jsonrpc", "2.0");
-        rpcRequest.addProperty("id", requestId.getAndIncrement());
-        rpcRequest.addProperty("method", method);
-        rpcRequest.add("params", params);
+    private JSONObject sendRequest(String method, JSONObject params) {
+        JSONObject rpcRequest = new JSONObject();
+        rpcRequest.put("jsonrpc", "2.0");
+        rpcRequest.put("id", requestId.getAndIncrement());
+        rpcRequest.put("method", method);
+        rpcRequest.put("params", params);
 
         String url = resolveMcpEndpointUrl();
-        String requestBody = GSON.toJson(rpcRequest);
+        String requestBody = rpcRequest.toJSONString();
 
         Request request = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(requestBody, JSON))
+                .post(RequestBody.create(requestBody, JSON_TYPE))
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -144,15 +145,15 @@ public class HttpMCPClient implements MCPClient {
                 return null;
             }
 
-            JsonObject rpcResponse = GSON.fromJson(body, JsonObject.class);
-            if (rpcResponse.has("error") && !rpcResponse.get("error").isJsonNull()) {
-                JsonObject error = rpcResponse.getAsJsonObject("error");
+            JSONObject rpcResponse = JSON.parseObject(body);
+            if (rpcResponse.containsKey("error") && rpcResponse.get("error") != null) {
+                JSONObject error = rpcResponse.getJSONObject("error");
                 log.error("MCP JSON-RPC 错误，method={}, code={}, message={}",
-                        method, error.get("code"), error.get("message"));
+                        method, error.getInteger("code"), error.getString("message"));
                 return null;
             }
 
-            return rpcResponse.has("result") ? rpcResponse.getAsJsonObject("result") : null;
+            return rpcResponse.getJSONObject("result");
         } catch (IOException e) {
             String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             log.error("MCP 请求异常，method={}, url={}, 原因={}", method, url, reason);
@@ -165,16 +166,16 @@ public class HttpMCPClient implements MCPClient {
      */
     private void sendInitializedNotification() {
         String method = INITIALIZED_NOTIFICATION_METHOD;
-        JsonObject notification = new JsonObject();
-        notification.addProperty("jsonrpc", "2.0");
-        notification.addProperty("method", method);
+        JSONObject notification = new JSONObject();
+        notification.put("jsonrpc", "2.0");
+        notification.put("method", method);
 
         String url = resolveMcpEndpointUrl();
-        String body = GSON.toJson(notification);
+        String body = notification.toJSONString();
 
         Request request = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(body, JSON))
+                .post(RequestBody.create(body, JSON_TYPE))
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -191,19 +192,22 @@ public class HttpMCPClient implements MCPClient {
         return serverUrl.endsWith("/mcp") ? serverUrl : serverUrl + "/mcp";
     }
 
-    private String extractTextContent(JsonObject result) {
-        if (result == null || !result.has("content") || !result.get("content").isJsonArray()) {
+    private String extractTextContent(JSONObject result) {
+        if (result == null || !result.containsKey("content")) {
             return null;
         }
-        JsonArray content = result.getAsJsonArray("content");
+        JSONArray content = result.getJSONArray("content");
+        if (content == null) {
+            return null;
+        }
         List<String> textSegments = new ArrayList<>();
-        for (JsonElement item : content) {
-            if (!item.isJsonObject()) {
-                continue;
-            }
-            JsonObject contentObj = item.getAsJsonObject();
-            if (contentObj.has("text") && !contentObj.get("text").isJsonNull()) {
-                textSegments.add(contentObj.get("text").getAsString());
+        for (int i = 0; i < content.size(); i++) {
+            JSONObject contentObj = content.getJSONObject(i);
+            if (contentObj != null && contentObj.containsKey("text")) {
+                String text = contentObj.getString("text");
+                if (text != null) {
+                    textSegments.add(text);
+                }
             }
         }
         if (textSegments.isEmpty()) {
@@ -215,47 +219,50 @@ public class HttpMCPClient implements MCPClient {
     /**
      * 将 MCP 标准 Tool Schema 转换为 bootstrap 的 MCPTool
      */
-    private MCPTool convertToMcpTool(JsonObject toolObj) {
-        String name = "";
-        if (toolObj.has("name") && !toolObj.get("name").isJsonNull()) {
-            name = toolObj.get("name").getAsString();
+    private MCPTool convertToMcpTool(JSONObject toolObj) {
+        String name = toolObj.getString("name");
+        if (name == null) {
+            name = "";
         }
-        String description = "";
-        if (toolObj.has("description") && !toolObj.get("description").isJsonNull()) {
-            description = toolObj.get("description").getAsString();
+        String description = toolObj.getString("description");
+        if (description == null) {
+            description = "";
         }
 
         Map<String, MCPTool.ParameterDef> parameters = new HashMap<>();
         List<String> requiredList = new ArrayList<>();
 
-        if (toolObj.has("inputSchema")) {
-            JsonObject inputSchema = toolObj.getAsJsonObject("inputSchema");
-
+        JSONObject inputSchema = toolObj.getJSONObject("inputSchema");
+        if (inputSchema != null) {
             // 解析 required 列表
-            if (inputSchema.has("required") && inputSchema.get("required").isJsonArray()) {
-                for (JsonElement req : inputSchema.getAsJsonArray("required")) {
-                    requiredList.add(req.getAsString());
+            JSONArray requiredArr = inputSchema.getJSONArray("required");
+            if (requiredArr != null) {
+                for (int i = 0; i < requiredArr.size(); i++) {
+                    requiredList.add(requiredArr.getString(i));
                 }
             }
 
             // 解析 properties
-            if (inputSchema.has("properties")) {
-                JsonObject properties = inputSchema.getAsJsonObject("properties");
+            JSONObject properties = inputSchema.getJSONObject("properties");
+            if (properties != null) {
                 for (String key : properties.keySet()) {
-                    JsonObject propObj = properties.getAsJsonObject(key);
+                    JSONObject propObj = properties.getJSONObject(key);
                     MCPTool.ParameterDef paramDef = MCPTool.ParameterDef.builder()
-                            .type(propObj.has("type") ? propObj.get("type").getAsString() : "string")
-                            .description(propObj.has("description") ? propObj.get("description").getAsString() : "")
+                            .type(propObj != null && propObj.containsKey("type") ? propObj.getString("type") : "string")
+                            .description(propObj != null && propObj.containsKey("description") ? propObj.getString("description") : "")
                             .required(requiredList.contains(key))
                             .build();
 
                     // 解析枚举值
-                    if (propObj.has("enum") && propObj.get("enum").isJsonArray()) {
-                        List<String> enumValues = new ArrayList<>();
-                        for (JsonElement e : propObj.getAsJsonArray("enum")) {
-                            enumValues.add(e.getAsString());
+                    if (propObj != null) {
+                        JSONArray enumArr = propObj.getJSONArray("enum");
+                        if (enumArr != null) {
+                            List<String> enumValues = new ArrayList<>();
+                            for (int i = 0; i < enumArr.size(); i++) {
+                                enumValues.add(enumArr.getString(i));
+                            }
+                            paramDef.setEnumValues(enumValues);
                         }
-                        paramDef.setEnumValues(enumValues);
                     }
 
                     parameters.put(key, paramDef);

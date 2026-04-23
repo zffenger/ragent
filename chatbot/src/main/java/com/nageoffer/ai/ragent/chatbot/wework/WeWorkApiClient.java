@@ -17,9 +17,8 @@
 
 package com.nageoffer.ai.ragent.chatbot.wework;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.chatbot.common.BotException;
 import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.chatbot.wework.dto.WeWorkMessage;
@@ -48,8 +47,6 @@ public class WeWorkApiClient {
     private final OkHttpClient httpClient;
     private final StringRedisTemplate redisTemplate;
     private final ChatbotProperties properties;
-
-    private static final Gson GSON = new Gson();
 
     /**
      * 获取 access_token 的 URL
@@ -88,7 +85,7 @@ public class WeWorkApiClient {
         Request request = new Request.Builder()
                 .url(SEND_MESSAGE_URL + "?access_token=" + token)
                 .header("Content-Type", "application/json")
-                .post(RequestBody.create(GSON.toJson(message), MediaType.parse("application/json")))
+                .post(RequestBody.create(JSON.toJSONString(message), MediaType.parse("application/json")))
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -98,14 +95,14 @@ public class WeWorkApiClient {
             }
 
             String responseBody = response.body().string();
-            WeWorkResponse resp = GSON.fromJson(responseBody, WeWorkResponse.class);
+            WeWorkResponse resp = JSON.parseObject(responseBody, WeWorkResponse.class);
 
-            if (!resp.isSuccess()) {
+            if (resp != null && !resp.isSuccess()) {
                 log.error("发送企微消息失败: errcode={}, errmsg={}", resp.getErrcode(), resp.getErrmsg());
                 throw new BotException("发送企微消息失败: " + resp.getErrmsg());
             }
 
-            log.debug("发送企微消息成功: toUser={}, msgId={}", toUser, resp.getMsgid());
+            log.debug("发送企微消息成功: toUser={}, msgId={}", toUser, resp != null ? resp.getMsgid() : null);
         } catch (IOException e) {
             log.error("发送企微消息异常: {}", e.getMessage(), e);
             throw new BotException("发送企微消息异常", e);
@@ -152,15 +149,15 @@ public class WeWorkApiClient {
             }
 
             String responseBody = response.body().string();
-            WeWorkResponse resp = GSON.fromJson(responseBody, WeWorkResponse.class);
+            WeWorkResponse resp = JSON.parseObject(responseBody, WeWorkResponse.class);
 
-            if (!resp.isSuccess()) {
+            if (resp != null && !resp.isSuccess()) {
                 throw new BotException("获取企微 Token 失败: " + resp.getErrmsg());
             }
 
-            JsonObject json = JsonParser.parseString(responseBody).getAsJsonObject();
-            String token = json.get("access_token").getAsString();
-            int expire = json.get("expires_in").getAsInt();
+            JSONObject json = JSON.parseObject(responseBody);
+            String token = json.getString("access_token");
+            int expire = json.getIntValue("expires_in");
 
             // 缓存 token，提前 5 分钟过期
             long cacheExpire = Math.max(expire - 300, 60);

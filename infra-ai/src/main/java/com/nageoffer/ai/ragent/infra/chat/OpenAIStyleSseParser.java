@@ -17,10 +17,9 @@
 
 package com.nageoffer.ai.ragent.infra.chat;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import lombok.NoArgsConstructor;
 
 /**
@@ -33,7 +32,7 @@ public final class OpenAIStyleSseParser {
     private static final String DATA_PREFIX = "data:";
     private static final String DONE_MARKER = "[DONE]";
 
-    static ParsedEvent parseLine(String line, Gson gson, boolean reasoningEnabled) {
+    static ParsedEvent parseLine(String line, boolean reasoningEnabled) {
         if (line == null || line.isBlank()) {
             return ParsedEvent.empty();
         }
@@ -46,13 +45,13 @@ public final class OpenAIStyleSseParser {
             return ParsedEvent.done();
         }
 
-        JsonObject obj = gson.fromJson(payload, JsonObject.class);
-        JsonArray choices = obj.getAsJsonArray("choices");
+        JSONObject obj = JSON.parseObject(payload);
+        JSONArray choices = obj.getJSONArray("choices");
         if (choices == null || choices.isEmpty()) {
             return ParsedEvent.empty();
         }
 
-        JsonObject choice0 = choices.get(0).getAsJsonObject();
+        JSONObject choice0 = choices.getJSONObject(0);
         String content = extractText(choice0, "content");
         String reasoning = reasoningEnabled ? extractText(choice0, "reasoning_content") : null;
         boolean completed = hasFinishReason(choice0);
@@ -60,34 +59,29 @@ public final class OpenAIStyleSseParser {
         return new ParsedEvent(content, reasoning, completed);
     }
 
-    private static boolean hasFinishReason(JsonObject choice) {
-        if (choice == null || !choice.has("finish_reason")) {
+    private static boolean hasFinishReason(JSONObject choice) {
+        if (choice == null || !choice.containsKey("finish_reason")) {
             return false;
         }
-        JsonElement finishReason = choice.get("finish_reason");
-        return finishReason != null && !finishReason.isJsonNull();
+        return choice.get("finish_reason") != null;
     }
 
-    private static String extractText(JsonObject choice, String fieldName) {
+    private static String extractText(JSONObject choice, String fieldName) {
         if (choice == null) {
             return null;
         }
-        if (choice.has("delta") && choice.get("delta").isJsonObject()) {
-            JsonObject delta = choice.getAsJsonObject("delta");
-            if (delta.has(fieldName)) {
-                JsonElement value = delta.get(fieldName);
-                if (value != null && !value.isJsonNull()) {
-                    return value.getAsString();
-                }
+        JSONObject delta = choice.getJSONObject("delta");
+        if (delta != null && delta.containsKey(fieldName)) {
+            String value = delta.getString(fieldName);
+            if (value != null) {
+                return value;
             }
         }
-        if (choice.has("message") && choice.get("message").isJsonObject()) {
-            JsonObject message = choice.getAsJsonObject("message");
-            if (message.has(fieldName)) {
-                JsonElement value = message.get(fieldName);
-                if (value != null && !value.isJsonNull()) {
-                    return value.getAsString();
-                }
+        JSONObject message = choice.getJSONObject("message");
+        if (message != null && message.containsKey(fieldName)) {
+            String value = message.getString(fieldName);
+            if (value != null) {
+                return value;
             }
         }
         return null;

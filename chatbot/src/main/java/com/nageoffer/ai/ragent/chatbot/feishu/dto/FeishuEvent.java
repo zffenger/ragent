@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.chatbot.feishu.dto;
 
-import com.google.gson.annotations.SerializedName;
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
 
 /**
@@ -48,7 +48,7 @@ public class FeishuEvent {
     /**
      * 事件 ID
      */
-    @SerializedName("event_id")
+    @JSONField(name = "event_id")
     private String eventId;
 
     /**
@@ -64,12 +64,12 @@ public class FeishuEvent {
     /**
      * 应用 ID
      */
-    @SerializedName("app_id")
+    @JSONField(name = "app_id")
     private String appId;
 
     /**
      * 租户 Key
      */
-    @SerializedName("tenant_key")
+    @JSONField(name = "tenant_key")
     private String tenantKey;
 }

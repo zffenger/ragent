@@ -19,8 +19,7 @@ package com.nageoffer.ai.ragent.settings.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.alibaba.fastjson2.JSON;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.settings.controller.vo.ChatBotVO;
 import com.nageoffer.ai.ragent.settings.dao.entity.ChatBotDO;
@@ -48,8 +47,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     private final ChatBotMapper chatBotMapper;
     private final RetrievalDomainMapper retrievalDomainMapper;
-
-    private static final Gson GSON = new Gson();
 
     @Override
     public List<ChatBotVO> listAll() {
@@ -173,7 +170,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             entity.setDetectionMode(vo.getDetectionMode());
         }
         if (vo.getDetectionKeywords() != null) {
-            entity.setDetectionKeywords(GSON.toJson(vo.getDetectionKeywords()));
+            entity.setDetectionKeywords(JSON.toJSONString(vo.getDetectionKeywords()));
         }
         if (vo.getAtTriggerEnabled() != null) {
             entity.setAtTriggerEnabled(Boolean.TRUE.equals(vo.getAtTriggerEnabled()) ? 1 : 0);
@@ -272,7 +269,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     private ChatBotVO convertToVO(ChatBotDO entity, Map<String, String> domainNameMap) {
         List<String> keywords = null;
         if (entity.getDetectionKeywords() != null && !entity.getDetectionKeywords().isBlank()) {
-            keywords = GSON.fromJson(entity.getDetectionKeywords(), new TypeToken<List<String>>() {}.getType());
+            keywords = JSON.parseArray(entity.getDetectionKeywords(), String.class);
         }
 
         return ChatBotVO.builder()
@@ -321,7 +318,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .botName(vo.getBotName() != null ? vo.getBotName() : "智能助手")
                 .domainId(vo.getDomainId())
                 .detectionMode(vo.getDetectionMode() != null ? vo.getDetectionMode() : "COMPOSITE")
-                .detectionKeywords(vo.getDetectionKeywords() != null ? GSON.toJson(vo.getDetectionKeywords()) : null)
+                .detectionKeywords(vo.getDetectionKeywords() != null ? JSON.toJSONString(vo.getDetectionKeywords()) : null)
                 .atTriggerEnabled(Boolean.TRUE.equals(vo.getAtTriggerEnabled()) ? 1 : 0)
                 .llmThreshold(vo.getLlmThreshold() != null ? vo.getLlmThreshold() : new BigDecimal("0.70"))
                 .answerMode(vo.getAnswerMode() != null ? vo.getAnswerMode() : "RAG")

@@ -22,7 +22,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.gson.Gson;
+import com.alibaba.fastjson2.JSON;
 import com.nageoffer.ai.ragent.rag.controller.request.IntentNodeCreateRequest;
 import com.nageoffer.ai.ragent.rag.controller.request.IntentNodeUpdateRequest;
 import com.nageoffer.ai.ragent.rag.controller.vo.IntentNodeTreeVO;
@@ -60,8 +60,6 @@ public class IntentTreeServiceImpl extends ServiceImpl<IntentNodeMapper, IntentN
 
     private final KnowledgeBaseMapper knowledgeBaseMapper;
     private final IntentTreeCacheManager intentTreeCacheManager;
-
-    private static final Gson GSON = new Gson();
 
     @Override
     public List<IntentNodeTreeVO> getFullTree() {
@@ -133,7 +131,7 @@ public class IntentTreeServiceImpl extends ServiceImpl<IntentNodeMapper, IntentN
                 .description(requestParam.getDescription())
                 .mcpToolId(requestParam.getMcpToolId())
                 .examples(
-                        requestParam.getExamples() == null ? null : GSON.toJson(requestParam.getExamples())
+                        requestParam.getExamples() == null ? null : JSON.toJSONString(requestParam.getExamples())
                 )
                 .topK(normalizeTopK(requestParam.getTopK()))
                 .kind(
@@ -181,7 +179,7 @@ public class IntentTreeServiceImpl extends ServiceImpl<IntentNodeMapper, IntentN
             node.setDescription(req.getDescription());
         }
         if (req.getExamples() != null) {
-            node.setExamples(GSON.toJson(req.getExamples()));
+            node.setExamples(JSON.toJSONString(req.getExamples()));
         }
         if (req.getCollectionName() != null) {
             node.setCollectionName(req.getCollectionName());

@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.chatbot.settings.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.google.gson.Gson;
+import com.alibaba.fastjson2.JSON;
 import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.chatbot.settings.dao.entity.SystemConfigDO;
 import com.nageoffer.ai.ragent.chatbot.settings.dao.mapper.SystemConfigMapper;
@@ -45,8 +45,6 @@ public class BotConfigServiceImpl implements BotConfigService {
     private final StringRedisTemplate redisTemplate;
     private final ChatbotProperties chatbotProperties;
 
-    private static final Gson GSON = new Gson();
-
     // 配置键常量
     private static final String CONFIG_KEY_FEISHU = "chatbot.feishu";
     private static final String CONFIG_KEY_WEWORK = "chatbot.wework";
@@ -62,13 +60,13 @@ public class BotConfigServiceImpl implements BotConfigService {
         if (config == null) {
             return FeishuBotConfigVO.builder().enabled(false).build();
         }
-        return GSON.fromJson(config.getConfigValue(), FeishuBotConfigVO.class);
+        return JSON.parseObject(config.getConfigValue(), FeishuBotConfigVO.class);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateFeishuBotConfig(FeishuBotConfigVO config) {
-        saveOrUpdateConfig(CONFIG_KEY_FEISHU, GSON.toJson(config), "飞书机器人配置");
+        saveOrUpdateConfig(CONFIG_KEY_FEISHU, JSON.toJSONString(config), "飞书机器人配置");
         refreshConfigCache();
     }
 
@@ -78,13 +76,13 @@ public class BotConfigServiceImpl implements BotConfigService {
         if (config == null) {
             return WeWorkBotConfigVO.builder().enabled(false).build();
         }
-        return GSON.fromJson(config.getConfigValue(), WeWorkBotConfigVO.class);
+        return JSON.parseObject(config.getConfigValue(), WeWorkBotConfigVO.class);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateWeWorkBotConfig(WeWorkBotConfigVO config) {
-        saveOrUpdateConfig(CONFIG_KEY_WEWORK, GSON.toJson(config), "企微机器人配置");
+        saveOrUpdateConfig(CONFIG_KEY_WEWORK, JSON.toJSONString(config), "企微机器人配置");
         refreshConfigCache();
     }
 
@@ -98,13 +96,13 @@ public class BotConfigServiceImpl implements BotConfigService {
                     .llmThreshold(0.7)
                     .build();
         }
-        return GSON.fromJson(config.getConfigValue(), DetectionConfigVO.class);
+        return JSON.parseObject(config.getConfigValue(), DetectionConfigVO.class);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDetectionConfig(DetectionConfigVO config) {
-        saveOrUpdateConfig(CONFIG_KEY_DETECTION, GSON.toJson(config), "问题检测配置");
+        saveOrUpdateConfig(CONFIG_KEY_DETECTION, JSON.toJSONString(config), "问题检测配置");
         refreshConfigCache();
     }
 
@@ -117,13 +115,13 @@ public class BotConfigServiceImpl implements BotConfigService {
                     .maxTokens(2000)
                     .build();
         }
-        return GSON.fromJson(config.getConfigValue(), AnswerConfigVO.class);
+        return JSON.parseObject(config.getConfigValue(), AnswerConfigVO.class);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateAnswerConfig(AnswerConfigVO config) {
-        saveOrUpdateConfig(CONFIG_KEY_ANSWER, GSON.toJson(config), "回答生成配置");
+        saveOrUpdateConfig(CONFIG_KEY_ANSWER, JSON.toJSONString(config), "回答生成配置");
         refreshConfigCache();
     }
 
@@ -148,7 +146,7 @@ public class BotConfigServiceImpl implements BotConfigService {
         // 加载飞书配置
         SystemConfigDO feishuConfig = getConfigByKey(CONFIG_KEY_FEISHU);
         if (feishuConfig != null) {
-            FeishuBotConfigVO vo = GSON.fromJson(feishuConfig.getConfigValue(), FeishuBotConfigVO.class);
+            FeishuBotConfigVO vo = JSON.parseObject(feishuConfig.getConfigValue(), FeishuBotConfigVO.class);
             ChatbotProperties.FeishuConfig feishu = chatbotProperties.getFeishu();
             feishu.setEnabled(vo.getEnabled() != null && vo.getEnabled());
             feishu.setAppId(vo.getAppId());
@@ -161,7 +159,7 @@ public class BotConfigServiceImpl implements BotConfigService {
         // 加载企微配置
         SystemConfigDO weworkConfig = getConfigByKey(CONFIG_KEY_WEWORK);
         if (weworkConfig != null) {
-            WeWorkBotConfigVO vo = GSON.fromJson(weworkConfig.getConfigValue(), WeWorkBotConfigVO.class);
+            WeWorkBotConfigVO vo = JSON.parseObject(weworkConfig.getConfigValue(), WeWorkBotConfigVO.class);
             ChatbotProperties.WeWorkConfig wework = chatbotProperties.getWework();
             wework.setEnabled(vo.getEnabled() != null && vo.getEnabled());
             wework.setCorpId(vo.getCorpId());
@@ -175,7 +173,7 @@ public class BotConfigServiceImpl implements BotConfigService {
         // 加载检测配置
         SystemConfigDO detectionConfig = getConfigByKey(CONFIG_KEY_DETECTION);
         if (detectionConfig != null) {
-            DetectionConfigVO vo = GSON.fromJson(detectionConfig.getConfigValue(), DetectionConfigVO.class);
+            DetectionConfigVO vo = JSON.parseObject(detectionConfig.getConfigValue(), DetectionConfigVO.class);
             ChatbotProperties.DetectionConfig detection = chatbotProperties.getDetection();
             if (vo.getMode() != null) {
                 detection.setMode(ChatbotProperties.DetectionMode.valueOf(vo.getMode()));
@@ -190,7 +188,7 @@ public class BotConfigServiceImpl implements BotConfigService {
         // 加载回答配置
         SystemConfigDO answerConfig = getConfigByKey(CONFIG_KEY_ANSWER);
         if (answerConfig != null) {
-            AnswerConfigVO vo = GSON.fromJson(answerConfig.getConfigValue(), AnswerConfigVO.class);
+            AnswerConfigVO vo = JSON.parseObject(answerConfig.getConfigValue(), AnswerConfigVO.class);
             ChatbotProperties.AnswerConfig answer = chatbotProperties.getAnswer();
             if (vo.getMode() != null) {
                 answer.setMode(ChatbotProperties.AnswerMode.valueOf(vo.getMode()));

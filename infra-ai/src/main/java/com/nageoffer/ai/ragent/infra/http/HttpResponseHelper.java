@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.infra.http;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
 import lombok.NoArgsConstructor;
@@ -34,8 +34,6 @@ import java.nio.charset.StandardCharsets;
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public final class HttpResponseHelper {
 
-    private static final Gson GSON = new Gson();
-
     /**
      * 读取响应体原始字符串
      */
@@ -47,18 +45,18 @@ public final class HttpResponseHelper {
     }
 
     /**
-     * 将响应体解析为 JsonObject
+     * 将响应体解析为 JSONObject
      *
      * @param body  OkHttp 响应体
      * @param label 提供商标签，用于异常消息
-     * @return 解析后的 JsonObject
+     * @return 解析后的 JSONObject
      */
-    public static JsonObject parseJson(ResponseBody body, String label) throws IOException {
+    public static JSONObject parseJson(ResponseBody body, String label) throws IOException {
         if (body == null) {
             throw new ModelClientException(label + " 响应为空", ModelClientErrorType.INVALID_RESPONSE, null);
         }
         String content = body.string();
-        return GSON.fromJson(content, JsonObject.class);
+        return JSON.parseObject(content);
     }
 
     /**

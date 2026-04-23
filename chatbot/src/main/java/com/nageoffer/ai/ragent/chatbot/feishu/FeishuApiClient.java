@@ -17,9 +17,8 @@
 
 package com.nageoffer.ai.ragent.chatbot.feishu;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.chatbot.common.BotException;
 import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +46,6 @@ public class FeishuApiClient {
     private final StringRedisTemplate redisTemplate;
     private final ChatbotProperties properties;
 
-    private static final Gson GSON = new Gson();
-
     /**
      * 获取 tenant_access_token 的 URL
      */
@@ -74,20 +71,20 @@ public class FeishuApiClient {
         String token = getTenantAccessToken();
 
         // 构建请求体
-        JsonObject body = new JsonObject();
-        body.addProperty("receive_id", chatId);
-        body.addProperty("receive_id_type", "chat_id");
-        body.addProperty("msg_type", "text");
+        JSONObject body = new JSONObject();
+        body.put("receive_id", chatId);
+        body.put("receive_id_type", "chat_id");
+        body.put("msg_type", "text");
 
-        JsonObject contentObj = new JsonObject();
-        contentObj.addProperty("text", content);
-        body.add("content", contentObj);
+        JSONObject contentObj = new JSONObject();
+        contentObj.put("text", content);
+        body.put("content", contentObj);
 
         Request request = new Request.Builder()
                 .url(SEND_MESSAGE_URL + "?receive_id_type=chat_id")
                 .header("Authorization", "Bearer " + token)
                 .header("Content-Type", "application/json")
-                .post(RequestBody.create(body.toString(), MediaType.parse("application/json")))
+                .post(RequestBody.create(body.toJSONString(), MediaType.parse("application/json")))
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -97,11 +94,11 @@ public class FeishuApiClient {
             }
 
             String responseBody = response.body().string();
-            JsonObject resp = JsonParser.parseString(responseBody).getAsJsonObject();
-            int code = resp.has("code") ? resp.get("code").getAsInt() : -1;
+            JSONObject resp = JSON.parseObject(responseBody);
+            int code = resp != null ? resp.getIntValue("code") : -1;
 
             if (code != 0) {
-                String msg = resp.has("msg") ? resp.get("msg").getAsString() : "Unknown error";
+                String msg = resp != null ? resp.getString("msg") : "Unknown error";
                 log.error("发送飞书消息失败: code={}, msg={}", code, msg);
                 throw new BotException("发送飞书消息失败: " + msg);
             }
@@ -137,14 +134,14 @@ public class FeishuApiClient {
      * @return token
      */
     private String requestTenantAccessToken() {
-        JsonObject body = new JsonObject();
-        body.addProperty("app_id", properties.getFeishu().getAppId());
-        body.addProperty("app_secret", properties.getFeishu().getAppSecret());
+        JSONObject body = new JSONObject();
+        body.put("app_id", properties.getFeishu().getAppId());
+        body.put("app_secret", properties.getFeishu().getAppSecret());
 
         Request request = new Request.Builder()
                 .url(TOKEN_URL)
                 .header("Content-Type", "application/json")
-                .post(RequestBody.create(body.toString(), MediaType.parse("application/json")))
+                .post(RequestBody.create(body.toJSONString(), MediaType.parse("application/json")))
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -153,16 +150,16 @@ public class FeishuApiClient {
             }
 
             String responseBody = response.body().string();
-            JsonObject resp = JsonParser.parseString(responseBody).getAsJsonObject();
+            JSONObject resp = JSON.parseObject(responseBody);
 
-            int code = resp.has("code") ? resp.get("code").getAsInt() : -1;
+            int code = resp != null ? resp.getIntValue("code") : -1;
             if (code != 0) {
-                String msg = resp.has("msg") ? resp.get("msg").getAsString() : "Unknown error";
+                String msg = resp != null ? resp.getString("msg") : "Unknown error";
                 throw new BotException("获取飞书 Token 失败: " + msg);
             }
 
-            String token = resp.get("tenant_access_token").getAsString();
-            int expire = resp.get("expire").getAsInt();
+            String token = resp.getString("tenant_access_token");
+            int expire = resp.getIntValue("expire");
 
             // 缓存 token，提前 5 分钟过期
             long cacheExpire = Math.max(expire - 300, 60);
