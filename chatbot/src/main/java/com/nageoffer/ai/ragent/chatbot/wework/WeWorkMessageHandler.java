@@ -17,14 +17,13 @@
 
 package com.nageoffer.ai.ragent.chatbot.wework;
 
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.BotPlatform;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.chatbot.core.QuestionDetector;
 import com.nageoffer.ai.ragent.chatbot.service.AnswerGenerator;
 import com.nageoffer.ai.ragent.chatbot.wework.dto.WeWorkEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -33,20 +32,24 @@ import lombok.extern.slf4j.Slf4j;
  * 处理企业微信回调推送的消息事件
  */
 @Slf4j
-@RequiredArgsConstructor
 public class WeWorkMessageHandler {
 
     private final QuestionDetector questionDetector;
     private final AnswerGenerator answerGenerator;
-    private final WeWorkApiClient weWorkApiClient;
-    private final ChatbotProperties properties;
+
+    public WeWorkMessageHandler(QuestionDetector questionDetector, AnswerGenerator answerGenerator) {
+        this.questionDetector = questionDetector;
+        this.answerGenerator = answerGenerator;
+    }
 
     /**
      * 处理企微事件
      *
-     * @param event 企微事件
+     * @param event     企微事件
+     * @param botConfig 机器人配置
+     * @param apiClient API 客户端
      */
-    public void handle(WeWorkEvent event) {
+    public void handle(WeWorkEvent event, BotConfig botConfig, WeWorkApiClient apiClient) {
         if (event == null) {
             return;
         }
@@ -63,19 +66,20 @@ public class WeWorkMessageHandler {
             return;
         }
 
-        log.info("处理企微消息: chatType={}, fromUser={}, content={}",
+        log.info("处理企微消息: botId={}, chatType={}, fromUser={}, content={}",
+                botConfig != null ? botConfig.getId() : "null",
                 event.getChatType(), event.getFromUserName(),
                 content.length() > 50 ? content.substring(0, 50) + "..." : content);
 
         try {
             // 构建消息上下文
-            MessageContext context = buildMessageContext(event, content);
+            MessageContext context = buildMessageContext(event, content, botConfig);
 
             // 判断是单聊还是群聊
             if (context.isPrivateChat()) {
-                handlePrivateMessage(content, context);
+                handlePrivateMessage(content, context, botConfig, apiClient);
             } else {
-                handleGroupMessage(content, context);
+                handleGroupMessage(content, context, botConfig, apiClient);
             }
         } catch (Exception e) {
             log.error("处理企微消息异常: {}", e.getMessage(), e);
@@ -85,15 +89,15 @@ public class WeWorkMessageHandler {
     /**
      * 处理单聊消息
      */
-    private void handlePrivateMessage(String content, MessageContext context) {
+    private void handlePrivateMessage(String content, MessageContext context, BotConfig botConfig, WeWorkApiClient apiClient) {
         log.debug("处理单聊消息");
-        generateAndSendReply(content, context);
+        generateAndSendReply(content, context, botConfig, apiClient);
     }
 
     /**
      * 处理群聊消息
      */
-    private void handleGroupMessage(String content, MessageContext context) {
+    private void handleGroupMessage(String content, MessageContext context, BotConfig botConfig, WeWorkApiClient apiClient) {
         // 检测是否为问题
         DetectionResult detectionResult = questionDetector.detect(content, context);
 
@@ -109,28 +113,28 @@ public class WeWorkMessageHandler {
         }
 
         log.debug("群聊问题检测通过，置信度: {}", detectionResult.getConfidence());
-        generateAndSendReply(question, context);
+        generateAndSendReply(question, context, botConfig, apiClient);
     }
 
     /**
      * 生成并发送回复
      */
-    private void generateAndSendReply(String question, MessageContext context) {
+    private void generateAndSendReply(String question, MessageContext context, BotConfig botConfig, WeWorkApiClient apiClient) {
         try {
             // 生成回答
             String answer = answerGenerator.generate(question, context);
 
             // 发送回复（企微群聊回复需要使用 chatId）
             String toUser = context.isGroupChat() ? context.getChatId() : context.getSenderId();
-            weWorkApiClient.sendTextMessage(toUser, answer);
+            apiClient.sendTextMessage(toUser, answer);
 
-            log.info("企微消息回复成功: toUser={}", toUser);
+            log.info("企微消息回复成功: botId={}, toUser={}", botConfig.getId(), toUser);
         } catch (Exception e) {
             log.error("生成或发送回复失败: {}", e.getMessage(), e);
             // 尝试发送错误提示
             try {
                 String toUser = context.isGroupChat() ? context.getChatId() : context.getSenderId();
-                weWorkApiClient.sendTextMessage(toUser, "抱歉，处理您的消息时出现错误，请稍后再试。");
+                apiClient.sendTextMessage(toUser, "抱歉，处理您的消息时出现错误，请稍后再试。");
             } catch (Exception ex) {
                 log.error("发送错误提示失败: {}", ex.getMessage());
             }
@@ -140,9 +144,9 @@ public class WeWorkMessageHandler {
     /**
      * 构建消息上下文
      */
-    private MessageContext buildMessageContext(WeWorkEvent event, String content) {
+    private MessageContext buildMessageContext(WeWorkEvent event, String content, BotConfig botConfig) {
         String chatType = "single".equals(event.getChatType()) ? "p2p" : "group";
-        String botName = properties.getWework().getBotName();
+        String botName = botConfig != null && botConfig.getBotName() != null ? botConfig.getBotName() : "智能助手";
 
         // 检测是否 @机器人（企微格式：<@username>）
         boolean atBot = content.contains("<@") && content.contains(">");
@@ -157,6 +161,7 @@ public class WeWorkMessageHandler {
                 .rawContent(content)
                 .messageId(event.getMsgId())
                 .timestamp(event.getCreateTime())
+                .botConfig(botConfig)
                 .build();
     }
 }

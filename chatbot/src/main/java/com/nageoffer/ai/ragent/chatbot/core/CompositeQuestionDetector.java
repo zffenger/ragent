@@ -17,9 +17,9 @@
 
 package com.nageoffer.ai.ragent.chatbot.core;
 
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +34,6 @@ public class CompositeQuestionDetector implements QuestionDetector {
 
     private final KeywordQuestionDetector keywordDetector;
     private final LlmQuestionDetector llmDetector;
-    private final ChatbotProperties properties;
 
     /**
      * 关键词检测的高置信度阈值
@@ -48,8 +47,11 @@ public class CompositeQuestionDetector implements QuestionDetector {
             return DetectionResult.notQuestion();
         }
 
+        BotConfig botConfig = context.getBotConfig();
+
         // 1. @机器人 直接触发，不需要 LLM 判断
-        if (properties.getDetection().isAtTriggerEnabled() && context.isAtBot()) {
+        boolean atTriggerEnabled = botConfig != null && botConfig.isAtTriggerEnabled();
+        if (atTriggerEnabled && context.isAtBot()) {
             log.debug("@触发，跳过 LLM 检测");
             return keywordDetector.detect(message, context);
         }

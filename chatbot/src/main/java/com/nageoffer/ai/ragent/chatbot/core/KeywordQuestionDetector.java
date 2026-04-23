@@ -17,10 +17,9 @@
 
 package com.nageoffer.ai.ragent.chatbot.core;
 
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -33,10 +32,14 @@ import java.util.regex.Pattern;
  * 基于关键词匹配和 @机器人 触发来检测问题
  */
 @Slf4j
-@RequiredArgsConstructor
 public class KeywordQuestionDetector implements QuestionDetector {
 
-    private final ChatbotProperties properties;
+    /**
+     * 默认触发关键词
+     */
+    private static final List<String> DEFAULT_KEYWORDS = List.of(
+            "?", "？", "请", "怎么", "如何", "什么", "为什么", "能不能", "可以吗", "吗"
+    );
 
     /**
      * @ 用户名的正则模式
@@ -50,16 +53,20 @@ public class KeywordQuestionDetector implements QuestionDetector {
         }
 
         String trimmedMessage = message.trim();
+        BotConfig botConfig = context.getBotConfig();
 
         // 1. @机器人 直接触发
-        if (properties.getDetection().isAtTriggerEnabled() && context.isAtBot()) {
+        boolean atTriggerEnabled = botConfig != null && botConfig.isAtTriggerEnabled();
+        if (atTriggerEnabled && context.isAtBot()) {
             String question = removeAtMention(trimmedMessage, context.getBotName());
             log.debug("@触发问题检测: {}", question);
             return DetectionResult.questionByAt(question.trim());
         }
 
         // 2. 关键词匹配
-        List<String> keywords = properties.getDetection().getKeywords();
+        List<String> keywords = botConfig != null && botConfig.getDetectionKeywords() != null
+                ? botConfig.getDetectionKeywords()
+                : DEFAULT_KEYWORDS;
         for (String keyword : keywords) {
             if (trimmedMessage.contains(keyword)) {
                 log.debug("关键词 '{}' 触发问题检测: {}", keyword, trimmedMessage);

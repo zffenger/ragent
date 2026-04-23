@@ -121,6 +121,9 @@ feishu:
     app-id: cli_a96f0846c8f81bca
     app-secret: dTzSZT6RAel84xkegUiuKbjeRTiqOsOZ
 
+chatbot:
+  enabled: true
+
 sa-token:
   token-name: Authorization
   timeout: 2592000

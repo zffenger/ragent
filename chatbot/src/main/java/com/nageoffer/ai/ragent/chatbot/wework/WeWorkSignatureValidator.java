@@ -17,8 +17,7 @@
 
 package com.nageoffer.ai.ragent.chatbot.wework;
 
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
-import lombok.RequiredArgsConstructor;
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Cipher;
@@ -35,16 +34,20 @@ import java.util.Base64;
  * 用于验证企业微信回调请求的签名，并解密消息内容
  * <p>
  * 企业微信使用 AES-256-CBC 加密消息，签名使用 SHA-1
+ * TODO: 待改造为数据库配置
  */
 @Slf4j
-@RequiredArgsConstructor
 public class WeWorkSignatureValidator {
 
-    private final ChatbotProperties properties;
+    private final BotConfig botConfig;
 
     private static final String AES = "AES";
     private static final String AES_CBC_PKCS7 = "AES/CBC/PKCS7Padding";
     private static final String SHA1 = "SHA-1";
+
+    public WeWorkSignatureValidator(BotConfig botConfig) {
+        this.botConfig = botConfig;
+    }
 
     /**
      * 验证签名
@@ -56,9 +59,14 @@ public class WeWorkSignatureValidator {
      * @return 签名是否有效
      */
     public boolean validate(String msgSignature, String timestamp, String nonce, String encryptMsg) {
-        String token = properties.getWework().getToken();
+        if (botConfig == null) {
+            log.warn("企微机器人配置为空，跳过签名验证");
+            return true;
+        }
+
+        String token = botConfig.getToken();
         if (token == null || token.isBlank()) {
-            log.warn("未配置企微 Token，跳过签名验证");
+            log.warn("未配置企微 Token，跳过签名验证: botId={}", botConfig.getId());
             return true;
         }
 
@@ -99,9 +107,13 @@ public class WeWorkSignatureValidator {
      * @return 解密后的 XML 消息
      */
     public String decrypt(String encryptMsg) {
-        String encodingAesKey = properties.getWework().getEncodingAesKey();
+        if (botConfig == null) {
+            throw new IllegalArgumentException("企微机器人配置为空");
+        }
+
+        String encodingAesKey = botConfig.getEncodingAesKey();
         if (encodingAesKey == null || encodingAesKey.isBlank()) {
-            throw new IllegalArgumentException("未配置企微 EncodingAESKey");
+            throw new IllegalArgumentException("未配置企微 EncodingAESKey: botId=" + botConfig.getId());
         }
 
         try {
@@ -125,7 +137,7 @@ public class WeWorkSignatureValidator {
             byte[] result = new byte[len - padLen];
             System.arraycopy(decrypted, 0, result, 0, result.length);
 
-            // 解析消息格式：random(16) + msgLen(4) + msg + receiveId
+            // 解析消息格式：random(16) + msgLen(4) + msg + receiveid
             // 前 16 字节是随机数，后 4 字节是消息长度
             int msgLen = ((result[16] & 0xff) << 24) |
                     ((result[17] & 0xff) << 16) |

@@ -23,53 +23,111 @@ import lombok.Data;
 /**
  * 飞书事件 DTO
  * <p>
- * 飞书 Webhook 推送的事件结构
+ * 飞书 Webhook 推送的事件结构（schema 2.0）
  */
 @Data
 public class FeishuEvent {
 
     /**
-     * 事件类型
-     * 如：url_verification, im.message.receive_v1
+     * 事件 Schema 版本
      */
-    private String type;
+    private String schema;
 
     /**
-     * 事件模式
-     * webhook 模式下为 "webhook"
+     * 事件头部信息
      */
-    private String mode;
-
-    /**
-     * URL 验证时返回的 challenge 字符串
-     */
-    private String challenge;
-
-    /**
-     * 事件 ID
-     */
-    @JSONField(name = "event_id")
-    private String eventId;
-
-    /**
-     * 事件时间戳
-     */
-    private Long ts;
+    private Header header;
 
     /**
      * 事件详细内容
      */
     private FeishuMessage event;
 
+    // ==================== 便捷方法 ====================
+
+    /**
+     * 事件类型
+     */
+    public String getType() {
+        return header != null ? header.getEventType() : null;
+    }
+
+    /**
+     * URL 验证时返回的 challenge 字符串
+     */
+    public String getChallenge() {
+        return null;
+    }
+
+    /**
+     * 事件 ID
+     */
+    public String getEventId() {
+        return header != null ? header.getEventId() : null;
+    }
+
+    /**
+     * 事件时间戳
+     */
+    public Long getTs() {
+        return header != null ? header.getCreateTime() : null;
+    }
+
     /**
      * 应用 ID
      */
-    @JSONField(name = "app_id")
-    private String appId;
+    public String getAppId() {
+        return header != null ? header.getAppId() : null;
+    }
 
     /**
      * 租户 Key
      */
-    @JSONField(name = "tenant_key")
-    private String tenantKey;
+    public String getTenantKey() {
+        return header != null ? header.getTenantKey() : null;
+    }
+
+    // ==================== 内部类 ====================
+
+    /**
+     * 事件头部信息
+     */
+    @Data
+    public static class Header {
+        /**
+         * 事件 ID
+         */
+        @JSONField(name = "event_id")
+        private String eventId;
+
+        /**
+         * 验证令牌
+         */
+        private String token;
+
+        /**
+         * 事件创建时间戳
+         */
+        @JSONField(name = "create_time")
+        private Long createTime;
+
+        /**
+         * 事件类型
+         * 如：im.message.receive_v1
+         */
+        @JSONField(name = "event_type")
+        private String eventType;
+
+        /**
+         * 租户 Key
+         */
+        @JSONField(name = "tenant_key")
+        private String tenantKey;
+
+        /**
+         * 应用 ID
+         */
+        @JSONField(name = "app_id")
+        private String appId;
+    }
 }

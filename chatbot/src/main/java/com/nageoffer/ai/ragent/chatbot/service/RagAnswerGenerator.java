@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.chatbot.service;
 
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
@@ -48,7 +48,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RagAnswerGenerator implements AnswerGenerator {
 
     private final LLMService llmService;
-    private final ChatbotProperties properties;
 
     /**
      * 回答生成的超时时间（秒）
@@ -56,9 +55,9 @@ public class RagAnswerGenerator implements AnswerGenerator {
     private static final long TIMEOUT_SECONDS = 60;
 
     /**
-     * RAG 系统提示词
+     * 默认 RAG 系统提示词
      */
-    private static final String RAG_SYSTEM_PROMPT = """
+    private static final String DEFAULT_SYSTEM_PROMPT = """
             你是一个智能客服助手，请基于你的知识回答用户问题。
             请遵循以下规则：
             1. 回答要准确、简洁、有针对性
@@ -66,9 +65,22 @@ public class RagAnswerGenerator implements AnswerGenerator {
             3. 避免过长的回答，控制在合理范围内
             """;
 
+    /**
+     * 默认最大 Token 数
+     */
+    private static final int DEFAULT_MAX_TOKENS = 2000;
+
     @Override
     public String generate(String question, MessageContext context) {
         log.info("使用 RAG 生成回答，问题: {}, 会话: {}", question, context.getConversationId());
+
+        BotConfig botConfig = context.getBotConfig();
+        String systemPrompt = botConfig != null && botConfig.getSystemPrompt() != null
+                ? botConfig.getSystemPrompt()
+                : DEFAULT_SYSTEM_PROMPT;
+        int maxTokens = botConfig != null && botConfig.getMaxTokens() != null
+                ? botConfig.getMaxTokens()
+                : DEFAULT_MAX_TOKENS;
 
         try {
             // 使用流式调用收集完整响应
@@ -78,10 +90,10 @@ public class RagAnswerGenerator implements AnswerGenerator {
 
             ChatRequest request = ChatRequest.builder()
                     .messages(List.of(
-                            ChatMessage.system(RAG_SYSTEM_PROMPT),
+                            ChatMessage.system(systemPrompt),
                             ChatMessage.user(question)
                     ))
-                    .maxTokens(properties.getAnswer().getMaxTokens())
+                    .maxTokens(maxTokens)
                     .temperature(0.3)
                     .topP(0.8)
                     .build();

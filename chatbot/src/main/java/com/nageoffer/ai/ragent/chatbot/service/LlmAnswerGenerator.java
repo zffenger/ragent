@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.chatbot.service;
 
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
@@ -37,18 +37,35 @@ import java.util.List;
 public class LlmAnswerGenerator implements AnswerGenerator {
 
     private final LLMService llmService;
-    private final ChatbotProperties properties;
+
+    /**
+     * 默认系统提示词
+     */
+    private static final String DEFAULT_SYSTEM_PROMPT = "你是一个智能客服助手，请简洁准确地回答用户问题。";
+
+    /**
+     * 默认最大 Token 数
+     */
+    private static final int DEFAULT_MAX_TOKENS = 2000;
 
     @Override
     public String generate(String question, MessageContext context) {
         log.info("使用 LLM 生成回答，问题: {}", question);
 
+        BotConfig botConfig = context.getBotConfig();
+        String systemPrompt = botConfig != null && botConfig.getSystemPrompt() != null
+                ? botConfig.getSystemPrompt()
+                : DEFAULT_SYSTEM_PROMPT;
+        int maxTokens = botConfig != null && botConfig.getMaxTokens() != null
+                ? botConfig.getMaxTokens()
+                : DEFAULT_MAX_TOKENS;
+
         ChatRequest request = ChatRequest.builder()
                 .messages(List.of(
-                        ChatMessage.system(properties.getAnswer().getDefaultSystemPrompt()),
+                        ChatMessage.system(systemPrompt),
                         ChatMessage.user(question)
                 ))
-                .maxTokens(properties.getAnswer().getMaxTokens())
+                .maxTokens(maxTokens)
                 .temperature(0.3)
                 .topP(0.8)
                 .build();

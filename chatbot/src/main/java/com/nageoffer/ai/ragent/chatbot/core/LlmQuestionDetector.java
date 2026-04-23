@@ -19,15 +19,16 @@ package com.nageoffer.ai.ragent.chatbot.core;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -40,7 +41,11 @@ import java.util.List;
 public class LlmQuestionDetector implements QuestionDetector {
 
     private final LLMService llmService;
-    private final ChatbotProperties properties;
+
+    /**
+     * 默认置信度阈值
+     */
+    private static final BigDecimal DEFAULT_THRESHOLD = new BigDecimal("0.70");
 
     /**
      * LLM 检测的系统提示词
@@ -82,7 +87,7 @@ public class LlmQuestionDetector implements QuestionDetector {
                     .build();
 
             String response = llmService.chat(request);
-            return parseDetectionResult(response, message);
+            return parseDetectionResult(response, message, context.getBotConfig());
         } catch (Exception e) {
             log.warn("LLM 问题检测失败: {}", e.getMessage());
             // 降级：默认认为不是问题
@@ -93,7 +98,7 @@ public class LlmQuestionDetector implements QuestionDetector {
     /**
      * 解析 LLM 返回的检测结果
      */
-    private DetectionResult parseDetectionResult(String response, String originalMessage) {
+    private DetectionResult parseDetectionResult(String response, String originalMessage, BotConfig botConfig) {
         try {
             // 尝试提取 JSON
             String jsonStr = extractJson(response);
@@ -102,9 +107,11 @@ public class LlmQuestionDetector implements QuestionDetector {
             boolean isQuestion = json != null && json.getBooleanValue("is_question");
             double confidence = json != null ? json.getDoubleValue("confidence") : 0.5;
 
-            // 检查置信度阈值
-            double threshold = properties.getDetection().getLlmThreshold();
-            if (isQuestion && confidence >= threshold) {
+            // 检查置信度阈值（从机器人配置获取）
+            BigDecimal threshold = botConfig != null && botConfig.getLlmThreshold() != null
+                    ? botConfig.getLlmThreshold()
+                    : DEFAULT_THRESHOLD;
+            if (isQuestion && confidence >= threshold.doubleValue()) {
                 log.debug("LLM 检测为问题，置信度: {}", confidence);
                 return DetectionResult.questionByLlm(originalMessage, confidence);
             }

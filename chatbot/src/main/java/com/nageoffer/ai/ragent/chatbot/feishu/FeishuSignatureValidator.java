@@ -17,8 +17,7 @@
 
 package com.nageoffer.ai.ragent.chatbot.feishu;
 
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
-import lombok.RequiredArgsConstructor;
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
@@ -36,12 +35,18 @@ import java.util.Base64;
  * 签名算法：HMAC-SHA256(timestamp + nonce + body, secret)
  */
 @Slf4j
-@RequiredArgsConstructor
 public class FeishuSignatureValidator {
 
-    private final ChatbotProperties properties;
+    private final BotConfig botConfig;
 
     private static final String HMAC_SHA256 = "HmacSHA256";
+
+    /**
+     * 使用 BotConfig 构造
+     */
+    public FeishuSignatureValidator(BotConfig botConfig) {
+        this.botConfig = botConfig;
+    }
 
     /**
      * 验证签名
@@ -54,9 +59,9 @@ public class FeishuSignatureValidator {
      */
     public boolean validate(String timestamp, String nonce, String body, String signature) {
         // 如果未配置验证令牌，跳过验证（不推荐生产环境使用）
-        String verificationToken = properties.getFeishu().getVerificationToken();
+        String verificationToken = botConfig.getVerificationToken();
         if (verificationToken == null || verificationToken.isBlank()) {
-            log.warn("未配置飞书验证令牌，跳过签名验证");
+            log.warn("未配置飞书验证令牌，跳过签名验证: botId={}", botConfig.getId());
             return true;
         }
 
@@ -75,7 +80,7 @@ public class FeishuSignatureValidator {
             // 比较签名
             boolean valid = calculatedSignature.equals(signature);
             if (!valid) {
-                log.warn("飞书签名验证失败: expected={}, actual={}", calculatedSignature, signature);
+                log.warn("飞书签名验证失败: botId={}, expected={}, actual={}", botConfig.getId(), calculatedSignature, signature);
             }
             return valid;
         } catch (Exception e) {

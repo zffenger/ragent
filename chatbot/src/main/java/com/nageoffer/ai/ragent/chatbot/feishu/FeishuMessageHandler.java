@@ -19,10 +19,10 @@ package com.nageoffer.ai.ragent.chatbot.feishu;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.BotPlatform;
 import com.nageoffer.ai.ragent.chatbot.common.DetectionResult;
 import com.nageoffer.ai.ragent.chatbot.common.MessageContext;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.chatbot.core.QuestionDetector;
 import com.nageoffer.ai.ragent.chatbot.feishu.dto.FeishuEvent;
 import com.nageoffer.ai.ragent.chatbot.feishu.dto.FeishuMessage;
@@ -41,16 +41,16 @@ public class FeishuMessageHandler {
 
     private final QuestionDetector questionDetector;
     private final AnswerGenerator answerGenerator;
-    private final FeishuApiClient feishuApiClient;
-    private final ChatbotProperties properties;
+    private final FeishuApiClientFactory apiClientFactory;
 
     /**
      * 处理飞书事件
      *
-     * @param event 飞书事件
+     * @param event     飞书事件
+     * @param botConfig 机器人配置
      */
-    public void handle(FeishuEvent event) {
-        if (event == null) {
+    public void handle(FeishuEvent event, BotConfig botConfig) {
+        if (event == null || botConfig == null) {
             return;
         }
 
@@ -80,21 +80,21 @@ public class FeishuMessageHandler {
                 return;
             }
 
-            log.info("处理飞书消息: chatType={}, chatId={}, content={}",
-                    message.getChatType(), message.getChatId(),
+            log.info("处理飞书消息: botId={}, chatType={}, chatId={}, content={}",
+                    botConfig.getId(), message.getChatType(), message.getChatId(),
                     content.length() > 50 ? content.substring(0, 50) + "..." : content);
 
             // 构建消息上下文
-            MessageContext context = buildMessageContext(message, content);
+            MessageContext context = buildMessageContext(message, content, botConfig);
 
             // 单聊直接回复
             if (context.isPrivateChat()) {
-                handlePrivateMessage(content, context);
+                handlePrivateMessage(content, context, botConfig);
                 return;
             }
 
             // 群聊需要检测是否为问题
-            handleGroupMessage(content, context);
+            handleGroupMessage(content, context, botConfig);
 
         } catch (Exception e) {
             log.error("处理飞书消息异常: {}", e.getMessage(), e);
@@ -104,15 +104,15 @@ public class FeishuMessageHandler {
     /**
      * 处理单聊消息
      */
-    private void handlePrivateMessage(String content, MessageContext context) {
+    private void handlePrivateMessage(String content, MessageContext context, BotConfig botConfig) {
         log.debug("处理单聊消息");
-        generateAndSendReply(content, context);
+        generateAndSendReply(content, context, botConfig);
     }
 
     /**
      * 处理群聊消息
      */
-    private void handleGroupMessage(String content, MessageContext context) {
+    private void handleGroupMessage(String content, MessageContext context, BotConfig botConfig) {
         // 检测是否为问题
         DetectionResult detectionResult = questionDetector.detect(content, context);
 
@@ -128,26 +128,28 @@ public class FeishuMessageHandler {
         }
 
         log.debug("群聊问题检测通过，置信度: {}", detectionResult.getConfidence());
-        generateAndSendReply(question, context);
+        generateAndSendReply(question, context, botConfig);
     }
 
     /**
      * 生成并发送回复
      */
-    private void generateAndSendReply(String question, MessageContext context) {
+    private void generateAndSendReply(String question, MessageContext context, BotConfig botConfig) {
         try {
             // 生成回答
             String answer = answerGenerator.generate(question, context);
 
-            // 发送回复
-            feishuApiClient.sendTextMessage(context.getChatId(), answer);
+            // 获取 API 客户端并发送回复
+            FeishuApiClient apiClient = apiClientFactory.getClient(botConfig);
+            apiClient.sendTextMessage(context.getChatId(), answer);
 
-            log.info("飞书消息回复成功: chatId={}", context.getChatId());
+            log.info("飞书消息回复成功: botId={}, chatId={}", botConfig.getId(), context.getChatId());
         } catch (Exception e) {
             log.error("生成或发送回复失败: {}", e.getMessage(), e);
             // 尝试发送错误提示
             try {
-                feishuApiClient.sendTextMessage(context.getChatId(), "抱歉，处理您的消息时出现错误，请稍后再试。");
+                FeishuApiClient apiClient = apiClientFactory.getClient(botConfig);
+                apiClient.sendTextMessage(context.getChatId(), "抱歉，处理您的消息时出现错误，请稍后再试。");
             } catch (Exception ex) {
                 log.error("发送错误提示失败: {}", ex.getMessage());
             }
@@ -184,8 +186,8 @@ public class FeishuMessageHandler {
     /**
      * 构建消息上下文
      */
-    private MessageContext buildMessageContext(FeishuMessage message, String content) {
-        String botName = properties.getFeishu().getBotName();
+    private MessageContext buildMessageContext(FeishuMessage message, String content, BotConfig botConfig) {
+        String botName = botConfig.getBotName() != null ? botConfig.getBotName() : "智能助手";
 
         return MessageContext.builder()
                 .platform(BotPlatform.FEISHU)
@@ -198,6 +200,7 @@ public class FeishuMessageHandler {
                 .rawContent(content)
                 .messageId(message.getMessageId())
                 .timestamp(message.getCreateTime())
+                .botConfig(botConfig)
                 .build();
     }
 }

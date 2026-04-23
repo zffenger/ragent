@@ -21,22 +21,16 @@ import com.nageoffer.ai.ragent.chatbot.core.CompositeQuestionDetector;
 import com.nageoffer.ai.ragent.chatbot.core.KeywordQuestionDetector;
 import com.nageoffer.ai.ragent.chatbot.core.LlmQuestionDetector;
 import com.nageoffer.ai.ragent.chatbot.core.QuestionDetector;
-import com.nageoffer.ai.ragent.chatbot.feishu.FeishuApiClient;
+import com.nageoffer.ai.ragent.chatbot.feishu.FeishuApiClientFactory;
 import com.nageoffer.ai.ragent.chatbot.feishu.FeishuMessageHandler;
-import com.nageoffer.ai.ragent.chatbot.feishu.FeishuSignatureValidator;
 import com.nageoffer.ai.ragent.chatbot.service.AnswerGenerator;
 import com.nageoffer.ai.ragent.chatbot.service.LlmAnswerGenerator;
-import com.nageoffer.ai.ragent.chatbot.settings.controller.BotConfigController;
-import com.nageoffer.ai.ragent.chatbot.settings.service.BotConfigService;
-import com.nageoffer.ai.ragent.chatbot.settings.service.impl.BotConfigServiceImpl;
-import com.nageoffer.ai.ragent.chatbot.wework.WeWorkApiClient;
+import com.nageoffer.ai.ragent.chatbot.wework.WeWorkApiClientFactory;
 import com.nageoffer.ai.ragent.chatbot.wework.WeWorkMessageHandler;
-import com.nageoffer.ai.ragent.chatbot.wework.WeWorkSignatureValidator;
 import com.nageoffer.ai.ragent.infra.chat.LLMService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -44,12 +38,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 /**
  * 机器人模块自动配置类
  * <p>
- * 根据配置自动装配飞书/企微机器人相关组件
+ * 机器人配置存储在数据库 t_chat_bot 表中，支持多机器人动态配置
  */
 @Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties(ChatbotProperties.class)
-@ConditionalOnProperty(prefix = "chatbot", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class ChatbotAutoConfiguration {
 
     // ==================== 问题检测器 ====================
@@ -59,20 +52,9 @@ public class ChatbotAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public KeywordQuestionDetector keywordQuestionDetector(ChatbotProperties properties) {
+    public KeywordQuestionDetector keywordQuestionDetector() {
         log.info("初始化关键词问题检测器");
-        return new KeywordQuestionDetector(properties);
-    }
-
-    /**
-     * LLM 问题检测器
-     */
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix = "chatbot.detection", name = "mode", havingValue = "LLM")
-    public LlmQuestionDetector llmQuestionDetector(LLMService llmService, ChatbotProperties properties) {
-        log.info("初始化 LLM 问题检测器");
-        return new LlmQuestionDetector(llmService, properties);
+        return new KeywordQuestionDetector();
     }
 
     /**
@@ -80,14 +62,12 @@ public class ChatbotAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(QuestionDetector.class)
-    @ConditionalOnProperty(prefix = "chatbot.detection", name = "mode", havingValue = "COMPOSITE", matchIfMissing = true)
     public CompositeQuestionDetector compositeQuestionDetector(
             KeywordQuestionDetector keywordDetector,
-            LLMService llmService,
-            ChatbotProperties properties) {
+            LLMService llmService) {
         log.info("初始化组合问题检测器");
-        LlmQuestionDetector llmDetector = new LlmQuestionDetector(llmService, properties);
-        return new CompositeQuestionDetector(keywordDetector, llmDetector, properties);
+        LlmQuestionDetector llmDetector = new LlmQuestionDetector(llmService);
+        return new CompositeQuestionDetector(keywordDetector, llmDetector);
     }
 
     // ==================== 回答生成器 ====================
@@ -97,10 +77,9 @@ public class ChatbotAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(AnswerGenerator.class)
-    @ConditionalOnProperty(prefix = "chatbot.answer", name = "mode", havingValue = "LLM")
-    public LlmAnswerGenerator llmAnswerGenerator(LLMService llmService, ChatbotProperties properties) {
+    public LlmAnswerGenerator llmAnswerGenerator(LLMService llmService) {
         log.info("初始化 LLM 回答生成器");
-        return new LlmAnswerGenerator(llmService, properties);
+        return new LlmAnswerGenerator(llmService);
     }
 
     // RAG 回答生成器在 RagAnswerGenerator.java 中通过 @Component 注解
@@ -108,84 +87,49 @@ public class ChatbotAutoConfiguration {
     // ==================== 飞书机器人组件 ====================
 
     /**
-     * 飞书签名验证器
+     * 飞书 API 客户端工厂
      */
     @Bean
-    @ConditionalOnProperty(prefix = "chatbot.feishu", name = "enabled", havingValue = "true")
-    public FeishuSignatureValidator feishuSignatureValidator(ChatbotProperties properties) {
-        log.info("初始化飞书签名验证器");
-        return new FeishuSignatureValidator(properties);
-    }
-
-    /**
-     * 飞书 API 客户端
-     */
-    @Bean
-    @ConditionalOnProperty(prefix = "chatbot.feishu", name = "enabled", havingValue = "true")
-    public FeishuApiClient feishuApiClient(
+    public FeishuApiClientFactory feishuApiClientFactory(
             okhttp3.OkHttpClient okHttpClient,
-            StringRedisTemplate stringRedisTemplate,
-            ChatbotProperties properties) {
-        log.info("初始化飞书 API 客户端");
-        return new FeishuApiClient(okHttpClient, stringRedisTemplate, properties);
+            StringRedisTemplate stringRedisTemplate) {
+        log.info("初始化飞书 API 客户端工厂");
+        return new FeishuApiClientFactory(okHttpClient, stringRedisTemplate);
     }
 
     /**
      * 飞书消息处理器
      */
     @Bean
-    @ConditionalOnProperty(prefix = "chatbot.feishu", name = "enabled", havingValue = "true")
     public FeishuMessageHandler feishuMessageHandler(
             QuestionDetector questionDetector,
             AnswerGenerator answerGenerator,
-            FeishuApiClient feishuApiClient,
-            ChatbotProperties properties) {
+            FeishuApiClientFactory apiClientFactory) {
         log.info("初始化飞书消息处理器");
-        return new FeishuMessageHandler(questionDetector, answerGenerator, feishuApiClient, properties);
+        return new FeishuMessageHandler(questionDetector, answerGenerator, apiClientFactory);
     }
 
     // ==================== 企微机器人组件 ====================
 
     /**
-     * 企微签名验证器
+     * 企微 API 客户端工厂
      */
     @Bean
-    @ConditionalOnProperty(prefix = "chatbot.wework", name = "enabled", havingValue = "true")
-    public WeWorkSignatureValidator weWorkSignatureValidator(ChatbotProperties properties) {
-        log.info("初始化企微签名验证器");
-        return new WeWorkSignatureValidator(properties);
-    }
-
-    /**
-     * 企微 API 客户端
-     */
-    @Bean
-    @ConditionalOnProperty(prefix = "chatbot.wework", name = "enabled", havingValue = "true")
-    public WeWorkApiClient weWorkApiClient(
+    public WeWorkApiClientFactory weWorkApiClientFactory(
             okhttp3.OkHttpClient okHttpClient,
-            StringRedisTemplate stringRedisTemplate,
-            ChatbotProperties properties) {
-        log.info("初始化企微 API 客户端");
-        return new WeWorkApiClient(okHttpClient, stringRedisTemplate, properties);
+            StringRedisTemplate stringRedisTemplate) {
+        log.info("初始化企微 API 客户端工厂");
+        return new WeWorkApiClientFactory(okHttpClient, stringRedisTemplate);
     }
 
     /**
      * 企微消息处理器
      */
     @Bean
-    @ConditionalOnProperty(prefix = "chatbot.wework", name = "enabled", havingValue = "true")
     public WeWorkMessageHandler weWorkMessageHandler(
             QuestionDetector questionDetector,
-            AnswerGenerator answerGenerator,
-            WeWorkApiClient weWorkApiClient,
-            ChatbotProperties properties) {
+            AnswerGenerator answerGenerator) {
         log.info("初始化企微消息处理器");
-        return new WeWorkMessageHandler(questionDetector, answerGenerator, weWorkApiClient, properties);
+        return new WeWorkMessageHandler(questionDetector, answerGenerator);
     }
-
-    // ==================== 机器人配置管理 ====================
-
-    // BotConfigService 和 BotConfigController 通过 @Service 和 @RestController 注解
-    // 由 Spring 自动扫描并注册，不需要在这里手动创建
-
 }

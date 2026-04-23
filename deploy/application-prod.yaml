@@ -80,6 +80,16 @@ feishu:
     app-secret: ${FEISHU_APP_SECRET:}
 
 # ========================================
+# 机器人配置
+# ========================================
+chatbot:
+  enabled: ${CHATBOT_ENABLED:false}
+  detection:
+    mode: COMPOSITE
+  answer:
+    mode: RAG
+
+# ========================================
 # MCP 服务器配置
 # ========================================
 rag:

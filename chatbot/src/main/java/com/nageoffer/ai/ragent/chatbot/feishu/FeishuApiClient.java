@@ -19,9 +19,8 @@ package com.nageoffer.ai.ragent.chatbot.feishu;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.BotException;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -39,12 +38,11 @@ import java.util.concurrent.TimeUnit;
  * 封装飞书开放平台的 API 调用，包括获取 Token、发送消息等
  */
 @Slf4j
-@RequiredArgsConstructor
 public class FeishuApiClient {
 
     private final OkHttpClient httpClient;
     private final StringRedisTemplate redisTemplate;
-    private final ChatbotProperties properties;
+    private final BotConfig botConfig;
 
     /**
      * 获取 tenant_access_token 的 URL
@@ -55,11 +53,6 @@ public class FeishuApiClient {
      * 发送消息的 URL
      */
     private static final String SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages";
-
-    /**
-     * Token 缓存的 Redis Key
-     */
-    private static final String TOKEN_CACHE_KEY = "chatbot:feishu:tenant_access_token";
 
     /**
      * 发送文本消息
@@ -76,9 +69,10 @@ public class FeishuApiClient {
         body.put("receive_id_type", "chat_id");
         body.put("msg_type", "text");
 
+        // content 必须是 JSON 字符串，不是 JSON 对象
         JSONObject contentObj = new JSONObject();
         contentObj.put("text", content);
-        body.put("content", contentObj);
+        body.put("content", contentObj.toJSONString());
 
         Request request = new Request.Builder()
                 .url(SEND_MESSAGE_URL + "?receive_id_type=chat_id")
@@ -89,7 +83,7 @@ public class FeishuApiClient {
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
-                log.error("发送飞书消息失败: chatId={}, code={}", chatId, response.code());
+                log.error("发送飞书消息失败: chatId={}, code={}, response={}", chatId, response.code(), response.body().string());
                 throw new BotException("发送飞书消息失败: HTTP " + response.code());
             }
 
@@ -118,25 +112,28 @@ public class FeishuApiClient {
      * @return tenant_access_token
      */
     public String getTenantAccessToken() {
+        String cacheKey = getTokenCacheKey();
+
         // 从缓存获取
-        String cachedToken = redisTemplate.opsForValue().get(TOKEN_CACHE_KEY);
+        String cachedToken = redisTemplate.opsForValue().get(cacheKey);
         if (cachedToken != null && !cachedToken.isBlank()) {
             return cachedToken;
         }
 
         // 请求新 token
-        return requestTenantAccessToken();
+        return requestTenantAccessToken(cacheKey);
     }
 
     /**
      * 请求新的 tenant_access_token
      *
+     * @param cacheKey 缓存 key
      * @return token
      */
-    private String requestTenantAccessToken() {
+    private String requestTenantAccessToken(String cacheKey) {
         JSONObject body = new JSONObject();
-        body.put("app_id", properties.getFeishu().getAppId());
-        body.put("app_secret", properties.getFeishu().getAppSecret());
+        body.put("app_id", botConfig.getAppId());
+        body.put("app_secret", botConfig.getAppSecret());
 
         Request request = new Request.Builder()
                 .url(TOKEN_URL)
@@ -163,7 +160,7 @@ public class FeishuApiClient {
 
             // 缓存 token，提前 5 分钟过期
             long cacheExpire = Math.max(expire - 300, 60);
-            redisTemplate.opsForValue().set(TOKEN_CACHE_KEY, token, cacheExpire, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(cacheKey, token, cacheExpire, TimeUnit.SECONDS);
 
             log.debug("获取飞书 Token 成功，缓存 {} 秒", cacheExpire);
             return token;
@@ -173,10 +170,26 @@ public class FeishuApiClient {
     }
 
     /**
+     * 获取 Token 缓存 key
+     */
+    private String getTokenCacheKey() {
+        return "chatbot:feishu:token:" + botConfig.getAppId();
+    }
+
+    /**
      * 清除缓存的 Token
      */
     public void clearTokenCache() {
-        redisTemplate.delete(TOKEN_CACHE_KEY);
-        log.debug("清除飞书 Token 缓存");
+        redisTemplate.delete(getTokenCacheKey());
+        log.debug("清除飞书 Token 缓存: appId={}", botConfig.getAppId());
+    }
+
+    /**
+     * 构造函数
+     */
+    public FeishuApiClient(OkHttpClient httpClient, StringRedisTemplate redisTemplate, BotConfig botConfig) {
+        this.httpClient = httpClient;
+        this.redisTemplate = redisTemplate;
+        this.botConfig = botConfig;
     }
 }

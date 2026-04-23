@@ -89,6 +89,11 @@ public class MessageContext {
     private Long timestamp;
 
     /**
+     * 机器人配置
+     */
+    private BotConfig botConfig;
+
+    /**
      * 是否为单聊
      */
     public boolean isPrivateChat() {

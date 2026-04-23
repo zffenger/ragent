@@ -19,11 +19,10 @@ package com.nageoffer.ai.ragent.chatbot.wework;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.nageoffer.ai.ragent.chatbot.common.BotConfig;
 import com.nageoffer.ai.ragent.chatbot.common.BotException;
-import com.nageoffer.ai.ragent.chatbot.config.ChatbotProperties;
 import com.nageoffer.ai.ragent.chatbot.wework.dto.WeWorkMessage;
 import com.nageoffer.ai.ragent.chatbot.wework.dto.WeWorkResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -39,14 +38,14 @@ import java.util.concurrent.TimeUnit;
  * 企业微信 API 客户端
  * <p>
  * 封装企业微信 API 调用，包括获取 Token、发送消息等
+ * TODO: 待改造为数据库配置
  */
 @Slf4j
-@RequiredArgsConstructor
 public class WeWorkApiClient {
 
     private final OkHttpClient httpClient;
     private final StringRedisTemplate redisTemplate;
-    private final ChatbotProperties properties;
+    private final BotConfig botConfig;
 
     /**
      * 获取 access_token 的 URL
@@ -58,10 +57,11 @@ public class WeWorkApiClient {
      */
     private static final String SEND_MESSAGE_URL = "https://qyapi.weixin.qq.com/cgi-bin/message/send";
 
-    /**
-     * Token 缓存的 Redis Key
-     */
-    private static final String TOKEN_CACHE_KEY = "chatbot:wework:access_token";
+    public WeWorkApiClient(OkHttpClient httpClient, StringRedisTemplate redisTemplate, BotConfig botConfig) {
+        this.httpClient = httpClient;
+        this.redisTemplate = redisTemplate;
+        this.botConfig = botConfig;
+    }
 
     /**
      * 发送文本消息
@@ -75,7 +75,7 @@ public class WeWorkApiClient {
         // 构建消息
         Integer agentId = null;
         try {
-            agentId = Integer.parseInt(properties.getWework().getAgentId());
+            agentId = Integer.parseInt(botConfig.getAgentId());
         } catch (NumberFormatException e) {
             throw new BotException("企微 AgentId 配置错误");
         }
@@ -117,24 +117,27 @@ public class WeWorkApiClient {
      * @return access_token
      */
     public String getAccessToken() {
+        String cacheKey = getTokenCacheKey();
+
         // 从缓存获取
-        String cachedToken = redisTemplate.opsForValue().get(TOKEN_CACHE_KEY);
+        String cachedToken = redisTemplate.opsForValue().get(cacheKey);
         if (cachedToken != null && !cachedToken.isBlank()) {
             return cachedToken;
         }
 
         // 请求新 token
-        return requestAccessToken();
+        return requestAccessToken(cacheKey);
     }
 
     /**
      * 请求新的 access_token
      *
+     * @param cacheKey 缓存 key
      * @return token
      */
-    private String requestAccessToken() {
-        String corpId = properties.getWework().getCorpId();
-        String secret = properties.getWework().getSecret();
+    private String requestAccessToken(String cacheKey) {
+        String corpId = botConfig.getCorpId();
+        String secret = botConfig.getAppSecret();
 
         String url = TOKEN_URL + "?corpid=" + corpId + "&corpsecret=" + secret;
 
@@ -161,7 +164,7 @@ public class WeWorkApiClient {
 
             // 缓存 token，提前 5 分钟过期
             long cacheExpire = Math.max(expire - 300, 60);
-            redisTemplate.opsForValue().set(TOKEN_CACHE_KEY, token, cacheExpire, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(cacheKey, token, cacheExpire, TimeUnit.SECONDS);
 
             log.debug("获取企微 Token 成功，缓存 {} 秒", cacheExpire);
             return token;
@@ -171,10 +174,17 @@ public class WeWorkApiClient {
     }
 
     /**
+     * 获取 Token 缓存 key
+     */
+    private String getTokenCacheKey() {
+        return "chatbot:wework:token:" + botConfig.getCorpId();
+    }
+
+    /**
      * 清除缓存的 Token
      */
     public void clearTokenCache() {
-        redisTemplate.delete(TOKEN_CACHE_KEY);
-        log.debug("清除企微 Token 缓存");
+        redisTemplate.delete(getTokenCacheKey());
+        log.debug("清除企微 Token 缓存: corpId={}", botConfig.getCorpId());
     }
 }
