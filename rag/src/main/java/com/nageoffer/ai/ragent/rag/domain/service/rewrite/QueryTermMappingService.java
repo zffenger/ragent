@@ -18,9 +18,8 @@
 package com.nageoffer.ai.ragent.rag.domain.service.rewrite;
 
 import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.QueryTermMappingMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.QueryTermMappingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class QueryTermMappingService {
 
-    private final QueryTermMappingMapper mappingMapper;
+    private final QueryTermMappingRepository mappingRepository;
     private final QueryTermMappingCacheManager cacheManager;
 
     /**
@@ -82,10 +81,7 @@ public class QueryTermMappingService {
         }
 
         // 缓存未命中，从数据库加载
-        List<QueryTermMappingDO> dbList = mappingMapper.selectList(
-                Wrappers.lambdaQuery(QueryTermMappingDO.class)
-                        .eq(QueryTermMappingDO::getEnabled, 1)
-        );
+        List<QueryTermMappingDO> dbList = mappingRepository.findAllEnabled();
         dbList.sort(Comparator
                 .comparing(QueryTermMappingDO::getPriority, Comparator.nullsLast(Integer::compareTo)).reversed()
                 .thenComparing(m -> m.getSourceTerm() == null ? 0 : m.getSourceTerm().length(), Comparator.reverseOrder())

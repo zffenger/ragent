@@ -20,7 +20,6 @@ package com.nageoffer.ai.ragent.rag.application.impl;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.QueryTermMappingCreateRequest;
@@ -29,7 +28,7 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.request.QueryTermMappin
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.QueryTermMappingVO;
 import com.nageoffer.ai.ragent.rag.domain.service.rewrite.QueryTermMappingCacheManager;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.QueryTermMappingMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.QueryTermMappingRepository;
 import com.nageoffer.ai.ragent.rag.application.QueryTermMappingAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,7 +37,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminService {
 
-    private final QueryTermMappingMapper queryTermMappingMapper;
+    private final QueryTermMappingRepository mappingRepository;
     private final QueryTermMappingCacheManager queryTermMappingCacheManager;
 
     @Override
@@ -57,7 +56,7 @@ public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminSe
         record.setEnabled(requestParam.getEnabled() != null ? (requestParam.getEnabled() ? 1 : 0) : 1);
         record.setRemark(StrUtil.trimToNull(requestParam.getRemark()));
 
-        queryTermMappingMapper.insert(record);
+        mappingRepository.save(record);
         queryTermMappingCacheManager.clearCache();
         return String.valueOf(record.getId());
     }
@@ -90,14 +89,14 @@ public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminSe
             record.setRemark(StrUtil.trimToNull(requestParam.getRemark()));
         }
 
-        queryTermMappingMapper.updateById(record);
+        mappingRepository.update(record);
         queryTermMappingCacheManager.clearCache();
     }
 
     @Override
     public void delete(String id) {
         QueryTermMappingDO record = loadById(id);
-        queryTermMappingMapper.deleteById(record.getId());
+        mappingRepository.deleteById(record.getId());
         queryTermMappingCacheManager.clearCache();
     }
 
@@ -111,21 +110,12 @@ public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminSe
     public IPage<QueryTermMappingVO> pageQuery(QueryTermMappingPageRequest requestParam) {
         String keyword = StrUtil.trimToNull(requestParam.getKeyword());
         Page<QueryTermMappingDO> page = new Page<>(requestParam.getCurrent(), requestParam.getSize());
-        IPage<QueryTermMappingDO> result = queryTermMappingMapper.selectPage(
-                page,
-                Wrappers.lambdaQuery(QueryTermMappingDO.class)
-                        .and(StrUtil.isNotBlank(keyword), wrapper -> wrapper
-                                .like(QueryTermMappingDO::getSourceTerm, keyword)
-                                .or()
-                                .like(QueryTermMappingDO::getTargetTerm, keyword))
-                        .orderByAsc(QueryTermMappingDO::getPriority)
-                        .orderByDesc(QueryTermMappingDO::getUpdateTime)
-        );
+        IPage<QueryTermMappingDO> result = mappingRepository.pageQuery(page, keyword);
         return result.convert(this::toVO);
     }
 
     private QueryTermMappingDO loadById(String id) {
-        QueryTermMappingDO record = queryTermMappingMapper.selectById(id);
+        QueryTermMappingDO record = mappingRepository.findById(id);
         Assert.notNull(record, () -> new ClientException("映射规则不存在"));
         return record;
     }

@@ -20,14 +20,13 @@ package com.nageoffer.ai.ragent.rag.application.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.MessageFeedbackRequest;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.MessageFeedbackDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMessageMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.MessageFeedbackMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.MessageFeedbackRepository;
 import com.nageoffer.ai.ragent.rag.application.MessageFeedbackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,8 +48,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MessageFeedbackServiceImpl implements MessageFeedbackService {
 
-    private final MessageFeedbackMapper feedbackMapper;
-    private final ConversationMessageMapper conversationMessageMapper;
+    private final MessageFeedbackRepository feedbackRepository;
+    private final ConversationMessageRepository messageRepository;
 
     @Override
     public void submitFeedbackAsync(String messageId, MessageFeedbackRequest request) {
@@ -94,21 +93,7 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
         if (StrUtil.isBlank(userId) || CollUtil.isEmpty(messageIds)) {
             return Collections.emptyMap();
         }
-        List<MessageFeedbackDO> records = feedbackMapper.selectList(
-                Wrappers.lambdaQuery(MessageFeedbackDO.class)
-                        .eq(MessageFeedbackDO::getUserId, userId)
-                        .eq(MessageFeedbackDO::getDeleted, 0)
-                        .in(MessageFeedbackDO::getMessageId, messageIds)
-        );
-        if (CollUtil.isEmpty(records)) {
-            return Collections.emptyMap();
-        }
-        return records.stream()
-                .collect(Collectors.toMap(
-                        MessageFeedbackDO::getMessageId,
-                        MessageFeedbackDO::getVote,
-                        (first, second) -> first
-                ));
+        return feedbackRepository.findVotesByUserIdAndMessageIds(userId, messageIds);
     }
 
     private void doSubmitFeedback(String messageId, String userId, Integer vote, String reason, String comment, long submitTime) {
@@ -117,12 +102,7 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
     }
 
     private ConversationMessageDO loadAssistantMessage(String messageId, String userId) {
-        ConversationMessageDO message = conversationMessageMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getId, messageId)
-                        .eq(ConversationMessageDO::getUserId, userId)
-                        .eq(ConversationMessageDO::getDeleted, 0)
-        );
+        ConversationMessageDO message = messageRepository.findByIdAndUserId(messageId, userId);
         Assert.notNull(message, () -> new ClientException("消息不存在"));
         Assert.isTrue("assistant".equalsIgnoreCase(message.getRole()), () -> new ClientException("仅支持对助手消息反馈"));
         return message;
@@ -130,12 +110,7 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
 
     private void doUpsertFeedback(String messageId, String userId, String conversationId,
                                   Integer vote, String reason, String comment, long submitTime) {
-        MessageFeedbackDO existing = feedbackMapper.selectOne(
-                Wrappers.lambdaQuery(MessageFeedbackDO.class)
-                        .eq(MessageFeedbackDO::getMessageId, messageId)
-                        .eq(MessageFeedbackDO::getUserId, userId)
-                        .eq(MessageFeedbackDO::getDeleted, 0)
-        );
+        MessageFeedbackDO existing = feedbackRepository.findByMessageIdAndUserId(messageId, userId);
 
         if (existing == null) {
             MessageFeedbackDO feedback = MessageFeedbackDO.builder()
@@ -146,19 +121,16 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
                     .reason(reason)
                     .comment(comment)
                     .build();
-            feedbackMapper.insert(feedback);
+            feedbackRepository.save(feedback);
         } else {
             // 仅当本次提交时间晚于记录最后更新时间时才覆盖，避免并发乱序
-            feedbackMapper.update(
-                    MessageFeedbackDO.builder()
-                            .vote(vote)
-                            .reason(reason)
-                            .comment(comment)
-                            .build(),
-                    Wrappers.lambdaUpdate(MessageFeedbackDO.class)
-                            .eq(MessageFeedbackDO::getId, existing.getId())
-                            .lt(MessageFeedbackDO::getUpdateTime, new Date(submitTime))
-            );
+            MessageFeedbackDO update = MessageFeedbackDO.builder()
+                    .id(existing.getId())
+                    .vote(vote)
+                    .reason(reason)
+                    .comment(comment)
+                    .build();
+            feedbackRepository.update(update, new Date(submitTime));
         }
     }
 }

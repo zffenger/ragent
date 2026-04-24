@@ -18,7 +18,6 @@
 package com.nageoffer.ai.ragent.rag.application.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.rag.infra.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.ConversationUpdateRequest;
@@ -26,9 +25,9 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.ConversationVO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMessageMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationSummaryMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
@@ -56,9 +55,9 @@ import static com.nageoffer.ai.ragent.rag.domain.constant.RAGConstant.CONVERSATI
 @RequiredArgsConstructor
 public class ConversationServiceImpl implements ConversationService {
 
-    private final ConversationMapper conversationMapper;
-    private final ConversationMessageMapper messageMapper;
-    private final ConversationSummaryMapper summaryMapper;
+    private final ConversationRepository conversationRepository;
+    private final ConversationMessageRepository messageRepository;
+    private final ConversationSummaryRepository summaryRepository;
     private final MemoryProperties memoryProperties;
     private final PromptTemplateLoader promptTemplateLoader;
     private final LLMService llmService;
@@ -69,12 +68,7 @@ public class ConversationServiceImpl implements ConversationService {
             return List.of();
         }
 
-        List<ConversationDO> records = conversationMapper.selectList(
-                Wrappers.lambdaQuery(ConversationDO.class)
-                        .eq(ConversationDO::getUserId, userId)
-                        .eq(ConversationDO::getDeleted, 0)
-                        .orderByDesc(ConversationDO::getLastTime)
-        );
+        List<ConversationDO> records = conversationRepository.listByUserId(userId);
         if (records == null || records.isEmpty()) {
             return List.of();
         }
@@ -97,12 +91,7 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("用户信息缺失");
         }
 
-        ConversationDO existing = conversationMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationDO.class)
-                        .eq(ConversationDO::getConversationId, conversationId)
-                        .eq(ConversationDO::getUserId, userId)
-                        .eq(ConversationDO::getDeleted, 0)
-        );
+        ConversationDO existing = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
 
         if (existing == null) {
             String title = generateTitleFromQuestion(question);
@@ -112,12 +101,12 @@ public class ConversationServiceImpl implements ConversationService {
                     .title(title)
                     .lastTime(request.getLastTime())
                     .build();
-            conversationMapper.insert(record);
+            conversationRepository.save(record);
             return;
         }
 
         existing.setLastTime(request.getLastTime());
-        conversationMapper.updateById(existing);
+        conversationRepository.update(existing);
     }
 
     @Override
@@ -136,18 +125,13 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("会话名称长度不能超过" + maxLen + "个字符");
         }
 
-        ConversationDO record = conversationMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationDO.class)
-                        .eq(ConversationDO::getConversationId, conversationId)
-                        .eq(ConversationDO::getUserId, userId)
-                        .eq(ConversationDO::getDeleted, 0)
-        );
+        ConversationDO record = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
         if (record == null) {
             throw new ClientException("会话不存在");
         }
 
         record.setTitle(title.trim());
-        conversationMapper.updateById(record);
+        conversationRepository.update(record);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -158,29 +142,14 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("会话信息缺失");
         }
 
-        ConversationDO record = conversationMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationDO.class)
-                        .eq(ConversationDO::getConversationId, conversationId)
-                        .eq(ConversationDO::getUserId, userId)
-                        .eq(ConversationDO::getDeleted, 0)
-        );
+        ConversationDO record = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
         if (record == null) {
             throw new ClientException("会话不存在");
         }
 
-        conversationMapper.deleteById(record.getId());
-        messageMapper.delete(
-                Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getConversationId, conversationId)
-                        .eq(ConversationMessageDO::getUserId, userId)
-                        .eq(ConversationMessageDO::getDeleted, 0)
-        );
-        summaryMapper.delete(
-                Wrappers.lambdaQuery(ConversationSummaryDO.class)
-                        .eq(ConversationSummaryDO::getConversationId, conversationId)
-                        .eq(ConversationSummaryDO::getUserId, userId)
-                        .eq(ConversationSummaryDO::getDeleted, 0)
-        );
+        conversationRepository.deleteById(record.getId());
+        messageRepository.deleteByConversationIdAndUserId(conversationId, userId);
+        summaryRepository.deleteByConversationIdAndUserId(conversationId, userId);
     }
 
     private String generateTitleFromQuestion(String question) {

@@ -20,7 +20,6 @@ package com.nageoffer.ai.ragent.rag.application.impl;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.SampleQuestionCreateRequest;
@@ -28,7 +27,7 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.request.SampleQuestionP
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.SampleQuestionUpdateRequest;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.SampleQuestionVO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.SampleQuestionDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.SampleQuestionMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.SampleQuestionRepository;
 import com.nageoffer.ai.ragent.rag.application.SampleQuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,7 +40,7 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
 
     private static final int DEFAULT_LIMIT = 3;
 
-    private final SampleQuestionMapper sampleQuestionMapper;
+    private final SampleQuestionRepository questionRepository;
 
     @Override
     public String create(SampleQuestionCreateRequest requestParam) {
@@ -54,7 +53,7 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
                 .description(StrUtil.trimToNull(requestParam.getDescription()))
                 .question(question)
                 .build();
-        sampleQuestionMapper.insert(record);
+        questionRepository.save(record);
         return String.valueOf(record.getId());
     }
 
@@ -75,13 +74,13 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
             record.setDescription(StrUtil.trimToNull(requestParam.getDescription()));
         }
 
-        sampleQuestionMapper.updateById(record);
+        questionRepository.update(record);
     }
 
     @Override
     public void delete(String id) {
         SampleQuestionDO record = loadById(id);
-        sampleQuestionMapper.deleteById(record.getId());
+        questionRepository.deleteById(record.getId());
     }
 
     @Override
@@ -94,28 +93,13 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
     public IPage<SampleQuestionVO> pageQuery(SampleQuestionPageRequest requestParam) {
         String keyword = StrUtil.trimToNull(requestParam.getKeyword());
         Page<SampleQuestionDO> page = new Page<>(requestParam.getCurrent(), requestParam.getSize());
-        IPage<SampleQuestionDO> result = sampleQuestionMapper.selectPage(
-                page,
-                Wrappers.lambdaQuery(SampleQuestionDO.class)
-                        .eq(SampleQuestionDO::getDeleted, 0)
-                        .and(StrUtil.isNotBlank(keyword), wrapper -> wrapper
-                                .like(SampleQuestionDO::getTitle, keyword)
-                                .or()
-                                .like(SampleQuestionDO::getDescription, keyword)
-                                .or()
-                                .like(SampleQuestionDO::getQuestion, keyword))
-                        .orderByDesc(SampleQuestionDO::getUpdateTime)
-        );
+        IPage<SampleQuestionDO> result = questionRepository.pageQuery(page, keyword);
         return result.convert(this::toVO);
     }
 
     @Override
     public List<SampleQuestionVO> listRandomQuestions() {
-        List<SampleQuestionDO> records = sampleQuestionMapper.selectList(
-                Wrappers.lambdaQuery(SampleQuestionDO.class)
-                        .eq(SampleQuestionDO::getDeleted, 0)
-                        .last("ORDER BY RANDOM() LIMIT " + DEFAULT_LIMIT)
-        );
+        List<SampleQuestionDO> records = questionRepository.listRandom(DEFAULT_LIMIT);
         if (records == null || records.isEmpty()) {
             return List.of();
         }
@@ -125,11 +109,7 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
     }
 
     private SampleQuestionDO loadById(String id) {
-        SampleQuestionDO record = sampleQuestionMapper.selectOne(
-                Wrappers.lambdaQuery(SampleQuestionDO.class)
-                        .eq(SampleQuestionDO::getId, id)
-                        .eq(SampleQuestionDO::getDeleted, 0)
-        );
+        SampleQuestionDO record = questionRepository.findById(id);
         Assert.notNull(record, () -> new ClientException("示例问题不存在"));
         return record;
     }

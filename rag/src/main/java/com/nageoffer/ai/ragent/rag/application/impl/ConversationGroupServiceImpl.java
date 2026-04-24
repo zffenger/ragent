@@ -18,13 +18,12 @@
 package com.nageoffer.ai.ragent.rag.application.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMessageMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationSummaryMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
 import com.nageoffer.ai.ragent.rag.application.ConversationGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,24 +34,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConversationGroupServiceImpl implements ConversationGroupService {
 
-    private final ConversationMessageMapper messageMapper;
-    private final ConversationSummaryMapper summaryMapper;
-    private final ConversationMapper conversationMapper;
+    private final ConversationMessageRepository messageRepository;
+    private final ConversationSummaryRepository summaryRepository;
+    private final ConversationRepository conversationRepository;
 
     @Override
     public List<ConversationMessageDO> listLatestUserOnlyMessages(String conversationId, String userId, int limit) {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId) || limit <= 0) {
             return List.of();
         }
-        return messageMapper.selectList(
-                Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getConversationId, conversationId)
-                        .eq(ConversationMessageDO::getUserId, userId)
-                        .eq(ConversationMessageDO::getRole, "user")
-                        .eq(ConversationMessageDO::getDeleted, 0)
-                        .orderByDesc(ConversationMessageDO::getCreateTime)
-                        .last("limit " + limit)
-        );
+        return messageRepository.listLatestUserMessages(conversationId, userId, limit);
     }
 
     @Override
@@ -60,20 +51,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return List.of();
         }
-        var query = Wrappers.lambdaQuery(ConversationMessageDO.class)
-                .eq(ConversationMessageDO::getConversationId, conversationId)
-                .eq(ConversationMessageDO::getUserId, userId)
-                .in(ConversationMessageDO::getRole, "user", "assistant")
-                .eq(ConversationMessageDO::getDeleted, 0);
-        if (afterId != null) {
-            query.gt(ConversationMessageDO::getId, afterId);
-        }
-        if (beforeId != null) {
-            query.lt(ConversationMessageDO::getId, beforeId);
-        }
-        return messageMapper.selectList(
-                query.orderByAsc(ConversationMessageDO::getId)
-        );
+        return messageRepository.listBetweenIds(conversationId, userId, afterId, beforeId);
     }
 
     @Override
@@ -81,16 +59,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId) || at == null) {
             return null;
         }
-        ConversationMessageDO record = messageMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getConversationId, conversationId)
-                        .eq(ConversationMessageDO::getUserId, userId)
-                        .eq(ConversationMessageDO::getDeleted, 0)
-                        .le(ConversationMessageDO::getCreateTime, at)
-                        .orderByDesc(ConversationMessageDO::getId)
-                        .last("limit 1")
-        );
-        return record == null ? null : record.getId();
+        return messageRepository.findMaxIdAtOrBefore(conversationId, userId, at);
     }
 
     @Override
@@ -98,13 +67,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return 0;
         }
-        return messageMapper.selectCount(
-                Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getConversationId, conversationId)
-                        .eq(ConversationMessageDO::getUserId, userId)
-                        .eq(ConversationMessageDO::getRole, "user")
-                        .eq(ConversationMessageDO::getDeleted, 0)
-        );
+        return messageRepository.countUserMessages(conversationId, userId);
     }
 
     @Override
@@ -112,14 +75,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return null;
         }
-        return summaryMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationSummaryDO.class)
-                        .eq(ConversationSummaryDO::getConversationId, conversationId)
-                        .eq(ConversationSummaryDO::getUserId, userId)
-                        .eq(ConversationSummaryDO::getDeleted, 0)
-                        .orderByDesc(ConversationSummaryDO::getId)
-                        .last("limit 1")
-        );
+        return summaryRepository.findLatestByConversationIdAndUserId(conversationId, userId);
     }
 
     @Override
@@ -127,11 +83,6 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return null;
         }
-        return conversationMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationDO.class)
-                        .eq(ConversationDO::getConversationId, conversationId)
-                        .eq(ConversationDO::getUserId, userId)
-                        .eq(ConversationDO::getDeleted, 0)
-        );
+        return conversationRepository.findByConversationIdAndUserId(conversationId, userId);
     }
 }

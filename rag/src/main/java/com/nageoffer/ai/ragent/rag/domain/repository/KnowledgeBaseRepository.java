@@ -15,10 +15,38 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.rag.infra.persistence.mapper;
+package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
 
-public interface KnowledgeBaseMapper extends BaseMapper<KnowledgeBaseDO> {
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * 知识库仓储接口
+ */
+public interface KnowledgeBaseRepository {
+
+    /**
+     * 根据ID查询知识库
+     *
+     * @param id 知识库ID
+     * @return 知识库信息
+     */
+    KnowledgeBaseDO findById(String id);
+
+    /**
+     * 根据ID列表查询知识库
+     *
+     * @param ids 知识库ID列表
+     * @return 知识库列表
+     */
+    List<KnowledgeBaseDO> findByIds(Collection<String> ids);
+
+    /**
+     * 查询所有知识库
+     *
+     * @return 知识库列表
+     */
+    List<KnowledgeBaseDO> findAll();
 }

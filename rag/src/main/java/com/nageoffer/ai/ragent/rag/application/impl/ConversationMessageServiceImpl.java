@@ -19,14 +19,13 @@ package com.nageoffer.ai.ragent.rag.application.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.ConversationMessageVO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMessageMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationSummaryMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
 import com.nageoffer.ai.ragent.rag.domain.enums.ConversationMessageOrder;
 import com.nageoffer.ai.ragent.rag.application.MessageFeedbackService;
 import com.nageoffer.ai.ragent.rag.application.ConversationMessageService;
@@ -44,16 +43,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ConversationMessageServiceImpl implements ConversationMessageService {
 
-    private final ConversationMessageMapper conversationMessageMapper;
-    private final ConversationSummaryMapper conversationSummaryMapper;
-    private final ConversationMapper conversationMapper;
+    private final ConversationMessageRepository messageRepository;
+    private final ConversationSummaryRepository summaryRepository;
+    private final ConversationRepository conversationRepository;
     private final MessageFeedbackService feedbackService;
 
     @Override
     public String addMessage(ConversationMessageBO conversationMessage) {
         ConversationMessageDO messageDO = BeanUtil.toBean(conversationMessage, ConversationMessageDO.class);
-        conversationMessageMapper.insert(messageDO);
-        return messageDO.getId();
+        return messageRepository.save(messageDO);
     }
 
     @Override
@@ -62,25 +60,13 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
             return List.of();
         }
 
-        ConversationDO conversation = conversationMapper.selectOne(
-                Wrappers.lambdaQuery(ConversationDO.class)
-                        .eq(ConversationDO::getConversationId, conversationId)
-                        .eq(ConversationDO::getUserId, userId)
-                        .eq(ConversationDO::getDeleted, 0)
-        );
+        ConversationDO conversation = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
         if (conversation == null) {
             return List.of();
         }
 
         boolean asc = order == null || order == ConversationMessageOrder.ASC;
-        List<ConversationMessageDO> records = conversationMessageMapper.selectList(
-                Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getConversationId, conversationId)
-                        .eq(ConversationMessageDO::getUserId, userId)
-                        .eq(ConversationMessageDO::getDeleted, 0)
-                        .orderBy(true, asc, ConversationMessageDO::getCreateTime)
-                        .last(limit != null, "limit " + limit)
-        );
+        List<ConversationMessageDO> records = messageRepository.listByConversationIdAndUserId(conversationId, userId, limit, asc);
         if (records == null || records.isEmpty()) {
             return List.of();
         }
@@ -116,6 +102,6 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
     @Override
     public void addMessageSummary(ConversationSummaryBO conversationSummary) {
         ConversationSummaryDO conversationSummaryDO = BeanUtil.toBean(conversationSummary, ConversationSummaryDO.class);
-        conversationSummaryMapper.insert(conversationSummaryDO);
+        summaryRepository.save(conversationSummaryDO);
     }
 }

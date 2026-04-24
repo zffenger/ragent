@@ -15,10 +15,27 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.rag.infra.persistence.mapper;
+package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
 
-public interface KnowledgeBaseMapper extends BaseMapper<KnowledgeBaseDO> {
+/**
+ * RAG Trace 运行仓储接口
+ */
+public interface RagTraceRunRepository {
+
+    /**
+     * 保存运行记录
+     *
+     * @param run 运行记录
+     */
+    void save(RagTraceRunDO run);
+
+    /**
+     * 根据链路ID更新运行状态
+     *
+     * @param traceId 链路ID
+     * @param run     更新内容
+     */
+    void updateByTraceId(String traceId, RagTraceRunDO run);
 }

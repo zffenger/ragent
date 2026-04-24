@@ -17,11 +17,10 @@
 
 package com.nageoffer.ai.ragent.rag.application.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceNodeDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.RagTraceNodeMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.RagTraceRunMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceNodeRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceRunRepository;
 import com.nageoffer.ai.ragent.rag.application.RagTraceRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,12 +34,12 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class RagTraceRecordServiceImpl implements RagTraceRecordService {
 
-    private final RagTraceRunMapper runMapper;
-    private final RagTraceNodeMapper nodeMapper;
+    private final RagTraceRunRepository runRepository;
+    private final RagTraceNodeRepository nodeRepository;
 
     @Override
     public void startRun(RagTraceRunDO run) {
-        runMapper.insert(run);
+        runRepository.save(run);
     }
 
     @Override
@@ -51,13 +50,12 @@ public class RagTraceRecordServiceImpl implements RagTraceRecordService {
                 .endTime(endTime)
                 .durationMs(durationMs)
                 .build();
-        runMapper.update(update, Wrappers.lambdaUpdate(RagTraceRunDO.class)
-                .eq(RagTraceRunDO::getTraceId, traceId));
+        runRepository.updateByTraceId(traceId, update);
     }
 
     @Override
     public void startNode(RagTraceNodeDO node) {
-        nodeMapper.insert(node);
+        nodeRepository.save(node);
     }
 
     @Override
@@ -68,8 +66,6 @@ public class RagTraceRecordServiceImpl implements RagTraceRecordService {
                 .endTime(endTime)
                 .durationMs(durationMs)
                 .build();
-        nodeMapper.update(update, Wrappers.lambdaUpdate(RagTraceNodeDO.class)
-                .eq(RagTraceNodeDO::getTraceId, traceId)
-                .eq(RagTraceNodeDO::getNodeId, nodeId));
+        nodeRepository.updateByTraceIdAndNodeId(traceId, nodeId, update);
     }
 }

@@ -15,10 +15,21 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.rag.infra.persistence.mapper;
+package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.IntentNodeDO;
 
-public interface KnowledgeBaseMapper extends BaseMapper<KnowledgeBaseDO> {
+import java.util.List;
+
+/**
+ * 意图节点仓储接口
+ */
+public interface IntentNodeRepository {
+
+    /**
+     * 查询所有启用的意图节点
+     *
+     * @return 意图节点列表
+     */
+    List<IntentNodeDO> findAllEnabled();
 }

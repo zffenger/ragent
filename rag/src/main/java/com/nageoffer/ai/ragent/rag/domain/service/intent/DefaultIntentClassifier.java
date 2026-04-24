@@ -23,11 +23,10 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.llm.domain.util.LLMResponseCleaner;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.IntentNodeDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.IntentNodeMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.IntentNodeRepository;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.rag.domain.service.prompt.PromptTemplateLoader;
@@ -57,7 +56,7 @@ import static com.nageoffer.ai.ragent.rag.domain.constant.RAGConstant.INTENT_CLA
 public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegistry {
 
     private final LLMService llmService;
-    private final IntentNodeMapper intentNodeMapper;
+    private final IntentNodeRepository intentNodeRepository;
     private final PromptTemplateLoader promptTemplateLoader;
     private final IntentTreeCacheManager intentTreeCacheManager;
 
@@ -264,12 +263,8 @@ public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegi
     }
 
     private List<IntentNode> loadIntentTreeFromDB() {
-        // 1. 查出所有未删除且已启用的节点（扁平结构）
-        List<IntentNodeDO> intentNodeDOList = intentNodeMapper.selectList(
-                Wrappers.lambdaQuery(IntentNodeDO.class)
-                        .eq(IntentNodeDO::getDeleted, 0)
-                        .eq(IntentNodeDO::getEnabled, 1)
-        );
+        // 1. 查出所有启用的节点（扁平结构）
+        List<IntentNodeDO> intentNodeDOList = intentNodeRepository.findAllEnabled();
 
         if (intentNodeDOList.isEmpty()) {
             return List.of();

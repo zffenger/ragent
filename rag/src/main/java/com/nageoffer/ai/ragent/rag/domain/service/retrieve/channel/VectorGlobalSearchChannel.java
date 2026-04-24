@@ -18,14 +18,13 @@
 package com.nageoffer.ai.ragent.rag.domain.service.retrieve.channel;
 
 import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeBaseDO;
 import com.nageoffer.ai.ragent.rag.infra.config.SearchChannelProperties;
 import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
 import com.nageoffer.ai.ragent.rag.domain.service.retrieve.RetrieverService;
 import com.nageoffer.ai.ragent.rag.domain.service.retrieve.channel.strategy.CollectionParallelRetriever;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeBaseMapper;
+import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeBaseRepository;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -44,15 +43,15 @@ import java.util.concurrent.Executor;
 public class VectorGlobalSearchChannel implements SearchChannel {
 
     private final SearchChannelProperties properties;
-    private final KnowledgeBaseMapper knowledgeBaseMapper;
+    private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final CollectionParallelRetriever parallelRetriever;
 
     public VectorGlobalSearchChannel(RetrieverService retrieverService,
                                      SearchChannelProperties properties,
-                                     KnowledgeBaseMapper knowledgeBaseMapper,
+                                     KnowledgeBaseRepository knowledgeBaseRepository,
                                      @Qualifier("ragInnerRetrievalThreadPoolExecutor") Executor innerRetrievalExecutor) {
         this.properties = properties;
-        this.knowledgeBaseMapper = knowledgeBaseMapper;
+        this.knowledgeBaseRepository = knowledgeBaseRepository;
         this.parallelRetriever = new CollectionParallelRetriever(retrieverService, innerRetrievalExecutor);
     }
 
@@ -160,7 +159,7 @@ public class VectorGlobalSearchChannel implements SearchChannel {
 
         // 如果指定了知识库 ID 列表，只获取这些知识库的 collection
         if (CollUtil.isNotEmpty(knowledgeBaseIds)) {
-            List<KnowledgeBaseDO> kbList = knowledgeBaseMapper.selectBatchIds(knowledgeBaseIds);
+            List<KnowledgeBaseDO> kbList = knowledgeBaseRepository.findByIds(knowledgeBaseIds);
             for (KnowledgeBaseDO kb : kbList) {
                 String collectionName = kb.getCollectionName();
                 if (collectionName != null && !collectionName.isBlank()) {
@@ -171,11 +170,7 @@ public class VectorGlobalSearchChannel implements SearchChannel {
         }
 
         // 否则从知识库表获取全量 collection（全局检索兜底）
-        List<KnowledgeBaseDO> kbList = knowledgeBaseMapper.selectList(
-                Wrappers.lambdaQuery(KnowledgeBaseDO.class)
-                        .select(KnowledgeBaseDO::getCollectionName)
-                        .eq(KnowledgeBaseDO::getDeleted, 0)
-        );
+        List<KnowledgeBaseDO> kbList = knowledgeBaseRepository.findAll();
         for (KnowledgeBaseDO kb : kbList) {
             String collectionName = kb.getCollectionName();
             if (collectionName != null && !collectionName.isBlank()) {
