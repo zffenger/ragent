@@ -31,7 +31,7 @@
     <modules>
         <module>bootstrap</module>
         <module>framework</module>
-        <module>infra-ai</module>
+        <module>llm</module>
         <module>mcp-server</module>
         <module>chatbot</module>
     </modules>

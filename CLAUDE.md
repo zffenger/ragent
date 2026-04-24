@@ -72,9 +72,9 @@ Spring Boot 应用，Maven 多模块组织。
 
 ### 模块划分
 - framework      # 基础框架层，异常处理、统一响应、链路追踪、认证鉴权基础，不依赖其他模块
-- infra-ai       # AI基础设施层，AI能力封装：LLM调用、Embedding、Rerank，依赖framework模块
+- llm       # AI基础设施层，AI能力封装：LLM调用、Embedding、Rerank，依赖framework模块
 - mcp-server     # MCP协议服务器（独立服务，不依赖其他模块）
-- chatbot        # 机器人模块，支持飞书/企微机器人接入，依赖framework、infra-ai模块
+- chatbot        # 机器人模块，支持飞书/企微机器人接入，依赖framework、llm模块
 - bootstrap      # 启动模块：应用启动入口，业务逻辑实现
 
 关键设计原则：

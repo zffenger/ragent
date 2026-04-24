@@ -90,10 +90,10 @@
     <text x="442" y="778" fill="#90A5C8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">Used by RAG, Ingestion, Admin and User modules</text>
   </g>
 
-  <!-- infra-ai -->
+  <!-- llm -->
   <g>
     <rect x="1010" y="160" width="330" height="340" rx="20" fill="#0D1624" stroke="#365178"/>
-    <text x="1038" y="196" fill="#E4EEFF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="19" font-weight="700">infra-ai</text>
+    <text x="1038" y="196" fill="#E4EEFF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="19" font-weight="700">llmÏ</text>
     <text x="1038" y="222" fill="#8DA3C1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">Model routing + provider clients</text>
 
     <rect x="1038" y="244" width="274" height="54" rx="12" fill="#0D2732" stroke="#1DE1FF"/>

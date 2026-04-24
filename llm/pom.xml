@@ -8,7 +8,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>infra-ai</artifactId>
+    <artifactId>llm</artifactId>
 
     <dependencies>
         <dependency>

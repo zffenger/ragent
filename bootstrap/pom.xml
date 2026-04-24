@@ -19,7 +19,7 @@
 
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>infra-ai</artifactId>
+            <artifactId>llm</artifactId>
             <version>${project.version}</version>
         </dependency>
 

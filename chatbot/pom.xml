@@ -21,10 +21,10 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 依赖 infra-ai 模块（LLMService） -->
+        <!-- 依赖 llm 模块（LLMService） -->
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>infra-ai</artifactId>
+            <artifactId>llm</artifactId>
             <version>${project.version}</version>
         </dependency>
 
