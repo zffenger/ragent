@@ -25,7 +25,7 @@ import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleExe
 import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleMapper;
 import com.nageoffer.ai.ragent.knowledge.enums.ScheduleRunStatus;
 import com.nageoffer.ai.ragent.knowledge.handler.RemoteFileFetcher;
-import com.nageoffer.ai.ragent.rag.dto.StoredFileDTO;
+import com.nageoffer.ai.ragent.rag.domain.vo.StoredFileDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

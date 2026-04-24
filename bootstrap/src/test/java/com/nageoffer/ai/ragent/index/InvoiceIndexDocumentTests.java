@@ -19,14 +19,14 @@ package com.nageoffer.ai.ragent.index;
 
 import cn.hutool.core.util.IdUtil;
 import com.nageoffer.ai.ragent.core.chunk.VectorChunk;
-import com.nageoffer.ai.ragent.rag.config.RAGDefaultProperties;
+import com.nageoffer.ai.ragent.rag.infra.config.RAGDefaultProperties;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
-import com.nageoffer.ai.ragent.rag.core.retrieve.RetrieverService;
-import com.nageoffer.ai.ragent.rag.core.vector.VectorStoreService;
+import com.nageoffer.ai.ragent.rag.domain.service.retrieve.RetrieverService;
+import com.nageoffer.ai.ragent.rag.domain.service.vector.VectorStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;

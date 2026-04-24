@@ -19,6 +19,7 @@ package com.nageoffer.ai.ragent.core.chunk;
 
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
+import com.nageoffer.ai.ragent.core.chunk.VectorChunk;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

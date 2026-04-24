@@ -9,6 +9,7 @@
       "Bash(curl:*)",
       "Bash(kill:*)",
       "Bash(find:*)",
+      "Bash(sed:*)",
       "Bash(mvn clean compile:*)",
       "Bash(javac:*)",
       "Bash(java:*)",

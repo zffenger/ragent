@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.ingestion.controller.request;
 
-import com.nageoffer.ai.ragent.rag.controller.request.DocumentSourceRequest;
-import com.nageoffer.ai.ragent.rag.core.vector.VectorSpaceId;
+import com.nageoffer.ai.ragent.rag.interfaces.controller.request.DocumentSourceRequest;
+import com.nageoffer.ai.ragent.rag.domain.service.vector.VectorSpaceId;
 import lombok.Data;
 
 import java.util.Map;
