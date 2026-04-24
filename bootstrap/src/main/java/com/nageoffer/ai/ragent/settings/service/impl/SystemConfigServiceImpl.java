@@ -22,13 +22,13 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
-import com.nageoffer.ai.ragent.settings.config.DynamicConfigRefresher;
+import com.nageoffer.ai.ragent.llm.domain.repository.ModelConfigRepository;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
-import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;
-import com.nageoffer.ai.ragent.settings.dao.entity.ModelProviderDO;
-import com.nageoffer.ai.ragent.settings.dao.mapper.ModelCandidateMapper;
-import com.nageoffer.ai.ragent.settings.dao.mapper.ModelProviderMapper;
+import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
+import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelProviderDO;
+import com.nageoffer.ai.ragent.llm.infra.persistence.mapper.ModelCandidateMapper;
+import com.nageoffer.ai.ragent.llm.infra.persistence.mapper.ModelProviderMapper;
 import com.nageoffer.ai.ragent.settings.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private final ModelProviderMapper modelProviderMapper;
     private final ModelCandidateMapper modelCandidateMapper;
     private final StringRedisTemplate redisTemplate;
-    private final DynamicConfigRefresher dynamicConfigRefresher;
+	private final ModelConfigRepository modelConfigRepository;
 
     // 配置键常量
     private static final String CONFIG_KEY_CHAT = "ai.chat";
@@ -286,7 +286,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         redisTemplate.delete(REDIS_PREFIX_CONFIG + CONFIG_KEY_RERANK);
 
         // 触发配置刷新
-        dynamicConfigRefresher.refreshFromDatabase();
+		modelConfigRepository.refreshCache();
 
         log.info("配置缓存已刷新");
     }

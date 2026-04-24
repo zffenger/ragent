@@ -19,7 +19,9 @@ package com.nageoffer.ai.ragent.rag.controller;
 
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
-import com.nageoffer.ai.ragent.llm.infra.config.AIModelProperties;
+import com.nageoffer.ai.ragent.llm.domain.repository.ModelConfigRepository;
+import com.nageoffer.ai.ragent.llm.domain.vo.ModelCandidateConfig;
+import com.nageoffer.ai.ragent.llm.domain.vo.ProviderConfig;
 import com.nageoffer.ai.ragent.llm.infra.config.AISelectionProperties;
 import com.nageoffer.ai.ragent.llm.infra.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
@@ -51,7 +53,7 @@ public class RAGSettingsController {
     private final RAGConfigProperties ragConfigProperties;
     private final RAGRateLimitProperties ragRateLimitProperties;
     private final MemoryProperties memoryProperties;
-    private final AIModelProperties aiModelProperties;
+    private final ModelConfigRepository modelConfigRepository;
     private final AISelectionProperties selectionProperties;
     private final AIStreamProperties streamProperties;
 
@@ -87,7 +89,7 @@ public class RAGSettingsController {
                                 .build())
                         .memory(toMemorySettings(memoryProperties))
                         .build())
-                .ai(toAISettings(aiModelProperties, selectionProperties, streamProperties))
+                .ai(toAISettings())
                 .build();
         return Results.success(response);
     }
@@ -110,50 +112,60 @@ public class RAGSettingsController {
                 .build();
     }
 
-    private AISettings toAISettings(AIModelProperties props,
-                                    AISelectionProperties selectionProps,
-                                    AIStreamProperties streamProps) {
-        Map<String, AISettings.ProviderConfig> providers = new HashMap<>();
-        if (props.getProviders() != null) {
-            props.getProviders().forEach((k, v) -> providers.put(k, AISettings.ProviderConfig.builder()
-                    .url(v.getUrl())
-                    .apiKey(v.getApiKey())
-                    .endpoints(v.getEndpoints())
+    private AISettings toAISettings() {
+        Map<String, ProviderConfig> providers = modelConfigRepository.getProviders();
+        Map<String, AISettings.ProviderConfig> providerConfigs = new HashMap<>();
+        if (providers != null) {
+            providers.forEach((k, v) -> providerConfigs.put(k, AISettings.ProviderConfig.builder()
+                    .url(v.url())
+                    .apiKey(v.apiKey())
+                    .endpoints(v.endpoints())
                     .build()));
         }
 
         return AISettings.builder()
-                .providers(providers)
-                .chat(toModelGroup(props.getChat()))
-                .embedding(toModelGroup(props.getEmbedding()))
-                .rerank(toModelGroup(props.getRerank()))
-                .selection(selectionProps == null ? null : AISettings.Selection.builder()
-                        .failureThreshold(selectionProps.getFailureThreshold())
-                        .openDurationMs(selectionProps.getOpenDurationMs())
+                .providers(providerConfigs)
+                .chat(toModelGroup(
+                        modelConfigRepository.getChatCandidates(),
+                        modelConfigRepository.getChatDefaultModel(),
+                        modelConfigRepository.getChatDeepThinkingModel()))
+                .embedding(toModelGroup(
+                        modelConfigRepository.getEmbeddingCandidates(),
+                        modelConfigRepository.getEmbeddingDefaultModel(),
+                        null))
+                .rerank(toModelGroup(
+                        modelConfigRepository.getRerankCandidates(),
+                        modelConfigRepository.getRerankDefaultModel(),
+                        null))
+                .selection(selectionProperties == null ? null : AISettings.Selection.builder()
+                        .failureThreshold(selectionProperties.getFailureThreshold())
+                        .openDurationMs(selectionProperties.getOpenDurationMs())
                         .build())
-                .stream(streamProps == null ? null : AISettings.Stream.builder()
-                        .messageChunkSize(streamProps.getMessageChunkSize())
+                .stream(streamProperties == null ? null : AISettings.Stream.builder()
+                        .messageChunkSize(streamProperties.getMessageChunkSize())
                         .build())
                 .build();
     }
 
-    private AISettings.ModelGroup toModelGroup(AIModelProperties.ModelGroup group) {
-        if (group == null) {
+    private AISettings.ModelGroup toModelGroup(java.util.List<ModelCandidateConfig> candidates,
+                                                String defaultModel,
+                                                String deepThinkingModel) {
+        if (candidates == null) {
             return null;
         }
         return AISettings.ModelGroup.builder()
-                .defaultModel(group.getDefaultModel())
-                .deepThinkingModel(group.getDeepThinkingModel())
-                .candidates(group.getCandidates() == null ? null : group.getCandidates().stream()
+                .defaultModel(defaultModel)
+                .deepThinkingModel(deepThinkingModel)
+                .candidates(candidates.stream()
                         .map(c -> AISettings.ModelCandidate.builder()
-                                .id(c.getId())
-                                .provider(c.getProvider())
-                                .model(c.getModel())
-                                .url(c.getUrl())
-                                .dimension(c.getDimension())
-                                .priority(c.getPriority())
-                                .enabled(c.getEnabled())
-                                .supportsThinking(c.getSupportsThinking())
+                                .id(c.id())
+                                .provider(c.provider())
+                                .model(c.model())
+                                .url(c.url())
+                                .dimension(c.dimension())
+                                .priority(c.priority())
+                                .enabled(c.enabled())
+                                .supportsThinking(c.supportsThinking())
                                 .build())
                         .collect(Collectors.toList()))
                 .build();

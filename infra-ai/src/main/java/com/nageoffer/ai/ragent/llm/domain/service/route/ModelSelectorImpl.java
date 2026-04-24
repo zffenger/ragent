@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.llm.domain.service.route;
 
 import cn.hutool.core.util.StrUtil;
-import com.nageoffer.ai.ragent.llm.infra.config.AIModelProperties;
+import com.nageoffer.ai.ragent.llm.domain.repository.ModelConfigRepository;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCandidateConfig;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 /**
  * 模型选择器
+ * <p>
  * 负责根据配置和当前需求（如普通对话、深度思考、Embedding等）选择合适的模型候选列表
  */
 @Slf4j
@@ -42,54 +43,51 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 class ModelSelectorImpl implements ModelSelector {
 
-    private final AIModelProperties properties;
+    private final ModelConfigRepository configRepository;
     private final ModelHealthStore healthStore;
 
-	@Override
+    @Override
     public List<ModelTarget> selectChatCandidates(boolean deepThinking) {
-        AIModelProperties.ModelGroup group = properties.getChat();
-        if (group == null) {
+        List<ModelCandidateConfig> candidates = configRepository.getChatCandidates();
+        if (candidates == null || candidates.isEmpty()) {
             return List.of();
         }
 
-        String firstChoiceModelId = resolveFirstChoiceModel(group, deepThinking);
-        return selectCandidates(group, firstChoiceModelId, deepThinking);
+        String firstChoiceModelId = resolveFirstChoiceModel(deepThinking);
+        return selectCandidates(candidates, firstChoiceModelId, deepThinking);
     }
 
-	@Override
+    @Override
     public List<ModelTarget> selectEmbeddingCandidates() {
-        return selectCandidates(properties.getEmbedding());
+        List<ModelCandidateConfig> candidates = configRepository.getEmbeddingCandidates();
+        return selectCandidates(candidates, configRepository.getEmbeddingDefaultModel(), false);
     }
 
-	@Override
+    @Override
     public List<ModelTarget> selectRerankCandidates() {
-        return selectCandidates(properties.getRerank());
+        List<ModelCandidateConfig> candidates = configRepository.getRerankCandidates();
+        return selectCandidates(candidates, configRepository.getRerankDefaultModel(), false);
     }
 
-    private String resolveFirstChoiceModel(AIModelProperties.ModelGroup group, boolean deepThinking) {
+    private String resolveFirstChoiceModel(boolean deepThinking) {
         if (deepThinking) {
-            String deepModel = group.getDeepThinkingModel();
+            String deepModel = configRepository.getChatDeepThinkingModel();
             if (StrUtil.isNotBlank(deepModel)) {
                 return deepModel;
             }
         }
-        return group.getDefaultModel();
+        return configRepository.getChatDefaultModel();
     }
 
-    private List<ModelTarget> selectCandidates(AIModelProperties.ModelGroup group) {
-        if (group == null) {
-            return List.of();
-        }
-        return selectCandidates(group, group.getDefaultModel(), false);
-    }
-
-    private List<ModelTarget> selectCandidates(AIModelProperties.ModelGroup group, String firstChoiceModelId, boolean deepThinking) {
-        if (group == null || group.getCandidates() == null) {
+    private List<ModelTarget> selectCandidates(List<ModelCandidateConfig> candidates,
+                                                String firstChoiceModelId,
+                                                boolean deepThinking) {
+        if (candidates == null || candidates.isEmpty()) {
             return List.of();
         }
 
-        List<AIModelProperties.ModelCandidate> orderedCandidates =
-                filterAndSortCandidates(group.getCandidates(), firstChoiceModelId, deepThinking);
+        List<ModelCandidateConfig> orderedCandidates =
+                filterAndSortCandidates(candidates, firstChoiceModelId, deepThinking);
 
         return buildAvailableTargets(orderedCandidates);
     }
@@ -97,18 +95,18 @@ class ModelSelectorImpl implements ModelSelector {
     /**
      * 过滤并排序候选模型列表
      */
-    private List<AIModelProperties.ModelCandidate> filterAndSortCandidates(List<AIModelProperties.ModelCandidate> candidates,
-                                                                           String firstChoiceModelId,
-                                                                           boolean deepThinking) {
-        List<AIModelProperties.ModelCandidate> enabled = candidates.stream()
-                .filter(c -> c != null && !Boolean.FALSE.equals(c.getEnabled()))
-                .filter(c -> !deepThinking || Boolean.TRUE.equals(c.getSupportsThinking()))
+    private List<ModelCandidateConfig> filterAndSortCandidates(List<ModelCandidateConfig> candidates,
+                                                                String firstChoiceModelId,
+                                                                boolean deepThinking) {
+        List<ModelCandidateConfig> enabled = candidates.stream()
+                .filter(c -> c != null && !Boolean.FALSE.equals(c.enabled()))
+                .filter(c -> !deepThinking || Boolean.TRUE.equals(c.supportsThinking()))
                 .sorted(Comparator
-                        .comparing((AIModelProperties.ModelCandidate c) ->
-                                !Objects.equals(resolveId(c), firstChoiceModelId))
-                        .thenComparing(AIModelProperties.ModelCandidate::getPriority,
+                        .comparing((ModelCandidateConfig c) ->
+                                !Objects.equals(c.id(), firstChoiceModelId))
+                        .thenComparing(ModelCandidateConfig::priority,
                                 Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(AIModelProperties.ModelCandidate::getId,
+                        .thenComparing(ModelCandidateConfig::id,
                                 Comparator.nullsLast(String::compareTo)))
                 .collect(Collectors.toList());
 
@@ -119,8 +117,8 @@ class ModelSelectorImpl implements ModelSelector {
         return enabled;
     }
 
-    private List<ModelTarget> buildAvailableTargets(List<AIModelProperties.ModelCandidate> candidates) {
-        Map<String, AIModelProperties.ProviderConfig> providers = properties.getProviders();
+    private List<ModelTarget> buildAvailableTargets(List<ModelCandidateConfig> candidates) {
+        Map<String, ProviderConfig> providers = configRepository.getProviders();
 
         return candidates.stream()
                 .map(candidate -> buildModelTarget(candidate, providers))
@@ -128,52 +126,19 @@ class ModelSelectorImpl implements ModelSelector {
                 .collect(Collectors.toList());
     }
 
-    private ModelTarget buildModelTarget(AIModelProperties.ModelCandidate candidate, Map<String, AIModelProperties.ProviderConfig> providers) {
-        String modelId = resolveId(candidate);
+    private ModelTarget buildModelTarget(ModelCandidateConfig candidate, Map<String, ProviderConfig> providers) {
+        String modelId = candidate.id();
 
         if (healthStore.isUnavailable(modelId)) {
             return null;
         }
 
-        AIModelProperties.ProviderConfig provider = providers.get(candidate.getProvider());
-        if (provider == null && !ModelProvider.NOOP.matches(candidate.getProvider())) {
-            log.warn("Provider配置缺失: provider={}, modelId={}", candidate.getProvider(), modelId);
+        ProviderConfig provider = providers.get(candidate.provider());
+        if (provider == null && !ModelProvider.NOOP.matches(candidate.provider())) {
+            log.warn("Provider配置缺失: provider={}, modelId={}", candidate.provider(), modelId);
             return null;
         }
 
-        return new ModelTarget(modelId, toCandidateConfig(candidate), toProviderConfig(provider));
-    }
-
-    private ModelCandidateConfig toCandidateConfig(AIModelProperties.ModelCandidate candidate) {
-        return new ModelCandidateConfig(
-                candidate.getId(),
-                candidate.getProvider(),
-                candidate.getModel(),
-                candidate.getUrl(),
-                candidate.getDimension(),
-                candidate.getPriority(),
-                candidate.getEnabled(),
-                candidate.getSupportsThinking()
-        );
-    }
-
-    private ProviderConfig toProviderConfig(AIModelProperties.ProviderConfig provider) {
-        if (provider == null) {
-            return null;
-        }
-        return new ProviderConfig(
-                provider.getUrl(),
-                provider.getApiKey(),
-                provider.getEndpoints()
-        );
-    }
-
-    private String resolveId(AIModelProperties.ModelCandidate candidate) {
-        if (StrUtil.isNotBlank(candidate.getId())) {
-            return candidate.getId();
-        }
-        return String.format("%s::%s",
-                Objects.toString(candidate.getProvider(), "unknown"),
-                Objects.toString(candidate.getModel(), "unknown"));
+        return new ModelTarget(modelId, candidate, provider);
     }
 }

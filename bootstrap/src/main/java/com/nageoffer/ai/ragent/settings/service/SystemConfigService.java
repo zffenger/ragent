@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.settings.service;
 
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
-import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;
+import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
 
 import java.util.List;
 

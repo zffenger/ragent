@@ -22,7 +22,7 @@ import com.nageoffer.ai.ragent.framework.web.Results;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
-import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;
+import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
 import com.nageoffer.ai.ragent.settings.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;

@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.settings.dao.mapper;
+package com.nageoffer.ai.ragent.llm.infra.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.settings.dao.entity.ModelProviderDO;
+import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 模型提供商 Mapper
+ * 模型候选 Mapper
  */
 @Mapper
-public interface ModelProviderMapper extends BaseMapper<ModelProviderDO> {
+public interface ModelCandidateMapper extends BaseMapper<ModelCandidateDO> {
 }
