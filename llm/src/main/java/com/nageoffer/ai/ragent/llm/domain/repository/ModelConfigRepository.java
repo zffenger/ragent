@@ -26,9 +26,11 @@ import java.util.Map;
 /**
  * 模型配置仓储接口
  * <p>
- * 提供模型配置的查询能力，配置从数据库动态加载
+ * 提供模型配置的查询和修改能力，配置从数据库动态加载
  */
 public interface ModelConfigRepository {
+
+    // ==================== 查询操作 ====================
 
     /**
      * 获取所有启用的提供商配置
@@ -72,8 +74,65 @@ public interface ModelConfigRepository {
      */
     String getRerankDefaultModel();
 
+    // ==================== 提供商管理 ====================
+
+    /**
+     * 获取所有提供商列表（包括禁用的）
+     */
+    List<ProviderConfig> listAllProviders();
+
+    /**
+     * 创建提供商
+     */
+    ProviderConfig createProvider(ProviderConfig provider);
+
+    /**
+     * 更新提供商
+     */
+    ProviderConfig updateProvider(ProviderConfig provider);
+
+    /**
+     * 删除提供商
+     */
+    void deleteProvider(String id);
+
+    // ==================== 模型候选管理 ====================
+
+    /**
+     * 更新模型组配置
+     */
+    void createModelConfig(ModelCandidateConfig config);
+    void updateModelConfig(ModelCandidateConfig config);
+	void deleteModelConfig(String id);
+
+    /**
+     * 设置默认模型
+     *
+     * @param candidateId 候选 ID
+     * @param modelType   模型类型
+     */
+    void setDefaultModel(String candidateId, String modelType);
+
+    /**
+     * 设置深度思考模型
+     *
+     * @param candidateId 候选 ID
+     */
+    void setDeepThinkingModel(String candidateId);
+
+    // ==================== 缓存管理 ====================
+
     /**
      * 刷新配置缓存
      */
     void refreshCache();
+
+    /**
+     * 模型组配置
+     */
+    record ModelGroupConfig(
+            String defaultModel,
+            String deepThinkingModel,
+            List<ModelCandidateConfig> candidates
+    ) {}
 }

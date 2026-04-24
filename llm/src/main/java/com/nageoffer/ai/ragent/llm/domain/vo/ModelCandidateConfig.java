@@ -23,35 +23,17 @@ package com.nageoffer.ai.ragent.llm.domain.vo;
  * 用于封装单个候选模型的配置信息，是领域层的值对象
  */
 public record ModelCandidateConfig(
-		/**
-		 * 模型唯一标识符
-		 */
         String id,
-		/**
-		 * 模型提供商名称
-		 */
+        String modelId,
+		String modelType,
         String provider,
-
-        String model,
-		/**
-		 * 模型名称
-		 */
+        String modelName,
         String url,
-		/**
-		 * 模型访问 URL
-		 */
         Integer dimension,
-		/**
-		 * 向量维度（用于 embedding 模型）
-		 */
         Integer priority,
-		/**
-		 * 模型优先级，数值越小优先级越高
-		 */
-        Boolean enabled,
-		/**
-		 * 是否启用该模型
-		 */
-        Boolean supportsThinking
+        boolean enabled,
+        boolean supportsThinking,
+        boolean isDefault,
+        boolean isDeepThinking
 ) {
 }

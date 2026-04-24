@@ -25,8 +25,11 @@ import java.util.Map;
  * 用于封装提供商的基本连接信息和端点配置，是领域层的值对象
  */
 public record ProviderConfig(
+		String id,
+		String name,
         String url,
         String apiKey,
-        Map<String, String> endpoints
+        Map<String, String> endpoints,
+		boolean enabled
 ) {
 }

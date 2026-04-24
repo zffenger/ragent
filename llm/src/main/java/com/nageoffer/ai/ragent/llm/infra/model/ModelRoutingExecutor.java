@@ -48,7 +48,7 @@ public class ModelRoutingExecutor {
             ModelCaller<C, T> caller) {
         String label = capability.getCapability();
         if (targets == null || targets.isEmpty()) {
-            throw new RemoteException("No " + label + " model candidates available");
+            throw new RemoteException("No " + label + " modelName candidates available");
         }
 
         Throwable last = null;
@@ -69,12 +69,12 @@ public class ModelRoutingExecutor {
             } catch (Exception e) {
                 last = e;
                 healthStore.markFailure(target.id());
-                log.warn("{} model failed, fallback to next. modelId={}, provider={}", label, target.id(), target.candidate().provider(), e);
+                log.warn("{} modelName failed, fallback to next. modelId={}, provider={}", label, target.id(), target.candidate().provider(), e);
             }
         }
 
         throw new RemoteException(
-                "All " + label + " model candidates failed: " + (last == null ? "unknown" : last.getMessage()),
+                "All " + label + " modelName candidates failed: " + (last == null ? "unknown" : last.getMessage()),
                 last,
                 BaseErrorCode.REMOTE_ERROR
         );

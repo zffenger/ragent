@@ -35,18 +35,20 @@ public interface SystemConfigService {
     /**
      * 获取指定类型的模型组配置
      *
-     * @param modelType 模型类型：CHAT/EMBEDDING/RERANK
      * @return 模型组配置
      */
-    ModelGroupConfigVO getModelGroupConfig(ModelCandidateDO.ModelType modelType);
+    ModelGroupConfigVO getRerankModelGroupConfig();
 
-    /**
+	ModelGroupConfigVO getChatModelGroupConfig();
+
+	ModelGroupConfigVO getEmbeddingModelGroupConfig();
+
+	/**
      * 更新指定类型的模型组配置
      *
-     * @param modelType 模型类型
      * @param config    模型组配置
      */
-    void updateModelGroupConfig(ModelCandidateDO.ModelType modelType, ModelGroupConfigVO config);
+    void updateModelGroupConfig(ModelGroupConfigVO config);
 
     /**
      * 获取所有模型提供商

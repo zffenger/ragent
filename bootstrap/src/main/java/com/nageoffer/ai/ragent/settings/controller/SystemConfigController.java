@@ -57,7 +57,7 @@ public class SystemConfigController {
      */
     @GetMapping("/ai/chat")
     public Result<ModelGroupConfigVO> getChatModelConfig() {
-        return Results.success(systemConfigService.getModelGroupConfig(ModelCandidateDO.ModelType.CHAT));
+        return Results.success(systemConfigService.getChatModelGroupConfig());
     }
 
     /**
@@ -65,7 +65,7 @@ public class SystemConfigController {
      */
     @PutMapping("/ai/chat")
     public Result<Void> updateChatModelConfig(@RequestBody ModelGroupConfigVO config) {
-        systemConfigService.updateModelGroupConfig(ModelCandidateDO.ModelType.CHAT, config);
+        systemConfigService.updateModelGroupConfig(config);
         return Results.success();
     }
 
@@ -74,7 +74,7 @@ public class SystemConfigController {
      */
     @GetMapping("/ai/embedding")
     public Result<ModelGroupConfigVO> getEmbeddingModelConfig() {
-        return Results.success(systemConfigService.getModelGroupConfig(ModelCandidateDO.ModelType.EMBEDDING));
+        return Results.success(systemConfigService.getEmbeddingModelGroupConfig());
     }
 
     /**
@@ -82,7 +82,7 @@ public class SystemConfigController {
      */
     @PutMapping("/ai/embedding")
     public Result<Void> updateEmbeddingModelConfig(@RequestBody ModelGroupConfigVO config) {
-        systemConfigService.updateModelGroupConfig(ModelCandidateDO.ModelType.EMBEDDING, config);
+        systemConfigService.updateModelGroupConfig(config);
         return Results.success();
     }
 
@@ -91,7 +91,7 @@ public class SystemConfigController {
      */
     @GetMapping("/ai/rerank")
     public Result<ModelGroupConfigVO> getRerankModelConfig() {
-        return Results.success(systemConfigService.getModelGroupConfig(ModelCandidateDO.ModelType.RERANK));
+        return Results.success(systemConfigService.getRerankModelGroupConfig());
     }
 
     /**
@@ -99,7 +99,7 @@ public class SystemConfigController {
      */
     @PutMapping("/ai/rerank")
     public Result<Void> updateRerankModelConfig(@RequestBody ModelGroupConfigVO config) {
-        systemConfigService.updateModelGroupConfig(ModelCandidateDO.ModelType.RERANK, config);
+        systemConfigService.updateModelGroupConfig(config);
         return Results.success();
     }
 

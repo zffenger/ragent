@@ -99,14 +99,14 @@ class ModelSelectorImpl implements ModelSelector {
                                                                 String firstChoiceModelId,
                                                                 boolean deepThinking) {
         List<ModelCandidateConfig> enabled = candidates.stream()
-                .filter(c -> c != null && !Boolean.FALSE.equals(c.enabled()))
-                .filter(c -> !deepThinking || Boolean.TRUE.equals(c.supportsThinking()))
+                .filter(c -> c != null && c.enabled())
+                .filter(c -> !deepThinking || c.supportsThinking())
                 .sorted(Comparator
                         .comparing((ModelCandidateConfig c) ->
-                                !Objects.equals(c.id(), firstChoiceModelId))
+                                !Objects.equals(c.modelId(), firstChoiceModelId))
                         .thenComparing(ModelCandidateConfig::priority,
                                 Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(ModelCandidateConfig::id,
+                        .thenComparing(ModelCandidateConfig::modelId,
                                 Comparator.nullsLast(String::compareTo)))
                 .collect(Collectors.toList());
 
@@ -127,7 +127,7 @@ class ModelSelectorImpl implements ModelSelector {
     }
 
     private ModelTarget buildModelTarget(ModelCandidateConfig candidate, Map<String, ProviderConfig> providers) {
-        String modelId = candidate.id();
+        String modelId = candidate.modelId();
 
         if (healthStore.isUnavailable(modelId)) {
             return null;
