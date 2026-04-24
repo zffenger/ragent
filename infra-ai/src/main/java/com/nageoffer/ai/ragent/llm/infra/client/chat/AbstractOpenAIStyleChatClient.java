@@ -22,7 +22,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
-import com.nageoffer.ai.ragent.llm.domain.repository.ChatClient;
+import com.nageoffer.ai.ragent.llm.domain.client.ChatClient;
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCallback;
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCancellationHandle;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;

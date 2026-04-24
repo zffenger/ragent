@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.domain.repository;
+package com.nageoffer.ai.ragent.llm.domain.client;
 
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 
@@ -26,14 +26,6 @@ import java.util.List;
  * 用于将文本转换为向量表示，支持单个文本和批量文本的嵌入操作
  */
 public interface EmbeddingClient extends LLMClient {
-
-    /**
-     * 获取嵌入服务提供商名称
-     *
-     * @return 提供商标识字符串
-     */
-    String provider();
-
     /**
      * 将单个文本转换为嵌入向量
      *

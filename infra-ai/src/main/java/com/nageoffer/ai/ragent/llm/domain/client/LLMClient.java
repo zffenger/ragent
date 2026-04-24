@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.domain.repository;
+package com.nageoffer.ai.ragent.llm.domain.client;
 
 public interface LLMClient {
 	/**
 	 * 获取服务提供商名称
 	 *
-	 * @return 服务提供商标识：{@link com.nageoffer.ai.ragent.infra.enums.ModelProvider}
+	 * @return 服务提供商标识：{@link com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider}
 	 */
 	String provider();
 }

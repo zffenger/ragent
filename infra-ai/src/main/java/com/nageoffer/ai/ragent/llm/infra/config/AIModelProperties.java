@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.interfaces.config;
+package com.nageoffer.ai.ragent.llm.infra.config;
 
 import lombok.Data;
 import org.springframework.stereotype.Component;

@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.llm.infra.model;
 
 import cn.hutool.core.util.StrUtil;
-import com.nageoffer.ai.ragent.llm.interfaces.config.AIModelProperties;
+import com.nageoffer.ai.ragent.llm.infra.config.AIModelProperties;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCandidateConfig;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;

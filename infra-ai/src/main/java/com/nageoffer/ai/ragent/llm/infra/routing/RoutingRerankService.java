@@ -18,11 +18,11 @@
 package com.nageoffer.ai.ragent.llm.infra.routing;
 
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
-import com.nageoffer.ai.ragent.llm.domain.repository.RerankClient;
+import com.nageoffer.ai.ragent.llm.domain.client.RerankClient;
 import com.nageoffer.ai.ragent.llm.domain.service.RerankService;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
-import com.nageoffer.ai.ragent.llm.infra.model.DefaultClientResolver;
-import com.nageoffer.ai.ragent.llm.infra.model.ModelClientResolver;
+import com.nageoffer.ai.ragent.llm.domain.service.impl.DefaultClientResolver;
+import com.nageoffer.ai.ragent.llm.domain.service.ModelClientResolver;
 import com.nageoffer.ai.ragent.llm.infra.model.ModelRoutingExecutor;
 import com.nageoffer.ai.ragent.llm.infra.model.ModelSelector;
 import org.springframework.context.annotation.Primary;

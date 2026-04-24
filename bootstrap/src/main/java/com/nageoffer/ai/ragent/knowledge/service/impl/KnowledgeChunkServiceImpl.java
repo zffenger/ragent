@@ -27,7 +27,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
-import com.nageoffer.ai.ragent.llm.domain.service.TokenCounterService;
+import com.nageoffer.ai.ragent.llm.domain.service.token.TokenCounterService;
 import com.nageoffer.ai.ragent.knowledge.controller.request.KnowledgeChunkBatchRequest;
 import com.nageoffer.ai.ragent.knowledge.controller.request.KnowledgeChunkCreateRequest;
 import com.nageoffer.ai.ragent.knowledge.controller.request.KnowledgeChunkPageRequest;

@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.llm.infra.client.chat;
 
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCallback;
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCancellationHandle;
-import com.nageoffer.ai.ragent.llm.domain.service.StreamCancellationHandles;
+import com.nageoffer.ai.ragent.llm.domain.service.impl.StreamCancellationHandles;
 import com.nageoffer.ai.ragent.llm.infra.http.ModelClientErrorType;
 import com.nageoffer.ai.ragent.llm.infra.http.ModelClientException;
 import lombok.NoArgsConstructor;

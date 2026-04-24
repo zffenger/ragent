@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.domain.service;
+package com.nageoffer.ai.ragent.llm.domain.service.impl;
 
 import lombok.NoArgsConstructor;
 import okhttp3.Call;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.nageoffer.ai.ragent.llm.domain.service.StreamCancellationHandle;
 
 /**
  * StreamCancellationHandle 工具类

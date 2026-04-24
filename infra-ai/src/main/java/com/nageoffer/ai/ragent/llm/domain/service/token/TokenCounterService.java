@@ -15,28 +15,18 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.infra.model;
+package com.nageoffer.ai.ragent.llm.domain.service.token;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+/**
+ * Token 统计服务接口
+ */
+public interface TokenCounterService {
 
-import com.nageoffer.ai.ragent.llm.domain.repository.LLMClient;
-import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
-
-public class DefaultClientResolver<C extends LLMClient> implements ModelClientResolver<C> {
-
-	private final Map<String, C> clientsByProvider;
-
-	public DefaultClientResolver(Collection<C> clients) {
-		this.clientsByProvider = clients.stream()
-				.collect(Collectors.toMap(C::provider, Function.identity()));
-	}
-
-
-	@Override
-	public C resolve(ModelTarget target) {
-		return clientsByProvider.get(target.candidate().provider());
-	}
+    /**
+     * 统计文本的 Token 数
+     *
+     * @param text 文本内容
+     * @return Token 数（无法计算时返回 null）
+     */
+    Integer countTokens(String text);
 }

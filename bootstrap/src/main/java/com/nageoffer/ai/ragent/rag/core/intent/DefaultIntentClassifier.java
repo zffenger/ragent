@@ -25,7 +25,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
-import com.nageoffer.ai.ragent.llm.infra.util.LLMResponseCleaner;
+import com.nageoffer.ai.ragent.llm.domain.util.LLMResponseCleaner;
 import com.nageoffer.ai.ragent.rag.dao.entity.IntentNodeDO;
 import com.nageoffer.ai.ragent.rag.dao.mapper.IntentNodeMapper;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;

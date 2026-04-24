@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.llm.infra.model;
 
-import com.nageoffer.ai.ragent.llm.interfaces.config.AISelectionProperties;
+import com.nageoffer.ai.ragent.llm.infra.config.AISelectionProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

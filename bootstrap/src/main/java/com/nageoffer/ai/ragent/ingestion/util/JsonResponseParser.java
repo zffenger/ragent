@@ -21,7 +21,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.nageoffer.ai.ragent.llm.infra.util.LLMResponseCleaner;
+import com.nageoffer.ai.ragent.llm.domain.util.LLMResponseCleaner;
 
 import java.util.Collections;
 import java.util.List;

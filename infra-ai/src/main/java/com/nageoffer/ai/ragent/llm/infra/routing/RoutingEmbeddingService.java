@@ -17,12 +17,12 @@
 
 package com.nageoffer.ai.ragent.llm.infra.routing;
 
-import com.nageoffer.ai.ragent.llm.domain.repository.EmbeddingClient;
+import com.nageoffer.ai.ragent.llm.domain.client.EmbeddingClient;
 import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
-import com.nageoffer.ai.ragent.llm.infra.model.DefaultClientResolver;
-import com.nageoffer.ai.ragent.llm.infra.model.ModelClientResolver;
+import com.nageoffer.ai.ragent.llm.domain.service.impl.DefaultClientResolver;
+import com.nageoffer.ai.ragent.llm.domain.service.ModelClientResolver;
 import com.nageoffer.ai.ragent.llm.infra.model.ModelRoutingExecutor;
 import com.nageoffer.ai.ragent.llm.infra.model.ModelSelector;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;

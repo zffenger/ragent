@@ -21,7 +21,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
-import com.nageoffer.ai.ragent.llm.domain.repository.RerankClient;
+import com.nageoffer.ai.ragent.llm.domain.client.RerankClient;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider;
 import com.nageoffer.ai.ragent.llm.domain.vo.ProviderConfig;

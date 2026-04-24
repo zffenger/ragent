@@ -20,7 +20,7 @@ package com.nageoffer.ai.ragent.llm.infra.client.embedding;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.nageoffer.ai.ragent.llm.domain.repository.EmbeddingClient;
+import com.nageoffer.ai.ragent.llm.domain.client.EmbeddingClient;
 import com.nageoffer.ai.ragent.llm.domain.vo.ProviderConfig;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
 import com.nageoffer.ai.ragent.llm.infra.http.HttpMediaTypes;

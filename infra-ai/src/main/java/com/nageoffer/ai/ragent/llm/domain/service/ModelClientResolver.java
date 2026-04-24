@@ -17,16 +17,23 @@
 
 package com.nageoffer.ai.ragent.llm.domain.service;
 
-/**
- * Token 统计服务接口
- */
-public interface TokenCounterService {
+import com.nageoffer.ai.ragent.llm.domain.client.LLMClient;
+import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 
-    /**
-     * 统计文本的 Token 数
-     *
-     * @param text 文本内容
-     * @return Token 数（无法计算时返回 null）
-     */
-    Integer countTokens(String text);
+/**
+ * 模型客户端解析器
+ * <p>
+ * 根据模型目标解析出对应的客户端实例
+ *
+ * @param <C> 客户端类型
+ */
+@FunctionalInterface
+public interface ModelClientResolver<C extends LLMClient> {
+	/**
+	 * 解析模型目标对应的客户端
+	 *
+	 * @param target 模型目标
+	 * @return 客户端实例，如果不存在返回 null
+	 */
+	C resolve(ModelTarget target);
 }

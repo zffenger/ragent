@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.domain.repository;
+package com.nageoffer.ai.ragent.llm.domain.client;
 
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
@@ -27,13 +27,6 @@ import java.util.List;
  * 用于对检索到的文档片段进行重新排序，以提高检索结果的相关性
  */
 public interface RerankClient extends LLMClient {
-
-    /**
-     * 获取Rerank服务提供商名称
-     *
-     * @return 提供商标识，如 "bailian"、"jina" 等
-     */
-    String provider();
 
     /**
      * 对检索到的文档片段进行重新排序

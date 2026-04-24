@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.infra.util;
+package com.nageoffer.ai.ragent.llm.domain.util;
 
 import lombok.NoArgsConstructor;
 

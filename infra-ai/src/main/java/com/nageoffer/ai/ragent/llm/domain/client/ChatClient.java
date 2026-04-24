@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.domain.repository;
+package com.nageoffer.ai.ragent.llm.domain.client;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCallback;
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCancellationHandle;
-import com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 
 /**
@@ -28,13 +27,6 @@ import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
  * 定义了与AI模型进行对话的核心方法
  */
 public interface ChatClient extends LLMClient {
-
-    /**
-     * 获取服务提供商名称
-     *
-     * @return 服务提供商标识：{@link ModelProvider}
-     */
-    String provider();
 
     /**
      * 同步聊天方法

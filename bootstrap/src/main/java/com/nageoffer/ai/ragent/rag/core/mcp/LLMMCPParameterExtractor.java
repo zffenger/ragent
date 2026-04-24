@@ -26,7 +26,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
-import com.nageoffer.ai.ragent.llm.infra.util.LLMResponseCleaner;
+import com.nageoffer.ai.ragent.llm.domain.util.LLMResponseCleaner;
 import com.nageoffer.ai.ragent.rag.core.prompt.PromptTemplateLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

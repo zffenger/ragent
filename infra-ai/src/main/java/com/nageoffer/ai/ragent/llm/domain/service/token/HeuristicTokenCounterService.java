@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.infra.token;
+package com.nageoffer.ai.ragent.llm.domain.service.token;
 
-import com.nageoffer.ai.ragent.llm.domain.service.TokenCounterService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -57,6 +56,9 @@ public class HeuristicTokenCounterService implements TokenCounterService {
         return Math.max(total, 1);
     }
 
+	/**
+	 * 中日韩文字、日文假名、韩文
+	 */
     private boolean isCjk(char ch) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
         return block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS

@@ -19,7 +19,8 @@ package com.nageoffer.ai.ragent.llm.infra.model;
 
 import com.nageoffer.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
-import com.nageoffer.ai.ragent.llm.domain.repository.LLMClient;
+import com.nageoffer.ai.ragent.llm.domain.client.LLMClient;
+import com.nageoffer.ai.ragent.llm.domain.service.ModelClientResolver;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 import lombok.RequiredArgsConstructor;
