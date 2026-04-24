@@ -21,7 +21,7 @@ module/
   │   └── assembler/                   # 应用层组装器
   │
   ├── infra/                           # 基础设施层（实现接口）
-  │   ├── repository/                  # Repository 实现
+  │   ├── persistence/                 # 持久化 实现
   │   │   ├── converter/               # DO ↔ Entity 转换
   │   │   ├── po/                      # 持久化对象（DO/PO）
   │   │   ├── mapper/                  # MyBatis Mapper
@@ -41,8 +41,10 @@ module/
 ```
 
 ### 依赖规则（关键！）
-- application 层依赖 domain 层，domain层不依赖任何其他层
+- application 层依赖 domain 层，application层是编排层，作用是编排多个领域服务
+- domain层不依赖任何其他层
 - interfaces/infra可以依赖domain和application，
+- interfaces可以依赖infra，infra不可以依赖interfaces
 - 禁止： domain/application 依赖 infra/interfaces
 
 ### 命名规范
@@ -61,9 +63,9 @@ application/UserApplication.java           // 应用服务
 application/assembler/XxxAssembler.java     // 应用层组装器
 
 // 基础设施层
-infra/repository/UserRepositoryImpl.java     // Repository 实现
-infra/repository/po/UserPO.java              // 持久化对象
-infra/repository/mapper/UserMapper.java      // MyBatis Mapper
+infra/persistence/UserRepositoryImpl.java     // Repository 实现
+infra/persistence/po/UserPO.java              // 持久化对象
+infra/persistence/mapper/UserMapper.java      // MyBatis Mapper
 infra/adapter/BaiduMapAdapter.java           // 领域层接口实现
 infra/adapter/client/BaiduMapClient.java     // 外部服务的client封装，非必须
 
@@ -73,6 +75,8 @@ interfaces/dto/request/CreateUserRequest.java          // 请求 DTO
 interfaces/dto/response/UserResponse.java              // 响应 DTO
 interfaces/facade/UserFacade.java                      // 外部服务门面
 ```
+
+### 其他要求
 
 ## 重构步骤
 
@@ -97,7 +101,7 @@ mkdir -p module/src/main/java/.../domain/repository
 mkdir -p module/src/main/java/.../domain/vo
 
 # 创建 infra 层目录
-mkdir -p module/src/main/java/.../infra/repository
+mkdir -p module/src/main/java/.../infra/persistence
 mkdir -p module/src/main/java/.../infra/adapter
 
 # 创建 interfaces 层目录
@@ -113,7 +117,7 @@ mkdir -p module/src/main/java/.../interfaces/config
 git mv old/path/XXXService.java new/path/domain/service/
 
 # 移动 Repository 接口到 domain/repository
-git mv old/path/XXXRepositoryImpl.java new/path/domain/repository/
+git mv old/path/XXXRepository.java new/path/domain/repository/
 
 # 移动值对象到 domain/vo
 git mv old/path/ModelTarget.java new/path/domain/vo/

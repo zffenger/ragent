@@ -19,11 +19,15 @@ package com.nageoffer.ai.ragent.chatbot.interfaces.controller;
 
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
-import com.nageoffer.ai.ragent.chatbot.settings.service.BotConfigService;
-import com.nageoffer.ai.ragent.chatbot.settings.vo.AnswerConfigVO;
-import com.nageoffer.ai.ragent.chatbot.settings.vo.DetectionConfigVO;
-import com.nageoffer.ai.ragent.chatbot.settings.vo.FeishuBotConfigVO;
-import com.nageoffer.ai.ragent.chatbot.settings.vo.WeWorkBotConfigVO;
+import com.nageoffer.ai.ragent.chatbot.domain.repository.SystemConfigRepository;
+import com.nageoffer.ai.ragent.chatbot.domain.vo.AnswerConfig;
+import com.nageoffer.ai.ragent.chatbot.domain.vo.DetectionConfig;
+import com.nageoffer.ai.ragent.chatbot.domain.vo.FeishuBotConfig;
+import com.nageoffer.ai.ragent.chatbot.domain.vo.WeWorkBotConfig;
+import com.nageoffer.ai.ragent.chatbot.interfaces.dto.response.AnswerConfigVO;
+import com.nageoffer.ai.ragent.chatbot.interfaces.dto.response.DetectionConfigVO;
+import com.nageoffer.ai.ragent.chatbot.interfaces.dto.response.FeishuBotConfigVO;
+import com.nageoffer.ai.ragent.chatbot.interfaces.dto.response.WeWorkBotConfigVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,92 +46,133 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/settings/chatbot")
 public class BotConfigController {
 
-    private final BotConfigService botConfigService;
+    private final SystemConfigRepository systemConfigRepository;
 
     // ==================== 飞书机器人配置 ====================
 
-    /**
-     * 获取飞书机器人配置
-     */
     @GetMapping("/feishu")
     public Result<FeishuBotConfigVO> getFeishuBotConfig() {
-        return Results.success(botConfigService.getFeishuBotConfig());
+        FeishuBotConfig config = systemConfigRepository.getFeishuBotConfig();
+        return Results.success(toFeishuBotConfigVO(config));
     }
 
-    /**
-     * 更新飞书机器人配置
-     */
     @PutMapping("/feishu")
-    public Result<Void> updateFeishuBotConfig(@RequestBody FeishuBotConfigVO config) {
-        botConfigService.updateFeishuBotConfig(config);
+    public Result<Void> updateFeishuBotConfig(@RequestBody FeishuBotConfigVO vo) {
+        systemConfigRepository.saveFeishuBotConfig(toFeishuBotConfig(vo));
         return Results.success();
     }
 
     // ==================== 企微机器人配置 ====================
 
-    /**
-     * 获取企微机器人配置
-     */
     @GetMapping("/wework")
     public Result<WeWorkBotConfigVO> getWeWorkBotConfig() {
-        return Results.success(botConfigService.getWeWorkBotConfig());
+        WeWorkBotConfig config = systemConfigRepository.getWeWorkBotConfig();
+        return Results.success(toWeWorkBotConfigVO(config));
     }
 
-    /**
-     * 更新企微机器人配置
-     */
     @PutMapping("/wework")
-    public Result<Void> updateWeWorkBotConfig(@RequestBody WeWorkBotConfigVO config) {
-        botConfigService.updateWeWorkBotConfig(config);
+    public Result<Void> updateWeWorkBotConfig(@RequestBody WeWorkBotConfigVO vo) {
+        systemConfigRepository.saveWeWorkBotConfig(toWeWorkBotConfig(vo));
         return Results.success();
     }
 
     // ==================== 检测配置 ====================
 
-    /**
-     * 获取问题检测配置
-     */
     @GetMapping("/detection")
     public Result<DetectionConfigVO> getDetectionConfig() {
-        return Results.success(botConfigService.getDetectionConfig());
+        DetectionConfig config = systemConfigRepository.getDetectionConfig();
+        return Results.success(toDetectionConfigVO(config));
     }
 
-    /**
-     * 更新问题检测配置
-     */
     @PutMapping("/detection")
-    public Result<Void> updateDetectionConfig(@RequestBody DetectionConfigVO config) {
-        botConfigService.updateDetectionConfig(config);
+    public Result<Void> updateDetectionConfig(@RequestBody DetectionConfigVO vo) {
+        systemConfigRepository.saveDetectionConfig(toDetectionConfig(vo));
         return Results.success();
     }
 
     // ==================== 回答配置 ====================
 
-    /**
-     * 获取回答生成配置
-     */
     @GetMapping("/answer")
     public Result<AnswerConfigVO> getAnswerConfig() {
-        return Results.success(botConfigService.getAnswerConfig());
+        AnswerConfig config = systemConfigRepository.getAnswerConfig();
+        return Results.success(toAnswerConfigVO(config));
     }
 
-    /**
-     * 更新回答生成配置
-     */
     @PutMapping("/answer")
-    public Result<Void> updateAnswerConfig(@RequestBody AnswerConfigVO config) {
-        botConfigService.updateAnswerConfig(config);
+    public Result<Void> updateAnswerConfig(@RequestBody AnswerConfigVO vo) {
+        systemConfigRepository.saveAnswerConfig(toAnswerConfig(vo));
         return Results.success();
     }
 
     // ==================== 缓存刷新 ====================
 
-    /**
-     * 刷新配置缓存
-     */
     @PostMapping("/refresh-cache")
     public Result<Void> refreshCache() {
-        botConfigService.refreshConfigCache();
+        systemConfigRepository.refreshCache();
         return Results.success();
+    }
+
+    // ==================== DTO 转换方法 ====================
+
+    private FeishuBotConfigVO toFeishuBotConfigVO(FeishuBotConfig config) {
+        return FeishuBotConfigVO.builder()
+                .enabled(config.enabled())
+                .appId(config.appId())
+                .appSecret(config.appSecret())
+                .encryptKey(config.encryptKey())
+                .verificationToken(config.verificationToken())
+                .botName(config.botName())
+                .build();
+    }
+
+    private FeishuBotConfig toFeishuBotConfig(FeishuBotConfigVO vo) {
+        return new FeishuBotConfig(
+                vo.getEnabled(), vo.getAppId(), vo.getAppSecret(),
+                vo.getEncryptKey(), vo.getVerificationToken(), vo.getBotName());
+    }
+
+    private WeWorkBotConfigVO toWeWorkBotConfigVO(WeWorkBotConfig config) {
+        return WeWorkBotConfigVO.builder()
+                .enabled(config.enabled())
+                .corpId(config.corpId())
+                .agentId(config.agentId())
+                .secret(config.secret())
+                .token(config.token())
+                .encodingAesKey(config.encodingAesKey())
+                .botName(config.botName())
+                .build();
+    }
+
+    private WeWorkBotConfig toWeWorkBotConfig(WeWorkBotConfigVO vo) {
+        return new WeWorkBotConfig(
+                vo.getEnabled(), vo.getCorpId(), vo.getAgentId(), vo.getSecret(),
+                vo.getToken(), vo.getEncodingAesKey(), vo.getBotName());
+    }
+
+    private DetectionConfigVO toDetectionConfigVO(DetectionConfig config) {
+        return DetectionConfigVO.builder()
+                .mode(config.mode())
+                .keywords(config.keywords())
+                .atTriggerEnabled(config.atTriggerEnabled())
+                .llmThreshold(config.llmThreshold())
+                .build();
+    }
+
+    private DetectionConfig toDetectionConfig(DetectionConfigVO vo) {
+        return new DetectionConfig(
+                vo.getMode(), vo.getKeywords(), vo.getAtTriggerEnabled(), vo.getLlmThreshold());
+    }
+
+    private AnswerConfigVO toAnswerConfigVO(AnswerConfig config) {
+        return AnswerConfigVO.builder()
+                .mode(config.mode())
+                .defaultSystemPrompt(config.defaultSystemPrompt())
+                .maxTokens(config.maxTokens())
+                .build();
+    }
+
+    private AnswerConfig toAnswerConfig(AnswerConfigVO vo) {
+        return new AnswerConfig(
+                vo.getMode(), vo.getDefaultSystemPrompt(), vo.getMaxTokens());
     }
 }

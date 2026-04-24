@@ -15,34 +15,20 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.settings.vo;
+package com.nageoffer.ai.ragent.chatbot.domain.vo;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.List;
 
 /**
- * 回答生成配置 VO
+ * 问题检测配置值对象
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class AnswerConfigVO {
-
-    /**
-     * 回答生成模式：LLM/RAG
-     */
-    private String mode;
-
-    /**
-     * 默认系统提示词
-     */
-    private String defaultSystemPrompt;
-
-    /**
-     * 最大 Token 数
-     */
-    private Integer maxTokens;
+public record DetectionConfig(
+        String mode,
+        List<String> keywords,
+        Boolean atTriggerEnabled,
+        Double llmThreshold
+) {
+    public static DetectionConfig defaultConfig() {
+        return new DetectionConfig("COMPOSITE", null, true, 0.7);
+    }
 }

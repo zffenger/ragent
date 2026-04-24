@@ -1,1 +1,1 @@
-com.nageoffer.ai.ragent.chatbot.config.ChatbotAutoConfiguration
+com.nageoffer.ai.ragent.chatbot.infra.config.ChatbotAutoConfiguration

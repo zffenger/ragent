@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.settings.dao.entity;
+package com.nageoffer.ai.ragent.chatbot.infra.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -40,7 +40,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 @TableName("t_system_config")
-public class SystemConfigDO {
+public class SystemConfigPO {
 
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;

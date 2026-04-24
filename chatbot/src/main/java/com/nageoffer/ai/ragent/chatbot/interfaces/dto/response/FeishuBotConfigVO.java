@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.settings.vo;
+package com.nageoffer.ai.ragent.chatbot.interfaces.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

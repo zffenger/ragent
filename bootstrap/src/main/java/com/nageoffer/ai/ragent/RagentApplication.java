@@ -33,7 +33,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.nageoffer.ai.ragent.knowledge.dao.mapper",
         "com.nageoffer.ai.ragent.user.dao.mapper",
         "com.nageoffer.ai.ragent.settings.dao.mapper",
-        "com.nageoffer.ai.ragent.chatbot.settings.dao.mapper"
+        "com.nageoffer.ai.ragent.chatbot.infra.persistence.mapper"
 })
 public class RagentApplication {
 

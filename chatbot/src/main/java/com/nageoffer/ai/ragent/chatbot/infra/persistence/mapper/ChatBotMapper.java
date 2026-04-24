@@ -15,41 +15,15 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.settings.vo;
+package com.nageoffer.ai.ragent.chatbot.infra.persistence.mapper;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nageoffer.ai.ragent.chatbot.infra.persistence.po.ChatBotDO;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 问题检测配置 VO
+ * 聊天机器人 Mapper
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class DetectionConfigVO {
-
-    /**
-     * 检测模式：KEYWORD/LLM/COMPOSITE
-     */
-    private String mode;
-
-    /**
-     * 触发关键词列表
-     */
-    private List<String> keywords;
-
-    /**
-     * 是否启用 @机器人 触发
-     */
-    private Boolean atTriggerEnabled;
-
-    /**
-     * LLM 检测的置信度阈值
-     */
-    private Double llmThreshold;
+@Mapper
+public interface ChatBotMapper extends BaseMapper<ChatBotDO> {
 }

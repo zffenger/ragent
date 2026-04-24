@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.settings.dao.mapper;
-
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.chatbot.settings.dao.entity.SystemConfigDO;
-import org.apache.ibatis.annotations.Mapper;
+package com.nageoffer.ai.ragent.chatbot.domain.vo;
 
 /**
- * 系统配置 Mapper
+ * 回答生成配置值对象
  */
-@Mapper
-public interface SystemConfigMapper extends BaseMapper<SystemConfigDO> {
+public record AnswerConfig(
+        String mode,
+        String defaultSystemPrompt,
+        Integer maxTokens
+) {
+    public static AnswerConfig defaultConfig() {
+        return new AnswerConfig("RAG", null, 2000);
+    }
 }

@@ -15,54 +15,41 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.settings.vo;
+package com.nageoffer.ai.ragent.chatbot.interfaces.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
- * 企微机器人配置 VO
+ * 问题检测配置 VO
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WeWorkBotConfigVO {
+public class DetectionConfigVO {
 
     /**
-     * 是否启用
+     * 检测模式：KEYWORD/LLM/COMPOSITE
      */
-    private Boolean enabled;
+    private String mode;
 
     /**
-     * 企业 ID
+     * 触发关键词列表
      */
-    private String corpId;
+    private List<String> keywords;
 
     /**
-     * 应用 AgentId
+     * 是否启用 @机器人 触发
      */
-    private String agentId;
+    private Boolean atTriggerEnabled;
 
     /**
-     * 应用 Secret
+     * LLM 检测的置信度阈值
      */
-    private String secret;
-
-    /**
-     * 回调配置 Token
-     */
-    private String token;
-
-    /**
-     * 回调配置 EncodingAESKey
-     */
-    private String encodingAesKey;
-
-    /**
-     * 机器人名称
-     */
-    private String botName;
+    private Double llmThreshold;
 }

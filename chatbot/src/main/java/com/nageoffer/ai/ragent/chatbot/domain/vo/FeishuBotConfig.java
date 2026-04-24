@@ -15,24 +15,20 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.config;
-
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+package com.nageoffer.ai.ragent.chatbot.domain.vo;
 
 /**
- * 机器人模块配置属性
- * <p>
- * 仅保留全局开关，机器人具体配置存储在数据库 t_chat_bot 表中
+ * 飞书机器人配置值对象
  */
-@Data
-@Configuration
-@ConfigurationProperties(prefix = "chatbot")
-public class ChatbotProperties {
-
-    /**
-     * 是否启用机器人模块
-     */
-    private boolean enabled = false;
+public record FeishuBotConfig(
+        Boolean enabled,
+        String appId,
+        String appSecret,
+        String encryptKey,
+        String verificationToken,
+        String botName
+) {
+    public static FeishuBotConfig disabled() {
+        return new FeishuBotConfig(false, null, null, null, null, null);
+    }
 }

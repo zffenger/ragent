@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.chatbot.config;
+package com.nageoffer.ai.ragent.chatbot.infra.config;
 
 import com.nageoffer.ai.ragent.chatbot.application.MessageProcessApplication;
 import com.nageoffer.ai.ragent.chatbot.domain.service.AnswerGenerator;

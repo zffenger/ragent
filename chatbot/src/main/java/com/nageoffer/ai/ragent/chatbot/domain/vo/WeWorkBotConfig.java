@@ -15,15 +15,21 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.settings.dao.mapper;
-
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.settings.dao.entity.ChatBotDO;
-import org.apache.ibatis.annotations.Mapper;
+package com.nageoffer.ai.ragent.chatbot.domain.vo;
 
 /**
- * 聊天机器人 Mapper
+ * 企微机器人配置值对象
  */
-@Mapper
-public interface ChatBotMapper extends BaseMapper<ChatBotDO> {
+public record WeWorkBotConfig(
+        Boolean enabled,
+        String corpId,
+        String agentId,
+        String secret,
+        String token,
+        String encodingAesKey,
+        String botName
+) {
+    public static WeWorkBotConfig disabled() {
+        return new WeWorkBotConfig(false, null, null, null, null, null, null);
+    }
 }
