@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.embedding;
 
-import com.nageoffer.ai.ragent.infra.embedding.EmbeddingService;
+import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;

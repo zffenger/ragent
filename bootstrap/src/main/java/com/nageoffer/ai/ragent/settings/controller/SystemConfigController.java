@@ -20,6 +20,7 @@ package com.nageoffer.ai.ragent.settings.controller;
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelProvider;
+import com.nageoffer.ai.ragent.settings.controller.vo.ModelCandidateVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
 import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
@@ -50,7 +51,7 @@ public class SystemConfigController {
 
     private final SystemConfigService systemConfigService;
 
-    // ==================== 模型配置 API ====================
+    // ==================== 模型组配置查询 ====================
 
     /**
      * 获取 Chat 模型配置
@@ -58,15 +59,6 @@ public class SystemConfigController {
     @GetMapping("/ai/chat")
     public Result<ModelGroupConfigVO> getChatModelConfig() {
         return Results.success(systemConfigService.getChatModelGroupConfig());
-    }
-
-    /**
-     * 更新 Chat 模型配置
-     */
-    @PutMapping("/ai/chat")
-    public Result<Void> updateChatModelConfig(@RequestBody ModelGroupConfigVO config) {
-        systemConfigService.updateModelGroupConfig(config);
-        return Results.success();
     }
 
     /**
@@ -78,15 +70,6 @@ public class SystemConfigController {
     }
 
     /**
-     * 更新 Embedding 模型配置
-     */
-    @PutMapping("/ai/embedding")
-    public Result<Void> updateEmbeddingModelConfig(@RequestBody ModelGroupConfigVO config) {
-        systemConfigService.updateModelGroupConfig(config);
-        return Results.success();
-    }
-
-    /**
      * 获取 Rerank 模型配置
      */
     @GetMapping("/ai/rerank")
@@ -94,12 +77,52 @@ public class SystemConfigController {
         return Results.success(systemConfigService.getRerankModelGroupConfig());
     }
 
+    // ==================== 模型候选 CRUD ====================
+
     /**
-     * 更新 Rerank 模型配置
+     * 创建模型候选
      */
-    @PutMapping("/ai/rerank")
-    public Result<Void> updateRerankModelConfig(@RequestBody ModelGroupConfigVO config) {
-        systemConfigService.updateModelGroupConfig(config);
+    @PostMapping("/model-candidates")
+    public Result<ModelCandidateVO> createModelCandidate(@RequestBody ModelCandidateVO vo) {
+        return Results.success(systemConfigService.createModelCandidate(vo));
+    }
+
+    /**
+     * 更新模型候选
+     */
+    @PutMapping("/model-candidates/{id}")
+    public Result<ModelCandidateVO> updateModelCandidate(
+            @PathVariable String id,
+            @RequestBody ModelCandidateVO vo) {
+        return Results.success(systemConfigService.updateModelCandidate(id, vo));
+    }
+
+    /**
+     * 删除模型候选
+     */
+    @DeleteMapping("/model-candidates/{id}")
+    public Result<Void> deleteModelCandidate(@PathVariable String id) {
+        systemConfigService.deleteModelCandidate(id);
+        return Results.success();
+    }
+
+    /**
+     * 设置默认模型
+     */
+    @PutMapping("/model-candidates/{id}/default")
+    public Result<Void> setDefaultModel(
+            @PathVariable String id,
+            @RequestBody SetDefaultModelRequest request) {
+        systemConfigService.setDefaultModel(id, ModelCandidateDO.ModelType.valueOf(request.getModelType()));
+        return Results.success();
+    }
+
+    /**
+     * 设置深度思考模型
+     */
+    @PutMapping("/model-candidates/{id}/deep-thinking")
+    public Result<Void> setDeepThinkingModel(@PathVariable String id) {
+        systemConfigService.setDeepThinkingModel(id);
         return Results.success();
     }
 
@@ -154,25 +177,7 @@ public class SystemConfigController {
         return Results.success();
     }
 
-    /**
-     * 设置默认模型
-     */
-    @PutMapping("/model-candidates/{id}/default")
-    public Result<Void> setDefaultModel(
-            @PathVariable String id,
-            @RequestBody SetDefaultModelRequest request) {
-        systemConfigService.setDefaultModel(id, ModelCandidateDO.ModelType.valueOf(request.getModelType()));
-        return Results.success();
-    }
-
-    /**
-     * 设置深度思考模型
-     */
-    @PutMapping("/model-candidates/{id}/deep-thinking")
-    public Result<Void> setDeepThinkingModel(@PathVariable String id) {
-        systemConfigService.setDeepThinkingModel(id);
-        return Results.success();
-    }
+    // ==================== 配置刷新 ====================
 
     /**
      * 刷新配置缓存

@@ -22,6 +22,19 @@ export interface ModelCandidate {
   isDeepThinking?: boolean | null;
 }
 
+export interface ModelCandidateInput {
+  id?: string | null;
+  modelId: string;
+  modelType: "CHAT" | "EMBEDDING" | "RERANK";
+  provider: string;
+  model: string;
+  url?: string | null;
+  dimension?: number | null;
+  priority?: number | null;
+  enabled?: boolean | null;
+  supportsThinking?: boolean | null;
+}
+
 export interface ModelProvider {
   id?: string | null;
   name: string;
@@ -63,30 +76,40 @@ export interface AnswerConfig {
   maxTokens?: number | null;
 }
 
-// ==================== 模型配置 API ====================
+// ==================== 模型组配置查询 API ====================
 
 export async function getChatModelConfig(): Promise<ModelGroupConfig> {
   return api.get<ModelGroupConfig, ModelGroupConfig>("/admin/settings/ai/chat");
-}
-
-export async function updateChatModelConfig(config: ModelGroupConfig): Promise<void> {
-  return api.put<void, void>("/admin/settings/ai/chat", config);
 }
 
 export async function getEmbeddingModelConfig(): Promise<ModelGroupConfig> {
   return api.get<ModelGroupConfig, ModelGroupConfig>("/admin/settings/ai/embedding");
 }
 
-export async function updateEmbeddingModelConfig(config: ModelGroupConfig): Promise<void> {
-  return api.put<void, void>("/admin/settings/ai/embedding", config);
-}
-
 export async function getRerankModelConfig(): Promise<ModelGroupConfig> {
   return api.get<ModelGroupConfig, ModelGroupConfig>("/admin/settings/ai/rerank");
 }
 
-export async function updateRerankModelConfig(config: ModelGroupConfig): Promise<void> {
-  return api.put<void, void>("/admin/settings/ai/rerank", config);
+// ==================== 模型候选 CRUD API ====================
+
+export async function createModelCandidate(candidate: ModelCandidateInput): Promise<ModelCandidate> {
+  return api.post<ModelCandidate, ModelCandidate>("/admin/settings/model-candidates", candidate);
+}
+
+export async function updateModelCandidate(id: string, candidate: ModelCandidateInput): Promise<ModelCandidate> {
+  return api.put<ModelCandidate, ModelCandidate>(`/admin/settings/model-candidates/${id}`, candidate);
+}
+
+export async function deleteModelCandidate(id: string): Promise<void> {
+  return api.delete<void, void>(`/admin/settings/model-candidates/${id}`);
+}
+
+export async function setDefaultModel(id: string, modelType: "CHAT" | "EMBEDDING" | "RERANK"): Promise<void> {
+  return api.put<void, void>(`/admin/settings/model-candidates/${id}/default`, { modelType });
+}
+
+export async function setDeepThinkingModel(id: string): Promise<void> {
+  return api.put<void, void>(`/admin/settings/model-candidates/${id}/deep-thinking`);
 }
 
 // ==================== 模型提供商 API ====================
@@ -96,9 +119,6 @@ export interface SupportedProvider {
   name: string;
 }
 
-/**
- * 获取系统支持的模型提供商类型
- */
 export async function getSupportedProviders(): Promise<SupportedProvider[]> {
   return api.get<SupportedProvider[], SupportedProvider[]>("/admin/settings/supported-providers");
 }
@@ -117,14 +137,6 @@ export async function updateModelProvider(id: string, provider: ModelProvider): 
 
 export async function deleteModelProvider(id: string): Promise<void> {
   return api.delete<void, void>(`/admin/settings/model-providers/${id}`);
-}
-
-export async function setDefaultModel(id: string, modelType: "CHAT" | "EMBEDDING" | "RERANK"): Promise<void> {
-  return api.put<void, void>(`/admin/settings/model-candidates/${id}/default`, { modelType });
-}
-
-export async function setDeepThinkingModel(id: string): Promise<void> {
-  return api.put<void, void>(`/admin/settings/model-candidates/${id}/deep-thinking`);
 }
 
 // ==================== 机器人配置 API ====================

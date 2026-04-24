@@ -20,6 +20,7 @@ package com.nageoffer.ai.ragent.settings.service.impl;
 import com.nageoffer.ai.ragent.llm.domain.repository.ModelConfigRepository;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCandidateConfig;
 import com.nageoffer.ai.ragent.llm.domain.vo.ProviderConfig;
+import com.nageoffer.ai.ragent.settings.controller.vo.ModelCandidateVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
 import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
@@ -49,42 +50,44 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private static final String CONFIG_KEY_RERANK = "ai.rerank";
     private static final String REDIS_PREFIX_CONFIG = "config:";
 
+    // ==================== 模型组配置查询 ====================
+
     @Override
-	public ModelGroupConfigVO getChatModelGroupConfig() {
-		List<ModelCandidateConfig> candidateConfigs = modelConfigRepository.getChatCandidates();
+    public ModelGroupConfigVO getChatModelGroupConfig() {
+        List<ModelCandidateConfig> candidateConfigs = modelConfigRepository.getChatCandidates();
 
-		List<ModelGroupConfigVO.ModelCandidateVO> candidateVOs = candidateConfigs.stream()
-				.map(this::toCandidateVO)
-				.collect(Collectors.toList());
+        List<ModelCandidateVO> candidateVOs = candidateConfigs.stream()
+                .map(this::toGroupCandidateVO)
+                .collect(Collectors.toList());
 
-		return ModelGroupConfigVO.builder()
-				.defaultModel(modelConfigRepository.getChatDefaultModel())
-				.deepThinkingModel(modelConfigRepository.getChatDeepThinkingModel())
-				.candidates(candidateVOs)
-				.build();
-	}
+        return ModelGroupConfigVO.builder()
+                .defaultModel(modelConfigRepository.getChatDefaultModel())
+                .deepThinkingModel(modelConfigRepository.getChatDeepThinkingModel())
+                .candidates(candidateVOs)
+                .build();
+    }
 
-	@Override
-	public ModelGroupConfigVO getEmbeddingModelGroupConfig() {
-		List<ModelCandidateConfig> candidateConfigs = modelConfigRepository.getEmbeddingCandidates();
+    @Override
+    public ModelGroupConfigVO getEmbeddingModelGroupConfig() {
+        List<ModelCandidateConfig> candidateConfigs = modelConfigRepository.getEmbeddingCandidates();
 
-		List<ModelGroupConfigVO.ModelCandidateVO> candidateVOs = candidateConfigs.stream()
-				.map(this::toCandidateVO)
-				.collect(Collectors.toList());
+        List<ModelCandidateVO> candidateVOs = candidateConfigs.stream()
+                .map(this::toGroupCandidateVO)
+                .collect(Collectors.toList());
 
-		return ModelGroupConfigVO.builder()
-				.defaultModel(modelConfigRepository.getEmbeddingDefaultModel())
-				.deepThinkingModel(null)
-				.candidates(candidateVOs)
-				.build();
-	}
+        return ModelGroupConfigVO.builder()
+                .defaultModel(modelConfigRepository.getEmbeddingDefaultModel())
+                .deepThinkingModel(null)
+                .candidates(candidateVOs)
+                .build();
+    }
 
-	@Override
+    @Override
     public ModelGroupConfigVO getRerankModelGroupConfig() {
-		List<ModelCandidateConfig> candidateConfigs = modelConfigRepository.getRerankCandidates();
+        List<ModelCandidateConfig> candidateConfigs = modelConfigRepository.getRerankCandidates();
 
-        List<ModelGroupConfigVO.ModelCandidateVO> candidateVOs = candidateConfigs.stream()
-                .map(this::toCandidateVO)
+        List<ModelCandidateVO> candidateVOs = candidateConfigs.stream()
+                .map(this::toGroupCandidateVO)
                 .collect(Collectors.toList());
 
         return ModelGroupConfigVO.builder()
@@ -94,25 +97,44 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                 .build();
     }
 
+    // ==================== 模型候选 CRUD ====================
+
     @Override
-    public void updateModelGroupConfig(ModelGroupConfigVO config) {
-        if (config == null || config.getCandidates() == null) {
-            return;
-        }
+    public ModelCandidateVO createModelCandidate(ModelCandidateVO vo) {
+        ModelCandidateConfig config = toCandidateConfig(vo);
+        modelConfigRepository.createModelConfig(config);
+        clearRedisCache();
+        return vo;
+    }
 
-        List<ModelCandidateConfig> candidates = config.getCandidates().stream()
-                .map(this::toCandidateConfig)
-                .toList();
+    @Override
+    public ModelCandidateVO updateModelCandidate(String id, ModelCandidateVO vo) {
+        vo.setId(id);
+        ModelCandidateConfig config = toCandidateConfig(vo);
+        modelConfigRepository.updateModelConfig(config);
+        clearRedisCache();
+        return vo;
+    }
 
-		for (ModelCandidateConfig candidate : candidates) {
-			if (candidate.id() != null) {
-				modelConfigRepository.updateModelConfig(candidate);
-			} else {
-				modelConfigRepository.createModelConfig(candidate);
-			}
-		}
+    @Override
+    public void deleteModelCandidate(String id) {
+        modelConfigRepository.deleteModelConfig(id);
         clearRedisCache();
     }
+
+    @Override
+    public void setDefaultModel(String candidateId, ModelCandidateDO.ModelType modelType) {
+        modelConfigRepository.setDefaultModel(candidateId, modelType.name());
+        clearRedisCache();
+    }
+
+    @Override
+    public void setDeepThinkingModel(String candidateId) {
+        modelConfigRepository.setDeepThinkingModel(candidateId);
+        clearRedisCache();
+    }
+
+    // ==================== 模型提供商管理 ====================
 
     @Override
     public List<ModelProviderVO> listModelProviders() {
@@ -161,17 +183,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         clearRedisCache();
     }
 
-    @Override
-    public void setDefaultModel(String candidateId, ModelCandidateDO.ModelType modelType) {
-        modelConfigRepository.setDefaultModel(candidateId, modelType.name());
-        clearRedisCache();
-    }
-
-    @Override
-    public void setDeepThinkingModel(String candidateId) {
-        modelConfigRepository.setDeepThinkingModel(candidateId);
-        clearRedisCache();
-    }
+    // ==================== 配置刷新 ====================
 
     @Override
     public void refreshConfigCache() {
@@ -180,14 +192,16 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         log.info("配置缓存已刷新");
     }
 
+    // ==================== 私有方法 ====================
+
     private void clearRedisCache() {
         redisTemplate.delete(REDIS_PREFIX_CONFIG + CONFIG_KEY_CHAT);
         redisTemplate.delete(REDIS_PREFIX_CONFIG + CONFIG_KEY_EMBEDDING);
         redisTemplate.delete(REDIS_PREFIX_CONFIG + CONFIG_KEY_RERANK);
     }
 
-    private ModelGroupConfigVO.ModelCandidateVO toCandidateVO(ModelCandidateConfig config) {
-        return ModelGroupConfigVO.ModelCandidateVO.builder()
+    private ModelCandidateVO toGroupCandidateVO(ModelCandidateConfig config) {
+        return ModelCandidateVO.builder()
                 .id(config.id())
                 .modelId(config.modelId())
                 .provider(config.provider())
@@ -202,21 +216,21 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                 .build();
     }
 
-    private ModelCandidateConfig toCandidateConfig(ModelGroupConfigVO.ModelCandidateVO vo) {
-        return new ModelCandidateConfig(
-                vo.getId(),
-                vo.getModelId(),
-				null,
-                vo.getProvider(),
-                vo.getModel(),
-                vo.getUrl(),
-                vo.getDimension(),
-                vo.getPriority(),
-                vo.getEnabled() != null && vo.getEnabled(),
-                vo.getSupportsThinking() != null && vo.getSupportsThinking(),
-                vo.getIsDefault() != null && vo.getIsDefault(),
-                vo.getIsDeepThinking() != null && vo.getIsDeepThinking()
-        );
+    private ModelCandidateConfig toCandidateConfig(ModelCandidateVO vo) {
+        return ModelCandidateConfig.builder()
+                .id(vo.getId())
+                .modelId(vo.getModelId())
+                .modelType(vo.getModelType())
+                .provider(vo.getProvider())
+                .modelName(vo.getModel())
+                .url(vo.getUrl())
+                .dimension(vo.getDimension())
+                .priority(vo.getPriority())
+                .enabled(vo.getEnabled() != null && vo.getEnabled())
+                .supportsThinking(vo.getSupportsThinking() != null && vo.getSupportsThinking())
+                .isDefault(false)
+                .isDeepThinking(false)
+                .build();
     }
 
     private ModelProviderVO toProviderVO(ProviderConfig config) {

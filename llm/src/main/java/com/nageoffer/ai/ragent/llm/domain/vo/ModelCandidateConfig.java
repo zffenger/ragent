@@ -17,11 +17,14 @@
 
 package com.nageoffer.ai.ragent.llm.domain.vo;
 
+import lombok.Builder;
+
 /**
  * 模型候选配置值对象
  * <p>
  * 用于封装单个候选模型的配置信息，是领域层的值对象
  */
+@Builder
 public record ModelCandidateConfig(
         String id,
         String modelId,

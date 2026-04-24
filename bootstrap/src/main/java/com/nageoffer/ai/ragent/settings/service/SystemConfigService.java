@@ -17,6 +17,7 @@
 
 package com.nageoffer.ai.ragent.settings.service;
 
+import com.nageoffer.ai.ragent.settings.controller.vo.ModelCandidateVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelGroupConfigVO;
 import com.nageoffer.ai.ragent.settings.controller.vo.ModelProviderVO;
 import com.nageoffer.ai.ragent.llm.infra.persistence.po.ModelCandidateDO;
@@ -30,25 +31,65 @@ import java.util.List;
  */
 public interface SystemConfigService {
 
-    // ==================== 模型配置 ====================
+    // ==================== 模型组配置查询 ====================
 
     /**
-     * 获取指定类型的模型组配置
-     *
-     * @return 模型组配置
+     * 获取 Chat 模型组配置
+     */
+    ModelGroupConfigVO getChatModelGroupConfig();
+
+    /**
+     * 获取 Embedding 模型组配置
+     */
+    ModelGroupConfigVO getEmbeddingModelGroupConfig();
+
+    /**
+     * 获取 Rerank 模型组配置
      */
     ModelGroupConfigVO getRerankModelGroupConfig();
 
-	ModelGroupConfigVO getChatModelGroupConfig();
+    // ==================== 模型候选 CRUD ====================
 
-	ModelGroupConfigVO getEmbeddingModelGroupConfig();
-
-	/**
-     * 更新指定类型的模型组配置
+    /**
+     * 创建模型候选
      *
-     * @param config    模型组配置
+     * @param vo 模型候选配置
+     * @return 创建后的模型候选
      */
-    void updateModelGroupConfig(ModelGroupConfigVO config);
+    ModelCandidateVO createModelCandidate(ModelCandidateVO vo);
+
+    /**
+     * 更新模型候选
+     *
+     * @param id 模型候选 ID
+     * @param vo 模型候选配置
+     * @return 更新后的模型候选
+     */
+    ModelCandidateVO updateModelCandidate(String id, ModelCandidateVO vo);
+
+    /**
+     * 删除模型候选
+     *
+     * @param id 模型候选 ID
+     */
+    void deleteModelCandidate(String id);
+
+    /**
+     * 设置默认模型
+     *
+     * @param candidateId 模型候选 ID
+     * @param modelType   模型类型
+     */
+    void setDefaultModel(String candidateId, ModelCandidateDO.ModelType modelType);
+
+    /**
+     * 设置深度思考模型
+     *
+     * @param candidateId 模型候选 ID
+     */
+    void setDeepThinkingModel(String candidateId);
+
+    // ==================== 模型提供商管理 ====================
 
     /**
      * 获取所有模型提供商
@@ -80,21 +121,6 @@ public interface SystemConfigService {
      * @param id 提供商 ID
      */
     void deleteModelProvider(String id);
-
-    /**
-     * 设置默认模型
-     *
-     * @param candidateId 模型候选 ID
-     * @param modelType   模型类型
-     */
-    void setDefaultModel(String candidateId, ModelCandidateDO.ModelType modelType);
-
-    /**
-     * 设置深度思考模型
-     *
-     * @param candidateId 模型候选 ID
-     */
-    void setDeepThinkingModel(String candidateId);
 
     // ==================== 配置刷新 ====================
 

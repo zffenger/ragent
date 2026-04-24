@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.Intent;
 
-import com.nageoffer.ai.ragent.infra.embedding.EmbeddingService;
+import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
 import com.nageoffer.ai.ragent.rag.core.intent.IntentNode;
 import com.nageoffer.ai.ragent.rag.core.intent.IntentTreeFactory;
 import jakarta.annotation.PostConstruct;

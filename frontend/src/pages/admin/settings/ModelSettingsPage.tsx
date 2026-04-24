@@ -4,15 +4,11 @@ import {
   getChatModelConfig,
   getEmbeddingModelConfig,
   getRerankModelConfig,
-  updateChatModelConfig,
-  updateEmbeddingModelConfig,
-  updateRerankModelConfig,
   listModelProviders,
   setDefaultModel,
   setDeepThinkingModel,
   getSupportedProviders,
   type ModelGroupConfig,
-  type ModelCandidate,
   type ModelProvider,
   type SupportedProvider,
 } from "@/services/modelConfigService";
@@ -22,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
 import { ModelProviderDialog } from "./ModelProviderDialog";
 import { ModelCandidateDialog } from "./ModelCandidateDialog";
 
@@ -60,7 +55,7 @@ export function ModelSettingsPage() {
     loadData();
   }, []);
 
-  const handleSetDefault = async (candidateId: number, modelType: "CHAT" | "EMBEDDING" | "RERANK") => {
+  const handleSetDefault = async (candidateId: string, modelType: "CHAT" | "EMBEDDING" | "RERANK") => {
     try {
       await setDefaultModel(candidateId, modelType);
       toast.success("已设置为默认模型");
@@ -70,7 +65,7 @@ export function ModelSettingsPage() {
     }
   };
 
-  const handleSetDeepThinking = async (candidateId: number) => {
+  const handleSetDeepThinking = async (candidateId: string) => {
     try {
       await setDeepThinkingModel(candidateId);
       toast.success("已设置为深度思考模型");

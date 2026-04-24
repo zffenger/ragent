@@ -4,12 +4,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  getChatModelConfig,
-  getEmbeddingModelConfig,
-  getRerankModelConfig,
-  updateChatModelConfig,
-  updateEmbeddingModelConfig,
-  updateRerankModelConfig,
+  createModelCandidate,
+  updateModelCandidate,
+  deleteModelCandidate,
   type ModelCandidate,
   type SupportedProvider,
 } from "@/services/modelConfigService";
@@ -91,28 +88,9 @@ export function ModelCandidateDialog({
     try {
       setLoading(true);
 
-      // 获取当前配置
-      const getConfig =
-        modelType === "CHAT"
-          ? getChatModelConfig
-          : modelType === "EMBEDDING"
-          ? getEmbeddingModelConfig
-          : getRerankModelConfig;
-
-      const updateConfig =
-        modelType === "CHAT"
-          ? updateChatModelConfig
-          : modelType === "EMBEDDING"
-          ? updateEmbeddingModelConfig
-          : updateRerankModelConfig;
-
-      const config = await getConfig();
-      const candidates = config.candidates || [];
-
-      // 构建新的候选对象
-      const newCandidate: ModelCandidate = {
-        id: isEdit ? candidate.id : null,
+      const input = {
         modelId: values.modelId,
+        modelType,
         provider: values.provider,
         model: values.model,
         url: values.url || null,
@@ -120,27 +98,16 @@ export function ModelCandidateDialog({
         priority: values.priority,
         enabled: values.enabled,
         supportsThinking: values.supportsThinking,
-        isDefault: candidate?.isDefault || false,
-        isDeepThinking: candidate?.isDeepThinking || false,
       };
 
-      // 更新候选列表
-      let updatedCandidates: ModelCandidate[];
-      if (isEdit) {
-        updatedCandidates = candidates.map((c) =>
-          c.id === candidate.id ? newCandidate : c
-        );
+      if (isEdit && candidate?.id) {
+        await updateModelCandidate(candidate.id, input);
+        toast.success("更新成功");
       } else {
-        updatedCandidates = [...candidates, newCandidate];
+        await createModelCandidate(input);
+        toast.success("添加成功");
       }
 
-      // 保存配置
-      await updateConfig({
-        ...config,
-        candidates: updatedCandidates,
-      });
-
-      toast.success(isEdit ? "更新成功" : "添加成功");
       setOpen(false);
       onRefresh();
     } catch (error) {
@@ -156,31 +123,7 @@ export function ModelCandidateDialog({
 
     try {
       setLoading(true);
-
-      const getConfig =
-        modelType === "CHAT"
-          ? getChatModelConfig
-          : modelType === "EMBEDDING"
-          ? getEmbeddingModelConfig
-          : getRerankModelConfig;
-
-      const updateConfig =
-        modelType === "CHAT"
-          ? updateChatModelConfig
-          : modelType === "EMBEDDING"
-          ? updateEmbeddingModelConfig
-          : updateRerankModelConfig;
-
-      const config = await getConfig();
-      const updatedCandidates = (config.candidates || []).filter(
-        (c) => c.id !== candidate.id
-      );
-
-      await updateConfig({
-        ...config,
-        candidates: updatedCandidates,
-      });
-
+      await deleteModelCandidate(candidate.id);
       toast.success("删除成功");
       setOpen(false);
       onRefresh();

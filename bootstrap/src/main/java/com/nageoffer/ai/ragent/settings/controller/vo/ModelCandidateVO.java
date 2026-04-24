@@ -22,32 +22,72 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
- * 模型组配置 VO
+ * 模型候选 VO
  * <p>
- * 用于展示和编辑 Chat/Embedding/Rerank 模型组配置
+ * 用于单个模型候选的创建和更新
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ModelGroupConfigVO {
+public class ModelCandidateVO {
 
     /**
-     * 默认模型 ID
+     * 主键 ID（更新时必填）
      */
-    private String defaultModel;
+    private String id;
 
     /**
-     * 深度思考模型 ID（仅 Chat 模型）
+     * 模型标识
      */
-    private String deepThinkingModel;
+    private String modelId;
 
     /**
-     * 候选模型列表
+     * 模型类型：CHAT, EMBEDDING, RERANK
      */
-    private List<ModelCandidateVO> candidates;
+    private String modelType;
 
+    /**
+     * 提供商名称
+     */
+    private String provider;
+
+    /**
+     * 模型名称
+     */
+    private String model;
+
+    /**
+     * 自定义 URL
+     */
+    private String url;
+
+    /**
+     * 向量维度（embedding 模型）
+     */
+    private Integer dimension;
+
+    /**
+     * 优先级
+     */
+    private Integer priority;
+
+    /**
+     * 是否启用
+     */
+    private Boolean enabled;
+
+	/**
+	 * 是否默认模型
+	 */
+	private Boolean isDefault;
+    /**
+     * 是否支持思考链
+     */
+    private Boolean supportsThinking;
+	/**
+	 * 是否深度思考模型
+	 */
+	private Boolean isDeepThinking;
 }

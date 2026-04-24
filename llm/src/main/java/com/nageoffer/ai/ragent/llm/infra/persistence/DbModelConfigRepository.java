@@ -347,20 +347,20 @@ public class DbModelConfigRepository implements ModelConfigRepository {
     }
 
     private ModelCandidateConfig toModelCandidateConfig(ModelCandidateDO entity) {
-        return new ModelCandidateConfig(
-                entity.getId(),
-                entity.getModelId(),
-				entity.getModelType(),
-                entity.getProviderName(),
-                entity.getModelName(),
-                entity.getUrl(),
-                entity.getDimension(),
-                entity.getPriority(),
-                Integer.valueOf(1).equals(entity.getEnabled()),
-                Integer.valueOf(1).equals(entity.getSupportsThinking()),
-                Integer.valueOf(1).equals(entity.getIsDefault()),
-                Integer.valueOf(1).equals(entity.getIsDeepThinking())
-        );
+        return ModelCandidateConfig.builder()
+                .id(entity.getId())
+                .modelId(entity.getModelId())
+                .modelType(entity.getModelType())
+                .provider(entity.getProviderName())
+                .modelName(entity.getModelName())
+                .url(entity.getUrl())
+                .dimension(entity.getDimension())
+                .priority(entity.getPriority())
+                .enabled(Integer.valueOf(1).equals(entity.getEnabled()))
+                .supportsThinking(Integer.valueOf(1).equals(entity.getSupportsThinking()))
+                .isDefault(Integer.valueOf(1).equals(entity.getIsDefault()))
+                .isDeepThinking(Integer.valueOf(1).equals(entity.getIsDeepThinking()))
+                .build();
     }
 
     private void validateConfig() {
