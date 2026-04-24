@@ -17,6 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.service.intent;
 
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 import com.nageoffer.ai.ragent.rag.domain.enums.IntentKind;
 
 import java.util.ArrayList;

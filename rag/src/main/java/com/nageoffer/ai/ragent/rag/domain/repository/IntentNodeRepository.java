@@ -17,9 +17,10 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 
 import java.util.List;
+
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 
 /**
  * 意图节点仓储接口
@@ -31,5 +32,5 @@ public interface IntentNodeRepository {
      *
      * @return 意图节点列表
      */
-    List<IntentNode> findAllEnabled();
+    List<IntentNode> loadAllIntentTree();
 }

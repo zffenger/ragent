@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.rag.domain.service.intent;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

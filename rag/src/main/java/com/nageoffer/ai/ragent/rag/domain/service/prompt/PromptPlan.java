@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.service.prompt;
 
-import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

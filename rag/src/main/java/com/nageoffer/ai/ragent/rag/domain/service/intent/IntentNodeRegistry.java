@@ -17,6 +17,8 @@
 
 package com.nageoffer.ai.ragent.rag.domain.service.intent;
 
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
+
 /**
  * 意图节点注册表
  * 用于在运行期快速获取意图树和节点信息

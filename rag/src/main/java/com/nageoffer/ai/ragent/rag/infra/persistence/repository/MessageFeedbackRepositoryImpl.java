@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.domain.entity.MessageFeedback;
@@ -96,13 +95,33 @@ public class MessageFeedbackRepositoryImpl implements MessageFeedbackRepository 
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, MessageFeedback.class);
+        MessageFeedback entity = new MessageFeedback();
+        entity.setId(record.getId());
+        entity.setMessageId(record.getMessageId());
+        entity.setConversationId(record.getConversationId());
+        entity.setUserId(record.getUserId());
+        entity.setVote(record.getVote());
+        entity.setReason(record.getReason());
+        entity.setComment(record.getComment());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private MessageFeedbackDO toDO(MessageFeedback entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, MessageFeedbackDO.class);
+        MessageFeedbackDO record = new MessageFeedbackDO();
+        record.setId(entity.getId());
+        record.setMessageId(entity.getMessageId());
+        record.setConversationId(entity.getConversationId());
+        record.setUserId(entity.getUserId());
+        record.setVote(entity.getVote());
+        record.setReason(entity.getReason());
+        record.setComment(entity.getComment());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

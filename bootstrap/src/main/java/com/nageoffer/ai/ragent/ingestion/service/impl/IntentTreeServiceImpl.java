@@ -34,7 +34,7 @@ import com.nageoffer.ai.ragent.rag.domain.enums.IntentLevel;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
-import com.nageoffer.ai.ragent.rag.domain.service.intent.IntentNode;
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 import com.nageoffer.ai.ragent.rag.domain.service.intent.IntentTreeCacheManager;
 import com.nageoffer.ai.ragent.rag.domain.service.intent.IntentTreeFactory;
 import com.nageoffer.ai.ragent.ingestion.service.IntentTreeService;

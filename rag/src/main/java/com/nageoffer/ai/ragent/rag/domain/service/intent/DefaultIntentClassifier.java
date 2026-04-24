@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.domain.service.intent;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
@@ -25,8 +24,8 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.llm.domain.util.LLMResponseCleaner;
-import com.nageoffer.ai.ragent.rag.domain.enums.IntentKind;
-import com.nageoffer.ai.ragent.rag.domain.enums.IntentLevel;
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 import com.nageoffer.ai.ragent.rag.domain.repository.IntentNodeRepository;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
@@ -39,7 +38,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -71,7 +69,7 @@ public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegi
 
         // 2. 如果Redis也没有，从数据库加载并缓存
         if (CollUtil.isEmpty(roots)) {
-            roots = loadIntentTreeFromDB();
+            roots = intentNodeRepository.loadAllIntentTree();
             if (!roots.isEmpty()) {
                 intentTreeCacheManager.saveIntentTreeToCache(roots);
             }
@@ -263,101 +261,5 @@ public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegi
         );
     }
 
-    private List<IntentNode> loadIntentTreeFromDB() {
-        // 1. 查出所有启用的节点（扁平结构）
-        List<com.nageoffer.ai.ragent.rag.domain.entity.IntentNode> entityList = intentNodeRepository.findAllEnabled();
 
-        if (entityList.isEmpty()) {
-            return List.of();
-        }
-
-        // 2. Entity -> IntentNode（第一遍：先把所有节点建出来，放到 map 里）
-        Map<String, IntentNode> id2Node = new HashMap<>();
-        for (com.nageoffer.ai.ragent.rag.domain.entity.IntentNode entity : entityList) {
-            IntentNode node = IntentNode.builder()
-                    .id(entity.getIntentCode())
-                    .kbId(entity.getKbId())
-                    .name(entity.getName())
-                    .description(entity.getDescription())
-                    .level(IntentLevel.fromCode(entity.getLevel()))
-                    .parentId(entity.getParentCode())
-                    .collectionName(entity.getCollectionName())
-                    .mcpToolId(entity.getMcpToolId())
-                    .topK(entity.getTopK())
-                    .promptSnippet(entity.getPromptSnippet())
-                    .promptTemplate(entity.getPromptTemplate())
-                    .paramPromptTemplate(entity.getParamPromptTemplate())
-                    .kind(IntentKind.fromCode(entity.getKind()))
-                    .examples(entity.getExamples() != null ? parseExamples(entity.getExamples()) : new ArrayList<>())
-                    .children(new ArrayList<>())
-                    .build();
-            id2Node.put(node.getId(), node);
-        }
-
-        // 3. 第二遍：根据 parentId 组装 parent -> children
-        List<IntentNode> roots = new ArrayList<>();
-        for (IntentNode node : id2Node.values()) {
-            String parentId = node.getParentId();
-            if (parentId == null || parentId.isBlank()) {
-                // 没有 parentId，当作根节点
-                roots.add(node);
-                continue;
-            }
-
-            IntentNode parent = id2Node.get(parentId);
-            if (parent == null) {
-                // 找不到父节点，兜底也当作根节点，避免节点丢失
-                roots.add(node);
-                continue;
-            }
-
-            // 追加到父节点的 children
-            if (parent.getChildren() == null) {
-                parent.setChildren(new ArrayList<>());
-            }
-            parent.getChildren().add(node);
-        }
-
-        // 4. 填充 fullPath（跟你原来的 fillFullPath 一样的逻辑）
-        fillFullPath(roots, null);
-
-        return roots;
-    }
-
-    /**
-     * 解析 examples JSON 字符串为 List
-     */
-    private List<String> parseExamples(String examplesJson) {
-        if (examplesJson == null || examplesJson.isBlank()) {
-            return new ArrayList<>();
-        }
-        try {
-            return JSON.parseArray(examplesJson, String.class);
-        } catch (Exception e) {
-            log.warn("解析 examples JSON 失败: {}", examplesJson, e);
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * 填充 fullPath 字段，效果类似：
-     * - 集团信息化
-     * - 集团信息化 > 人事
-     * - 业务系统 > OA系统 > 系统介绍
-     */
-    private void fillFullPath(List<IntentNode> nodes, IntentNode parent) {
-        if (nodes == null) return;
-
-        for (IntentNode node : nodes) {
-            if (parent == null) {
-                node.setFullPath(node.getName());
-            } else {
-                node.setFullPath(parent.getFullPath() + " > " + node.getName());
-            }
-
-            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
-                fillFullPath(node.getChildren(), node);
-            }
-        }
-    }
 }

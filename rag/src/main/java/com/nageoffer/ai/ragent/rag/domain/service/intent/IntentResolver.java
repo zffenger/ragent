@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.rag.domain.service.intent;
 
 import cn.hutool.core.collection.CollUtil;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 import com.nageoffer.ai.ragent.rag.domain.vo.IntentCandidate;
 import com.nageoffer.ai.ragent.rag.domain.vo.IntentGroup;
 import com.nageoffer.ai.ragent.rag.domain.vo.SubQuestionIntent;

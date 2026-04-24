@@ -22,6 +22,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
+
 /**
  * NodeScore 过滤工具类
  * 统一 KB / MCP 意图的过滤逻辑，避免多处重复定义

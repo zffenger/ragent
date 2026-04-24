@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeBase;
 import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeBaseRepository;
@@ -72,13 +71,31 @@ public class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, KnowledgeBase.class);
+        KnowledgeBase entity = new KnowledgeBase();
+        entity.setId(record.getId());
+        entity.setName(record.getName());
+        entity.setEmbeddingModel(record.getEmbeddingModel());
+        entity.setCollectionName(record.getCollectionName());
+        entity.setCreatedBy(record.getCreatedBy());
+        entity.setUpdatedBy(record.getUpdatedBy());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private KnowledgeBaseDO toDO(KnowledgeBase entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, KnowledgeBaseDO.class);
+        KnowledgeBaseDO record = new KnowledgeBaseDO();
+        record.setId(entity.getId());
+        record.setName(entity.getName());
+        record.setEmbeddingModel(entity.getEmbeddingModel());
+        record.setCollectionName(entity.getCollectionName());
+        record.setCreatedBy(entity.getCreatedBy());
+        record.setUpdatedBy(entity.getUpdatedBy());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

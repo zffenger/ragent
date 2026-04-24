@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.rag.domain.vo;
 
 import java.util.List;
 
-import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 
 /**
  * 意图分组（MCP 与 KB）

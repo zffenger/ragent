@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
@@ -68,13 +67,29 @@ public class ConversationSummaryRepositoryImpl implements ConversationSummaryRep
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, ConversationSummary.class);
+        ConversationSummary entity = new ConversationSummary();
+        entity.setId(record.getId());
+        entity.setConversationId(record.getConversationId());
+        entity.setUserId(record.getUserId());
+        entity.setContent(record.getContent());
+        entity.setLastMessageId(record.getLastMessageId());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private ConversationSummaryDO toDO(ConversationSummary entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, ConversationSummaryDO.class);
+        ConversationSummaryDO record = new ConversationSummaryDO();
+        record.setId(entity.getId());
+        record.setConversationId(entity.getConversationId());
+        record.setUserId(entity.getUserId());
+        record.setContent(entity.getContent());
+        record.setLastMessageId(entity.getLastMessageId());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

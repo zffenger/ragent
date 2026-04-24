@@ -18,9 +18,8 @@
 package com.nageoffer.ai.ragent.rag.Intent;
 
 import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
-import com.nageoffer.ai.ragent.rag.domain.service.intent.IntentNode;
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 import com.nageoffer.ai.ragent.rag.domain.service.intent.IntentTreeFactory;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

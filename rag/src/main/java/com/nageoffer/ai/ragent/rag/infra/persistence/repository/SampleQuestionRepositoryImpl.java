@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -101,13 +100,27 @@ public class SampleQuestionRepositoryImpl implements SampleQuestionRepository {
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, SampleQuestion.class);
+        SampleQuestion entity = new SampleQuestion();
+        entity.setId(record.getId());
+        entity.setTitle(record.getTitle());
+        entity.setDescription(record.getDescription());
+        entity.setQuestion(record.getQuestion());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private SampleQuestionDO toDO(SampleQuestion entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, SampleQuestionDO.class);
+        SampleQuestionDO record = new SampleQuestionDO();
+        record.setId(entity.getId());
+        record.setTitle(entity.getTitle());
+        record.setDescription(entity.getDescription());
+        record.setQuestion(entity.getQuestion());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

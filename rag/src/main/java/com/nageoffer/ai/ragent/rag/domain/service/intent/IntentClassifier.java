@@ -19,6 +19,8 @@ package com.nageoffer.ai.ragent.rag.domain.service.intent;
 
 import java.util.List;
 
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
+
 /**
  * 意图分类器接口
  * <p>

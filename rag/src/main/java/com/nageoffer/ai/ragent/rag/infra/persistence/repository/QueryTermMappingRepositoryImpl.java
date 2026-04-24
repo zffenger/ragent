@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -94,13 +93,39 @@ public class QueryTermMappingRepositoryImpl implements QueryTermMappingRepositor
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, QueryTermMapping.class);
+        QueryTermMapping entity = new QueryTermMapping();
+        entity.setId(record.getId());
+        entity.setDomain(record.getDomain());
+        entity.setSourceTerm(record.getSourceTerm());
+        entity.setTargetTerm(record.getTargetTerm());
+        entity.setMatchType(record.getMatchType());
+        entity.setPriority(record.getPriority());
+        entity.setEnabled(record.getEnabled());
+        entity.setRemark(record.getRemark());
+        entity.setCreateBy(record.getCreateBy());
+        entity.setUpdateBy(record.getUpdateBy());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private QueryTermMappingDO toDO(QueryTermMapping entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, QueryTermMappingDO.class);
+        QueryTermMappingDO record = new QueryTermMappingDO();
+        record.setId(entity.getId());
+        record.setDomain(entity.getDomain());
+        record.setSourceTerm(entity.getSourceTerm());
+        record.setTargetTerm(entity.getTargetTerm());
+        record.setMatchType(entity.getMatchType());
+        record.setPriority(entity.getPriority());
+        record.setEnabled(entity.getEnabled());
+        record.setRemark(entity.getRemark());
+        record.setCreateBy(entity.getCreateBy());
+        record.setUpdateBy(entity.getUpdateBy());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

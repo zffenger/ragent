@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.vo;
 
-import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 
 /**
  * 意图候选及其子问题索引

@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun;
 import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceRunRepository;
@@ -55,13 +54,45 @@ public class RagTraceRunRepositoryImpl implements RagTraceRunRepository {
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, RagTraceRun.class);
+        RagTraceRun entity = new RagTraceRun();
+        entity.setId(record.getId());
+        entity.setTraceId(record.getTraceId());
+        entity.setTraceName(record.getTraceName());
+        entity.setEntryMethod(record.getEntryMethod());
+        entity.setConversationId(record.getConversationId());
+        entity.setTaskId(record.getTaskId());
+        entity.setUserId(record.getUserId());
+        entity.setStatus(record.getStatus());
+        entity.setErrorMessage(record.getErrorMessage());
+        entity.setStartTime(record.getStartTime());
+        entity.setEndTime(record.getEndTime());
+        entity.setDurationMs(record.getDurationMs());
+        entity.setExtraData(record.getExtraData());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private RagTraceRunDO toDO(RagTraceRun entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, RagTraceRunDO.class);
+        RagTraceRunDO record = new RagTraceRunDO();
+        record.setId(entity.getId());
+        record.setTraceId(entity.getTraceId());
+        record.setTraceName(entity.getTraceName());
+        record.setEntryMethod(entity.getEntryMethod());
+        record.setConversationId(entity.getConversationId());
+        record.setTaskId(entity.getTaskId());
+        record.setUserId(entity.getUserId());
+        record.setStatus(entity.getStatus());
+        record.setErrorMessage(entity.getErrorMessage());
+        record.setStartTime(entity.getStartTime());
+        record.setEndTime(entity.getEndTime());
+        record.setDurationMs(entity.getDurationMs());
+        record.setExtraData(entity.getExtraData());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

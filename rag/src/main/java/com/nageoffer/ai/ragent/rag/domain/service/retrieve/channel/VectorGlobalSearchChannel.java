@@ -20,7 +20,7 @@ package com.nageoffer.ai.ragent.rag.domain.service.retrieve.channel;
 import cn.hutool.core.collection.CollUtil;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
 import com.nageoffer.ai.ragent.rag.infra.config.SearchChannelProperties;
-import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 import com.nageoffer.ai.ragent.rag.domain.service.retrieve.RetrieverService;
 import com.nageoffer.ai.ragent.rag.domain.service.retrieve.channel.strategy.CollectionParallelRetriever;
 import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeBaseRepository;

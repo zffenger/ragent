@@ -17,124 +17,140 @@
 
 package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import lombok.AllArgsConstructor;
+import com.nageoffer.ai.ragent.rag.domain.enums.IntentKind;
+import com.nageoffer.ai.ragent.rag.domain.enums.IntentLevel;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * 意图节点实体
- */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class IntentNode {
 
     /**
-     * 主键ID
+     * 唯一标识，如：
+     * - "group" / "group-hr" / "biz-oa-intro" / "middleware-redis"
      */
     private String id;
 
     /**
-     * 知识库ID
+     * 知识库 ID
      */
     private String kbId;
 
     /**
-     * 业务唯一标识
-     */
-    private String intentCode;
-
-    /**
-     * 展示名称
+     * 展示名称，如「人事」「OA系统」「数据安全」
      */
     private String name;
 
     /**
-     * 层级：0=DOMAIN,1=CATEGORY,2=TOPIC
-     */
-    private Integer level;
-
-    /**
-     * 父节点的intentCode
-     */
-    private String parentCode;
-
-    /**
-     * 描述
+     * 语义说明，用于向量化时的语义提示词
      */
     private String description;
 
     /**
-     * 示例问题（JSON数组）
+     * 所属层级：DOMAIN / CATEGORY / TOPIC
      */
-    private String examples;
+    private IntentLevel level;
 
     /**
-     * 向量集合名称
+     * 父节点 ID，根节点为 null
+     */
+    private String parentId;
+
+    /**
+     * 示例问题：尤其是“叶子节点”，可以放典型问法，帮助向量模型更精准对齐
+     */
+    @Builder.Default
+    private List<String> examples = new ArrayList<>();
+
+    /**
+     * 子节点列表，没有子节点 = 叶子
+     */
+    @Builder.Default
+    private List<IntentNode> children = new ArrayList<>();
+
+    /**
+     * 预计算好的嵌入向量
+     * 仅向量意图识别测试使用
+     */
+    @Deprecated
+    @Builder.Default
+    private float[] embedding = null;
+
+    /**
+     * 仅用于排查/打印的全路径，如「集团信息化 > 人事」
+     */
+    @Builder.Default
+    private String fullPath = "";
+
+    /**
+     * 这类节点属于知识库还是系统交互
+     */
+    @Builder.Default
+    private IntentKind kind = IntentKind.KB;
+
+    /**
+     * 向量集合名称（仅对 kind=KB 有意义）
      */
     private String collectionName;
 
     /**
-     * MCP工具ID
+     * MCP 工具 ID（仅对 kind=MCP 有意义）
      */
     private String mcpToolId;
 
     /**
-     * 节点级检索TopK
+     * 节点级检索 TopK（可选）
+     * 未配置时回退到全局 TopK
      */
     private Integer topK;
 
     /**
-     * 类型：0=KB(RAG)，1=SYSTEM，2=MCP
-     */
-    private Integer kind;
-
-    /**
-     * 排序
-     */
-    private Integer sortOrder;
-
-    /**
-     * 短规则片段
+     * 短规则片段（可选）
      */
     private String promptSnippet;
 
     /**
-     * 完整Prompt模板
+     * 场景用的完整 Prompt 模板（可选）
      */
     private String promptTemplate;
 
     /**
-     * 参数提取提示词模板
+     * 参数提取提示词模板（MCP 模式专属）
+     * 如果配置了此字段，MCP 参数提取时使用自定义提示词
      */
     private String paramPromptTemplate;
 
     /**
-     * 是否启用
+     * 是否为”最终节点”（叶子节点）：
+     * - 叶子节点才挂知识库（向量集合）
+     * - 叶子节点才会参与意图匹配打分
      */
-    private Integer enabled;
+    public boolean isLeaf() {
+        return children == null || children.isEmpty();
+    }
 
     /**
-     * 创建人
+     * 是否为 KB 类型节点
      */
-    private String createBy;
+    public boolean isKB() {
+        return kind == null || kind == IntentKind.KB;
+    }
 
     /**
-     * 更新人
+     * 是否为 MCP 类型节点
      */
-    private String updateBy;
+    public boolean isMCP() {
+        return kind == IntentKind.MCP;
+    }
 
     /**
-     * 创建时间
+     * 是否为 SYSTEM 类型节点
      */
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
+    public boolean isSystem() {
+        return kind == IntentKind.SYSTEM;
+    }
 }

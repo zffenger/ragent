@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.rag.domain.service.prompt;
 
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
-import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 import com.nageoffer.ai.ragent.rag.domain.service.mcp.MCPResponse;
 
 import java.util.List;

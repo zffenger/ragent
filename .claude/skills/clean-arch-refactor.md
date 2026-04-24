@@ -77,6 +77,7 @@ interfaces/facade/UserFacade.java                      // 外部服务门面
 ```
 
 ### 其他要求
+各种PO/VO值对象与Entity之间的互转不要使用BeanUtil.copy()
 
 ## 重构步骤
 

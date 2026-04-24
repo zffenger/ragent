@@ -17,7 +17,6 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
@@ -83,13 +82,29 @@ public class ConversationRepositoryImpl implements ConversationRepository {
         if (record == null) {
             return null;
         }
-        return BeanUtil.toBean(record, Conversation.class);
+        Conversation entity = new Conversation();
+        entity.setId(record.getId());
+        entity.setConversationId(record.getConversationId());
+        entity.setUserId(record.getUserId());
+        entity.setTitle(record.getTitle());
+        entity.setLastTime(record.getLastTime());
+        entity.setCreateTime(record.getCreateTime());
+        entity.setUpdateTime(record.getUpdateTime());
+        return entity;
     }
 
     private ConversationDO toDO(Conversation entity) {
         if (entity == null) {
             return null;
         }
-        return BeanUtil.toBean(entity, ConversationDO.class);
+        ConversationDO record = new ConversationDO();
+        record.setId(entity.getId());
+        record.setConversationId(entity.getConversationId());
+        record.setUserId(entity.getUserId());
+        record.setTitle(entity.getTitle());
+        record.setLastTime(entity.getLastTime());
+        record.setCreateTime(entity.getCreateTime());
+        record.setUpdateTime(entity.getUpdateTime());
+        return record;
     }
 }

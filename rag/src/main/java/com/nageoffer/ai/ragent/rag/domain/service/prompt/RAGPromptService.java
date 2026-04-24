@@ -21,8 +21,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.RetrievedChunk;
-import com.nageoffer.ai.ragent.rag.domain.service.intent.IntentNode;
-import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
+import com.nageoffer.ai.ragent.rag.domain.entity.NodeScore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
