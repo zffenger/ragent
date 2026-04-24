@@ -19,9 +19,9 @@ package com.nageoffer.ai.ragent.rag.controller;
 
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
-import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AIModelProperties;
-import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AISelectionProperties;
-import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AIStreamProperties;
+import com.nageoffer.ai.ragent.llm.interfaces.config.AIModelProperties;
+import com.nageoffer.ai.ragent.llm.interfaces.config.AISelectionProperties;
+import com.nageoffer.ai.ragent.llm.interfaces.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.config.RAGConfigProperties;
 import com.nageoffer.ai.ragent.rag.config.RAGDefaultProperties;

@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.rag.service.handler;
 
-import com.nageoffer.ai.ragent.infra.ai.domain.service.StreamCallback;
-import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AIStreamProperties;
+import com.nageoffer.ai.ragent.llm.domain.service.StreamCallback;
+import com.nageoffer.ai.ragent.llm.interfaces.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.core.memory.ConversationMemoryService;
 import com.nageoffer.ai.ragent.rag.service.ConversationGroupService;
 import lombok.RequiredArgsConstructor;

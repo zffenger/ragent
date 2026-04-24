@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.rag.service.pipeline;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.StreamCallback;
+import com.nageoffer.ai.ragent.llm.domain.service.StreamCallback;
 import com.nageoffer.ai.ragent.rag.core.rewrite.RewriteResult;
 import com.nageoffer.ai.ragent.rag.dto.SubQuestionIntent;
 import lombok.Builder;

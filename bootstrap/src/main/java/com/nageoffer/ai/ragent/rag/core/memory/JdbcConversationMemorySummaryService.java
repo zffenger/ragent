@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.rag.core.memory;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
+import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.dao.entity.ConversationMessageDO;
 import com.nageoffer.ai.ragent.rag.dao.entity.ConversationSummaryDO;

@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.rag.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
+import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.controller.request.ConversationUpdateRequest;
 import com.nageoffer.ai.ragent.rag.controller.vo.ConversationVO;

@@ -25,7 +25,7 @@ import com.nageoffer.ai.ragent.chatbot.domain.entity.MessageContext;
 import com.nageoffer.ai.ragent.chatbot.domain.service.QuestionDetector;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
+import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

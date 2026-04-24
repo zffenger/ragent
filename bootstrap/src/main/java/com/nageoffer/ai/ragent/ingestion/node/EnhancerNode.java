@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
+import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.ingestion.domain.context.IngestionContext;
 import com.nageoffer.ai.ragent.ingestion.domain.enums.EnhanceType;
 import com.nageoffer.ai.ragent.ingestion.domain.enums.IngestionNodeType;

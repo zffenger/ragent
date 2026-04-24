@@ -25,7 +25,7 @@ import com.nageoffer.ai.ragent.chatbot.infra.adapter.feishu.FeishuMessageSender;
 import com.nageoffer.ai.ragent.chatbot.infra.adapter.wework.WeWorkApiClientFactory;
 import com.nageoffer.ai.ragent.chatbot.infra.llm.LlmAnswerGenerator;
 import com.nageoffer.ai.ragent.chatbot.infra.llm.LlmQuestionDetector;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.LLMService;
+import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

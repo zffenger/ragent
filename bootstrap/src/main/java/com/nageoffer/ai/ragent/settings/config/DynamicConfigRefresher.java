@@ -20,7 +20,7 @@ package com.nageoffer.ai.ragent.settings.config;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
-import com.nageoffer.ai.ragent.infra.ai.interfaces.config.AIModelProperties;
+import com.nageoffer.ai.ragent.llm.interfaces.config.AIModelProperties;
 import com.nageoffer.ai.ragent.settings.dao.entity.ModelCandidateDO;
 import com.nageoffer.ai.ragent.settings.dao.entity.ModelProviderDO;
 import com.nageoffer.ai.ragent.settings.dao.mapper.ModelCandidateMapper;

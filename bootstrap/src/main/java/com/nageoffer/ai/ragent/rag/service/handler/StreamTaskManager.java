@@ -23,7 +23,7 @@ import com.google.common.cache.CacheBuilder;
 import com.nageoffer.ai.ragent.rag.enums.SSEEventType;
 import com.nageoffer.ai.ragent.rag.dto.CompletionPayload;
 import com.nageoffer.ai.ragent.framework.web.SseEmitterSender;
-import com.nageoffer.ai.ragent.infra.ai.domain.service.StreamCancellationHandle;
+import com.nageoffer.ai.ragent.llm.domain.service.StreamCancellationHandle;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.SneakyThrows;
