@@ -23,9 +23,6 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * 系统设置视图对象
  * 包含RAG和AI相关的配置信息
@@ -83,41 +80,8 @@ public class SystemSettingsVO {
     @Data
     @Builder
     public static class AISettings {
-        private Map<String, ProviderConfig> providers;
-        private ModelGroup chat;
-        private ModelGroup embedding;
-        private ModelGroup rerank;
         private Selection selection;
         private Stream stream;
-
-        @Data
-        @Builder
-        public static class ProviderConfig {
-            private String url;
-            private String apiKey;
-            private Map<String, String> endpoints;
-        }
-
-        @Data
-        @Builder
-        public static class ModelGroup {
-            private String defaultModel;
-            private String deepThinkingModel;
-            private List<ModelCandidate> candidates;
-        }
-
-        @Data
-        @Builder
-        public static class ModelCandidate {
-            private String id;
-            private String provider;
-            private String model;
-            private String url;
-            private Integer dimension;
-            private Integer priority;
-            private Boolean enabled;
-            private Boolean supportsThinking;
-        }
 
         @Data
         @Builder

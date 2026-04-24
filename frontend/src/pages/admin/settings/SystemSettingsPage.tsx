@@ -4,7 +4,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { SystemSettings } from "@/services/settingsService";
 import { getSystemSettings } from "@/services/settingsService";
 import { getErrorMessage } from "@/utils/error";
@@ -60,7 +59,6 @@ export function SystemSettingsPage() {
   }
 
   const { rag, ai } = settings;
-  const providers = Object.entries(ai.providers || {});
 
   return (
     <div className="admin-page">
@@ -123,43 +121,6 @@ export function SystemSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>模型服务提供方</CardTitle>
-          <CardDescription>接入地址与端点配置</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table className="min-w-[760px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[140px]">Provider</TableHead>
-                <TableHead className="w-[240px]">URL</TableHead>
-                <TableHead className="w-[200px]">API Key</TableHead>
-                <TableHead>Endpoints</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {providers.map(([name, provider]) => (
-                <TableRow key={name}>
-                  <TableCell className="font-medium">{name}</TableCell>
-                  <TableCell>{provider.url}</TableCell>
-                  <TableCell>{provider.apiKey ? provider.apiKey : "-"}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      {Object.entries(provider.endpoints).map(([key, value]) => (
-                        <div key={key}>
-                          {key}: {value}
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>模型选择策略</CardTitle>
           <CardDescription>熔断与选择阈值</CardDescription>
         </CardHeader>
@@ -176,107 +137,6 @@ export function SystemSettingsPage() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <InfoItem label="Message Chunk Size" value={ai.stream.messageChunkSize} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Chat 模型配置</CardTitle>
-          <CardDescription>默认模型与候选列表</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <InfoItem label="Default Model" value={ai.chat.defaultModel} />
-            <InfoItem label="Deep Thinking Model" value={ai.chat.deepThinkingModel} />
-          </div>
-          <Table className="min-w-[720px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[220px]">ID</TableHead>
-                <TableHead className="w-[120px]">Provider</TableHead>
-                <TableHead className="w-[200px]">Model</TableHead>
-                <TableHead className="w-[100px]">Thinking</TableHead>
-                <TableHead className="w-[90px]">Priority</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ai.chat.candidates.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.id}</TableCell>
-                  <TableCell>{item.provider}</TableCell>
-                  <TableCell>{item.model}</TableCell>
-                  <TableCell>{item.supportsThinking ? "支持" : "-"}</TableCell>
-                  <TableCell>{item.priority}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Embedding 模型配置</CardTitle>
-          <CardDescription>向量化模型列表</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <InfoItem label="Default Model" value={ai.embedding.defaultModel} />
-          </div>
-          <Table className="min-w-[720px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[220px]">ID</TableHead>
-                <TableHead className="w-[120px]">Provider</TableHead>
-                <TableHead className="w-[200px]">Model</TableHead>
-                <TableHead className="w-[110px]">Dimension</TableHead>
-                <TableHead className="w-[90px]">Priority</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ai.embedding.candidates.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.id}</TableCell>
-                  <TableCell>{item.provider}</TableCell>
-                  <TableCell>{item.model}</TableCell>
-                  <TableCell>{item.dimension}</TableCell>
-                  <TableCell>{item.priority}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Rerank 模型配置</CardTitle>
-          <CardDescription>重排模型列表</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <InfoItem label="Default Model" value={ai.rerank.defaultModel} />
-          </div>
-          <Table className="min-w-[640px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[220px]">ID</TableHead>
-                <TableHead className="w-[120px]">Provider</TableHead>
-                <TableHead className="w-[200px]">Model</TableHead>
-                <TableHead className="w-[90px]">Priority</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ai.rerank.candidates.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.id}</TableCell>
-                  <TableCell>{item.provider}</TableCell>
-                  <TableCell>{item.model}</TableCell>
-                  <TableCell>{item.priority}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
         </CardContent>
       </Card>
     </div>

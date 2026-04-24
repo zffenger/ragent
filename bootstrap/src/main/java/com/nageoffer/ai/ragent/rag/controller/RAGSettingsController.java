@@ -19,9 +19,6 @@ package com.nageoffer.ai.ragent.rag.controller;
 
 import com.nageoffer.ai.ragent.framework.convention.Result;
 import com.nageoffer.ai.ragent.framework.web.Results;
-import com.nageoffer.ai.ragent.llm.domain.repository.ModelConfigRepository;
-import com.nageoffer.ai.ragent.llm.domain.vo.ModelCandidateConfig;
-import com.nageoffer.ai.ragent.llm.domain.vo.ProviderConfig;
 import com.nageoffer.ai.ragent.llm.infra.config.AISelectionProperties;
 import com.nageoffer.ai.ragent.llm.infra.config.AIStreamProperties;
 import com.nageoffer.ai.ragent.rag.config.MemoryProperties;
@@ -38,10 +35,6 @@ import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 /**
  * RAG 设置控制器，负责系统 RAG、AI 模型等配置信息的查询
  */
@@ -53,7 +46,6 @@ public class RAGSettingsController {
     private final RAGConfigProperties ragConfigProperties;
     private final RAGRateLimitProperties ragRateLimitProperties;
     private final MemoryProperties memoryProperties;
-    private final ModelConfigRepository modelConfigRepository;
     private final AISelectionProperties selectionProperties;
     private final AIStreamProperties streamProperties;
 
@@ -89,7 +81,15 @@ public class RAGSettingsController {
                                 .build())
                         .memory(toMemorySettings(memoryProperties))
                         .build())
-                .ai(toAISettings())
+                .ai(AISettings.builder()
+                        .selection(selectionProperties == null ? null : AISettings.Selection.builder()
+                                .failureThreshold(selectionProperties.getFailureThreshold())
+                                .openDurationMs(selectionProperties.getOpenDurationMs())
+                                .build())
+                        .stream(streamProperties == null ? null : AISettings.Stream.builder()
+                                .messageChunkSize(streamProperties.getMessageChunkSize())
+                                .build())
+                        .build())
                 .build();
         return Results.success(response);
     }
@@ -109,65 +109,6 @@ public class RAGSettingsController {
                 .summaryStartTurns(props.getSummaryStartTurns())
                 .summaryMaxChars(props.getSummaryMaxChars())
                 .titleMaxLength(props.getTitleMaxLength())
-                .build();
-    }
-
-    private AISettings toAISettings() {
-        Map<String, ProviderConfig> providers = modelConfigRepository.getProviders();
-        Map<String, AISettings.ProviderConfig> providerConfigs = new HashMap<>();
-        if (providers != null) {
-            providers.forEach((k, v) -> providerConfigs.put(k, AISettings.ProviderConfig.builder()
-                    .url(v.url())
-                    .apiKey(v.apiKey())
-                    .endpoints(v.endpoints())
-                    .build()));
-        }
-
-        return AISettings.builder()
-                .providers(providerConfigs)
-                .chat(toModelGroup(
-                        modelConfigRepository.getChatCandidates(),
-                        modelConfigRepository.getChatDefaultModel(),
-                        modelConfigRepository.getChatDeepThinkingModel()))
-                .embedding(toModelGroup(
-                        modelConfigRepository.getEmbeddingCandidates(),
-                        modelConfigRepository.getEmbeddingDefaultModel(),
-                        null))
-                .rerank(toModelGroup(
-                        modelConfigRepository.getRerankCandidates(),
-                        modelConfigRepository.getRerankDefaultModel(),
-                        null))
-                .selection(selectionProperties == null ? null : AISettings.Selection.builder()
-                        .failureThreshold(selectionProperties.getFailureThreshold())
-                        .openDurationMs(selectionProperties.getOpenDurationMs())
-                        .build())
-                .stream(streamProperties == null ? null : AISettings.Stream.builder()
-                        .messageChunkSize(streamProperties.getMessageChunkSize())
-                        .build())
-                .build();
-    }
-
-    private AISettings.ModelGroup toModelGroup(java.util.List<ModelCandidateConfig> candidates,
-                                                String defaultModel,
-                                                String deepThinkingModel) {
-        if (candidates == null) {
-            return null;
-        }
-        return AISettings.ModelGroup.builder()
-                .defaultModel(defaultModel)
-                .deepThinkingModel(deepThinkingModel)
-                .candidates(candidates.stream()
-                        .map(c -> AISettings.ModelCandidate.builder()
-                                .id(c.modelId())
-                                .provider(c.provider())
-                                .model(c.modelName())
-                                .url(c.url())
-                                .dimension(c.dimension())
-                                .priority(c.priority())
-                                .enabled(c.enabled())
-                                .supportsThinking(c.supportsThinking())
-                                .build())
-                        .collect(Collectors.toList()))
                 .build();
     }
 }

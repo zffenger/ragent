@@ -32,14 +32,6 @@ export interface SystemSettings {
     };
   };
   ai: {
-    providers: Record<
-      string,
-      {
-        url: string;
-        apiKey?: string | null;
-        endpoints: Record<string, string>;
-      }
-    >;
     selection: {
       failureThreshold: number;
       openDurationMs: number;
@@ -47,27 +39,7 @@ export interface SystemSettings {
     stream: {
       messageChunkSize: number;
     };
-    chat: ModelGroup;
-    embedding: ModelGroup;
-    rerank: ModelGroup;
   };
-}
-
-export interface ModelGroup {
-  defaultModel?: string | null;
-  deepThinkingModel?: string | null;
-  candidates: ModelCandidate[];
-}
-
-export interface ModelCandidate {
-  id: string;
-  provider: string;
-  model: string;
-  url?: string | null;
-  dimension?: number | null;
-  priority?: number | null;
-  enabled?: boolean | null;
-  supportsThinking?: boolean | null;
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
