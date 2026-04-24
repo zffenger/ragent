@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceNode;
 import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceNodeRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.RagTraceNodeMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceNodeDO;
@@ -34,17 +36,33 @@ public class RagTraceNodeRepositoryImpl implements RagTraceNodeRepository {
     private final RagTraceNodeMapper nodeMapper;
 
     @Override
-    public void save(RagTraceNodeDO node) {
-        nodeMapper.insert(node);
+    public void save(RagTraceNode node) {
+        RagTraceNodeDO record = toDO(node);
+        nodeMapper.insert(record);
     }
 
     @Override
-    public void updateByTraceIdAndNodeId(String traceId, String nodeId, RagTraceNodeDO node) {
+    public void updateByTraceIdAndNodeId(String traceId, String nodeId, RagTraceNode node) {
+        RagTraceNodeDO record = toDO(node);
         nodeMapper.update(
-                node,
+                record,
                 Wrappers.lambdaUpdate(RagTraceNodeDO.class)
                         .eq(RagTraceNodeDO::getTraceId, traceId)
                         .eq(RagTraceNodeDO::getNodeId, nodeId)
         );
+    }
+
+    private RagTraceNode toEntity(RagTraceNodeDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, RagTraceNode.class);
+    }
+
+    private RagTraceNodeDO toDO(RagTraceNode entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, RagTraceNodeDO.class);
     }
 }

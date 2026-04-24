@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 会话仓储实现
@@ -36,37 +39,57 @@ public class ConversationRepositoryImpl implements ConversationRepository {
     private final ConversationMapper conversationMapper;
 
     @Override
-    public List<ConversationDO> listByUserId(String userId) {
-        return conversationMapper.selectList(
+    public List<Conversation> listByUserId(String userId) {
+        List<ConversationDO> records = conversationMapper.selectList(
                 Wrappers.lambdaQuery(ConversationDO.class)
                         .eq(ConversationDO::getUserId, userId)
                         .eq(ConversationDO::getDeleted, 0)
                         .orderByDesc(ConversationDO::getLastTime)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public ConversationDO findByConversationIdAndUserId(String conversationId, String userId) {
-        return conversationMapper.selectOne(
+    public Conversation findByConversationIdAndUserId(String conversationId, String userId) {
+        ConversationDO record = conversationMapper.selectOne(
                 Wrappers.lambdaQuery(ConversationDO.class)
                         .eq(ConversationDO::getConversationId, conversationId)
                         .eq(ConversationDO::getUserId, userId)
                         .eq(ConversationDO::getDeleted, 0)
         );
+        return toEntity(record);
     }
 
     @Override
-    public void save(ConversationDO conversation) {
-        conversationMapper.insert(conversation);
+    public void save(Conversation conversation) {
+        ConversationDO record = toDO(conversation);
+        conversationMapper.insert(record);
     }
 
     @Override
-    public void update(ConversationDO conversation) {
-        conversationMapper.updateById(conversation);
+    public void update(Conversation conversation) {
+        ConversationDO record = toDO(conversation);
+        conversationMapper.updateById(record);
     }
 
     @Override
     public void deleteById(String id) {
         conversationMapper.deleteById(id);
+    }
+
+    private Conversation toEntity(ConversationDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, Conversation.class);
+    }
+
+    private ConversationDO toDO(Conversation entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, ConversationDO.class);
     }
 }

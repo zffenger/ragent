@@ -17,9 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.application;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
 
 import java.util.Date;
 import java.util.List;
@@ -38,7 +38,7 @@ public interface ConversationGroupService {
      * @param limit          返回的消息数量限制
      * @return 用户消息列表，按时间倒序排列
      */
-    List<ConversationMessageDO> listLatestUserOnlyMessages(String conversationId, String userId, int limit);
+    List<ConversationMessage> listLatestUserOnlyMessages(String conversationId, String userId, int limit);
 
     /**
      * 获取指定ID范围内的消息列表
@@ -49,7 +49,7 @@ public interface ConversationGroupService {
      * @param beforeId       结束消息ID（不包含）
      * @return 指定范围内的消息列表
      */
-    List<ConversationMessageDO> listMessagesBetweenIds(String conversationId, String userId, String afterId, String beforeId);
+    List<ConversationMessage> listMessagesBetweenIds(String conversationId, String userId, String afterId, String beforeId);
 
     /**
      * 查找指定时间点之前或当时的最大消息ID
@@ -77,7 +77,7 @@ public interface ConversationGroupService {
      * @param userId         用户ID
      * @return 最新的对话摘要，如果不存在则返回null
      */
-    ConversationSummaryDO findLatestSummary(String conversationId, String userId);
+    ConversationSummary findLatestSummary(String conversationId, String userId);
 
     /**
      * 查找指定的对话信息
@@ -86,5 +86,5 @@ public interface ConversationGroupService {
      * @param userId         用户ID
      * @return 对话信息，如果不存在则返回null
      */
-    ConversationDO findConversation(String conversationId, String userId);
+    Conversation findConversation(String conversationId, String userId);
 }

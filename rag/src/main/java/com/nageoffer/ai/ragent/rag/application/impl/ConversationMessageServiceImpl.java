@@ -20,9 +20,9 @@ package com.nageoffer.ai.ragent.rag.application.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.ConversationMessageVO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
@@ -50,8 +50,8 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
 
     @Override
     public String addMessage(ConversationMessageBO conversationMessage) {
-        ConversationMessageDO messageDO = BeanUtil.toBean(conversationMessage, ConversationMessageDO.class);
-        return messageRepository.save(messageDO);
+        ConversationMessage message = BeanUtil.toBean(conversationMessage, ConversationMessage.class);
+        return messageRepository.save(message);
     }
 
     @Override
@@ -60,13 +60,13 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
             return List.of();
         }
 
-        ConversationDO conversation = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
+        Conversation conversation = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
         if (conversation == null) {
             return List.of();
         }
 
         boolean asc = order == null || order == ConversationMessageOrder.ASC;
-        List<ConversationMessageDO> records = messageRepository.listByConversationIdAndUserId(conversationId, userId, limit, asc);
+        List<ConversationMessage> records = messageRepository.listByConversationIdAndUserId(conversationId, userId, limit, asc);
         if (records == null || records.isEmpty()) {
             return List.of();
         }
@@ -77,12 +77,12 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
 
         List<String> assistantMessageIds = records.stream()
                 .filter(record -> "assistant".equalsIgnoreCase(record.getRole()))
-                .map(ConversationMessageDO::getId)
+                .map(ConversationMessage::getId)
                 .toList();
         Map<String, Integer> votesByMessageId = feedbackService.getUserVotes(userId, assistantMessageIds);
 
         List<ConversationMessageVO> result = new ArrayList<>();
-        for (ConversationMessageDO record : records) {
+        for (ConversationMessage record : records) {
             ConversationMessageVO vo = ConversationMessageVO.builder()
                     .id(String.valueOf(record.getId()))
                     .conversationId(record.getConversationId())
@@ -101,7 +101,7 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
 
     @Override
     public void addMessageSummary(ConversationSummaryBO conversationSummary) {
-        ConversationSummaryDO conversationSummaryDO = BeanUtil.toBean(conversationSummary, ConversationSummaryDO.class);
-        summaryRepository.save(conversationSummaryDO);
+        ConversationSummary summary = BeanUtil.toBean(conversationSummary, ConversationSummary.class);
+        summaryRepository.save(summary);
     }
 }

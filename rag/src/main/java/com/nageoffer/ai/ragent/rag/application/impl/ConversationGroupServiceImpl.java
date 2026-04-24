@@ -18,9 +18,9 @@
 package com.nageoffer.ai.ragent.rag.application.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
@@ -39,7 +39,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
     private final ConversationRepository conversationRepository;
 
     @Override
-    public List<ConversationMessageDO> listLatestUserOnlyMessages(String conversationId, String userId, int limit) {
+    public List<ConversationMessage> listLatestUserOnlyMessages(String conversationId, String userId, int limit) {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId) || limit <= 0) {
             return List.of();
         }
@@ -47,7 +47,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
     }
 
     @Override
-    public List<ConversationMessageDO> listMessagesBetweenIds(String conversationId, String userId, String afterId, String beforeId) {
+    public List<ConversationMessage> listMessagesBetweenIds(String conversationId, String userId, String afterId, String beforeId) {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return List.of();
         }
@@ -71,7 +71,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
     }
 
     @Override
-    public ConversationSummaryDO findLatestSummary(String conversationId, String userId) {
+    public ConversationSummary findLatestSummary(String conversationId, String userId) {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return null;
         }
@@ -79,7 +79,7 @@ public class ConversationGroupServiceImpl implements ConversationGroupService {
     }
 
     @Override
-    public ConversationDO findConversation(String conversationId, String userId) {
+    public Conversation findConversation(String conversationId, String userId) {
         if (StrUtil.isBlank(conversationId) || StrUtil.isBlank(userId)) {
             return null;
         }

@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeBase;
 import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeBaseRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeBaseMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 知识库仓储实现
@@ -37,24 +40,45 @@ public class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
     private final KnowledgeBaseMapper knowledgeBaseMapper;
 
     @Override
-    public KnowledgeBaseDO findById(String id) {
-        return knowledgeBaseMapper.selectOne(
+    public KnowledgeBase findById(String id) {
+        KnowledgeBaseDO record = knowledgeBaseMapper.selectOne(
                 Wrappers.lambdaQuery(KnowledgeBaseDO.class)
                         .eq(KnowledgeBaseDO::getId, id)
                         .eq(KnowledgeBaseDO::getDeleted, 0)
         );
+        return toEntity(record);
     }
 
     @Override
-    public List<KnowledgeBaseDO> findByIds(Collection<String> ids) {
-        return knowledgeBaseMapper.selectBatchIds(ids);
+    public List<KnowledgeBase> findByIds(Collection<String> ids) {
+        List<KnowledgeBaseDO> records = knowledgeBaseMapper.selectBatchIds(ids);
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<KnowledgeBaseDO> findAll() {
-        return knowledgeBaseMapper.selectList(
+    public List<KnowledgeBase> findAll() {
+        List<KnowledgeBaseDO> records = knowledgeBaseMapper.selectList(
                 Wrappers.lambdaQuery(KnowledgeBaseDO.class)
                         .eq(KnowledgeBaseDO::getDeleted, 0)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
+    }
+
+    private KnowledgeBase toEntity(KnowledgeBaseDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, KnowledgeBase.class);
+    }
+
+    private KnowledgeBaseDO toDO(KnowledgeBase entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, KnowledgeBaseDO.class);
     }
 }

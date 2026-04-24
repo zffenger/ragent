@@ -21,11 +21,8 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceContext;
-import com.nageoffer.ai.ragent.framework.trace.RagTraceNode;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceRoot;
 import com.nageoffer.ai.ragent.rag.infra.config.RagTraceProperties;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceNodeDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
 import com.nageoffer.ai.ragent.rag.application.RagTraceRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +75,7 @@ public class RagTraceAspect {
         Date startTime = new Date();
         long startMillis = System.currentTimeMillis();
 
-        traceRecordService.startRun(RagTraceRunDO.builder()
+        traceRecordService.startRun(com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun.builder()
                 .traceId(traceId)
                 .traceName(traceName)
                 .entryMethod(method.getDeclaringClass().getName() + "#" + method.getName())
@@ -115,7 +112,7 @@ public class RagTraceAspect {
     }
 
     @Around("@annotation(traceNode)")
-    public Object aroundNode(ProceedingJoinPoint joinPoint, RagTraceNode traceNode) throws Throwable {
+    public Object aroundNode(ProceedingJoinPoint joinPoint, com.nageoffer.ai.ragent.framework.trace.RagTraceNode traceNode) throws Throwable {
         if (!traceProperties.isEnabled()) {
             return joinPoint.proceed();
         }
@@ -132,7 +129,7 @@ public class RagTraceAspect {
         Date startTime = new Date();
         long startMillis = System.currentTimeMillis();
 
-        traceRecordService.startNode(RagTraceNodeDO.builder()
+        traceRecordService.startNode(com.nageoffer.ai.ragent.rag.domain.entity.RagTraceNode.builder()
                 .traceId(traceId)
                 .nodeId(nodeId)
                 .parentNodeId(parentNodeId)

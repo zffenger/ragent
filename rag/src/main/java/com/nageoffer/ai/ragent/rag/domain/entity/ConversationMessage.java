@@ -15,38 +15,66 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.rag.domain.repository;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeBase;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.Date;
 
 /**
- * 知识库仓储接口
+ * 会话消息实体
  */
-public interface KnowledgeBaseRepository {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ConversationMessage {
 
     /**
-     * 根据ID查询知识库
-     *
-     * @param id 知识库ID
-     * @return 知识库信息
+     * 主键ID
      */
-    KnowledgeBase findById(String id);
+    private String id;
 
     /**
-     * 根据ID列表查询知识库
-     *
-     * @param ids 知识库ID列表
-     * @return 知识库列表
+     * 会话ID
      */
-    List<KnowledgeBase> findByIds(Collection<String> ids);
+    private String conversationId;
 
     /**
-     * 查询所有知识库
-     *
-     * @return 知识库列表
+     * 用户ID
      */
-    List<KnowledgeBase> findAll();
+    private String userId;
+
+    /**
+     * 角色：user/assistant
+     */
+    private String role;
+
+    /**
+     * 消息内容
+     */
+    private String content;
+
+    /**
+     * 深度思考内容
+     */
+    private String thinkingContent;
+
+    /**
+     * 深度思考耗时（秒）
+     */
+    private Integer thinkingDuration;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
 }

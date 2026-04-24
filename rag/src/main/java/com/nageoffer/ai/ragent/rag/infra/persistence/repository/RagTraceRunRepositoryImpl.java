@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun;
 import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceRunRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.RagTraceRunMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
@@ -34,16 +36,32 @@ public class RagTraceRunRepositoryImpl implements RagTraceRunRepository {
     private final RagTraceRunMapper runMapper;
 
     @Override
-    public void save(RagTraceRunDO run) {
-        runMapper.insert(run);
+    public void save(RagTraceRun run) {
+        RagTraceRunDO record = toDO(run);
+        runMapper.insert(record);
     }
 
     @Override
-    public void updateByTraceId(String traceId, RagTraceRunDO run) {
+    public void updateByTraceId(String traceId, RagTraceRun run) {
+        RagTraceRunDO record = toDO(run);
         runMapper.update(
-                run,
+                record,
                 Wrappers.lambdaUpdate(RagTraceRunDO.class)
                         .eq(RagTraceRunDO::getTraceId, traceId)
         );
+    }
+
+    private RagTraceRun toEntity(RagTraceRunDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, RagTraceRun.class);
+    }
+
+    private RagTraceRunDO toDO(RagTraceRun entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, RagTraceRunDO.class);
     }
 }

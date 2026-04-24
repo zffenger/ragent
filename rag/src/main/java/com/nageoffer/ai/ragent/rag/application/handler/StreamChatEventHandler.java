@@ -20,7 +20,7 @@ package com.nageoffer.ai.ragent.rag.application.handler;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.llm.domain.service.StreamCallback;
 import com.nageoffer.ai.ragent.llm.infra.config.AIStreamProperties;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
 import com.nageoffer.ai.ragent.rag.domain.vo.CompletionPayload;
 import com.nageoffer.ai.ragent.rag.domain.vo.MessageDelta;
 import com.nageoffer.ai.ragent.rag.domain.vo.MetaPayload;
@@ -97,7 +97,7 @@ public class StreamChatEventHandler implements StreamCallback {
      * 判断是否需要发送标题
      */
     private boolean shouldSendTitle() {
-        ConversationDO existingConversation = conversationGroupService.findConversation(
+        Conversation existingConversation = conversationGroupService.findConversation(
                 conversationId,
                 userId
         );
@@ -212,7 +212,7 @@ public class StreamChatEventHandler implements StreamCallback {
         if (!sendTitleOnComplete) {
             return null;
         }
-        ConversationDO conversation = conversationGroupService.findConversation(conversationId, userId);
+        Conversation conversation = conversationGroupService.findConversation(conversationId, userId);
         if (conversation != null && StrUtil.isNotBlank(conversation.getTitle())) {
             return conversation.getTitle();
         }

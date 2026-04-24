@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationSummaryMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
@@ -34,13 +36,14 @@ public class ConversationSummaryRepositoryImpl implements ConversationSummaryRep
     private final ConversationSummaryMapper summaryMapper;
 
     @Override
-    public void save(ConversationSummaryDO summary) {
-        summaryMapper.insert(summary);
+    public void save(ConversationSummary summary) {
+        ConversationSummaryDO summaryDO = toDO(summary);
+        summaryMapper.insert(summaryDO);
     }
 
     @Override
-    public ConversationSummaryDO findLatestByConversationIdAndUserId(String conversationId, String userId) {
-        return summaryMapper.selectOne(
+    public ConversationSummary findLatestByConversationIdAndUserId(String conversationId, String userId) {
+        ConversationSummaryDO record = summaryMapper.selectOne(
                 Wrappers.lambdaQuery(ConversationSummaryDO.class)
                         .eq(ConversationSummaryDO::getConversationId, conversationId)
                         .eq(ConversationSummaryDO::getUserId, userId)
@@ -48,6 +51,7 @@ public class ConversationSummaryRepositoryImpl implements ConversationSummaryRep
                         .orderByDesc(ConversationSummaryDO::getId)
                         .last("limit 1")
         );
+        return toEntity(record);
     }
 
     @Override
@@ -58,5 +62,19 @@ public class ConversationSummaryRepositoryImpl implements ConversationSummaryRep
                         .eq(ConversationSummaryDO::getUserId, userId)
                         .eq(ConversationSummaryDO::getDeleted, 0)
         );
+    }
+
+    private ConversationSummary toEntity(ConversationSummaryDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, ConversationSummary.class);
+    }
+
+    private ConversationSummaryDO toDO(ConversationSummary entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, ConversationSummaryDO.class);
     }
 }

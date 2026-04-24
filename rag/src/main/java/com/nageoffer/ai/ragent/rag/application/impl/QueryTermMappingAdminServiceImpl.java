@@ -27,7 +27,7 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.request.QueryTermMappin
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.QueryTermMappingUpdateRequest;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.QueryTermMappingVO;
 import com.nageoffer.ai.ragent.rag.domain.service.rewrite.QueryTermMappingCacheManager;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.QueryTermMapping;
 import com.nageoffer.ai.ragent.rag.domain.repository.QueryTermMappingRepository;
 import com.nageoffer.ai.ragent.rag.application.QueryTermMappingAdminService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,7 @@ public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminSe
         Assert.notBlank(sourceTerm, () -> new ClientException("原始词不能为空"));
         Assert.notBlank(targetTerm, () -> new ClientException("目标词不能为空"));
 
-        QueryTermMappingDO record = new QueryTermMappingDO();
+        QueryTermMapping record = new QueryTermMapping();
         record.setSourceTerm(sourceTerm);
         record.setTargetTerm(targetTerm);
         record.setMatchType(requestParam.getMatchType() != null ? requestParam.getMatchType() : 1);
@@ -64,7 +64,7 @@ public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminSe
     @Override
     public void update(String id, QueryTermMappingUpdateRequest requestParam) {
         Assert.notNull(requestParam, () -> new ClientException("请求不能为空"));
-        QueryTermMappingDO record = loadById(id);
+        QueryTermMapping record = loadById(id);
 
         if (requestParam.getSourceTerm() != null) {
             String sourceTerm = StrUtil.trimToNull(requestParam.getSourceTerm());
@@ -95,32 +95,32 @@ public class QueryTermMappingAdminServiceImpl implements QueryTermMappingAdminSe
 
     @Override
     public void delete(String id) {
-        QueryTermMappingDO record = loadById(id);
+        QueryTermMapping record = loadById(id);
         mappingRepository.deleteById(record.getId());
         queryTermMappingCacheManager.clearCache();
     }
 
     @Override
     public QueryTermMappingVO queryById(String id) {
-        QueryTermMappingDO record = loadById(id);
+        QueryTermMapping record = loadById(id);
         return toVO(record);
     }
 
     @Override
     public IPage<QueryTermMappingVO> pageQuery(QueryTermMappingPageRequest requestParam) {
         String keyword = StrUtil.trimToNull(requestParam.getKeyword());
-        Page<QueryTermMappingDO> page = new Page<>(requestParam.getCurrent(), requestParam.getSize());
-        IPage<QueryTermMappingDO> result = mappingRepository.pageQuery(page, keyword);
+        Page<QueryTermMapping> page = new Page<>(requestParam.getCurrent(), requestParam.getSize());
+        IPage<QueryTermMapping> result = mappingRepository.pageQuery(page, keyword);
         return result.convert(this::toVO);
     }
 
-    private QueryTermMappingDO loadById(String id) {
-        QueryTermMappingDO record = mappingRepository.findById(id);
+    private QueryTermMapping loadById(String id) {
+        QueryTermMapping record = mappingRepository.findById(id);
         Assert.notNull(record, () -> new ClientException("映射规则不存在"));
         return record;
     }
 
-    private QueryTermMappingVO toVO(QueryTermMappingDO record) {
+    private QueryTermMappingVO toVO(QueryTermMapping record) {
         return QueryTermMappingVO.builder()
                 .id(String.valueOf(record.getId()))
                 .sourceTerm(record.getSourceTerm())

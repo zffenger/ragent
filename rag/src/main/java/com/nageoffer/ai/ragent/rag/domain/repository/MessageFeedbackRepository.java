@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.MessageFeedbackDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.MessageFeedback;
 
 import java.util.Date;
 import java.util.List;
@@ -33,7 +33,7 @@ public interface MessageFeedbackRepository {
      *
      * @param feedback 反馈信息
      */
-    void save(MessageFeedbackDO feedback);
+    void save(MessageFeedback feedback);
 
     /**
      * 更新反馈
@@ -41,7 +41,7 @@ public interface MessageFeedbackRepository {
      * @param feedback   反馈信息
      * @param beforeTime 更新时间限制（仅当记录更新时间早于此时间时才更新）
      */
-    void update(MessageFeedbackDO feedback, Date beforeTime);
+    void update(MessageFeedback feedback, Date beforeTime);
 
     /**
      * 根据消息ID和用户ID查询反馈
@@ -50,7 +50,7 @@ public interface MessageFeedbackRepository {
      * @param userId    用户ID
      * @return 反馈信息
      */
-    MessageFeedbackDO findByMessageIdAndUserId(String messageId, String userId);
+    MessageFeedback findByMessageIdAndUserId(String messageId, String userId);
 
     /**
      * 根据用户ID和消息ID列表查询反馈

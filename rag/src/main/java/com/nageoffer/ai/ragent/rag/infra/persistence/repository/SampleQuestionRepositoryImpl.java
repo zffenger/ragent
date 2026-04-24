@@ -17,9 +17,11 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.SampleQuestion;
 import com.nageoffer.ai.ragent.rag.domain.repository.SampleQuestionRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.SampleQuestionMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.SampleQuestionDO;
@@ -27,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 示例问题仓储实现
@@ -38,13 +41,15 @@ public class SampleQuestionRepositoryImpl implements SampleQuestionRepository {
     private final SampleQuestionMapper questionMapper;
 
     @Override
-    public void save(SampleQuestionDO question) {
-        questionMapper.insert(question);
+    public void save(SampleQuestion question) {
+        SampleQuestionDO record = toDO(question);
+        questionMapper.insert(record);
     }
 
     @Override
-    public void update(SampleQuestionDO question) {
-        questionMapper.updateById(question);
+    public void update(SampleQuestion question) {
+        SampleQuestionDO record = toDO(question);
+        questionMapper.updateById(record);
     }
 
     @Override
@@ -53,18 +58,20 @@ public class SampleQuestionRepositoryImpl implements SampleQuestionRepository {
     }
 
     @Override
-    public SampleQuestionDO findById(String id) {
-        return questionMapper.selectOne(
+    public SampleQuestion findById(String id) {
+        SampleQuestionDO record = questionMapper.selectOne(
                 Wrappers.lambdaQuery(SampleQuestionDO.class)
                         .eq(SampleQuestionDO::getId, id)
                         .eq(SampleQuestionDO::getDeleted, 0)
         );
+        return toEntity(record);
     }
 
     @Override
-    public IPage<SampleQuestionDO> pageQuery(IPage<SampleQuestionDO> page, String keyword) {
-        return questionMapper.selectPage(
-                page,
+    public IPage<SampleQuestion> pageQuery(IPage<SampleQuestion> page, String keyword) {
+        IPage<SampleQuestionDO> doPage = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page.getCurrent(), page.getSize());
+        IPage<SampleQuestionDO> result = questionMapper.selectPage(
+                doPage,
                 Wrappers.lambdaQuery(SampleQuestionDO.class)
                         .eq(SampleQuestionDO::getDeleted, 0)
                         .and(StrUtil.isNotBlank(keyword), wrapper -> wrapper
@@ -75,14 +82,32 @@ public class SampleQuestionRepositoryImpl implements SampleQuestionRepository {
                                 .like(SampleQuestionDO::getQuestion, keyword))
                         .orderByDesc(SampleQuestionDO::getUpdateTime)
         );
+        return result.convert(this::toEntity);
     }
 
     @Override
-    public List<SampleQuestionDO> listRandom(int limit) {
-        return questionMapper.selectList(
+    public List<SampleQuestion> listRandom(int limit) {
+        List<SampleQuestionDO> records = questionMapper.selectList(
                 Wrappers.lambdaQuery(SampleQuestionDO.class)
                         .eq(SampleQuestionDO::getDeleted, 0)
                         .last("ORDER BY RANDOM() LIMIT " + limit)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
+    }
+
+    private SampleQuestion toEntity(SampleQuestionDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, SampleQuestion.class);
+    }
+
+    private SampleQuestionDO toDO(SampleQuestion entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, SampleQuestionDO.class);
     }
 }

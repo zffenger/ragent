@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.rag.domain.service.rewrite;
 
 import cn.hutool.core.collection.CollUtil;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.QueryTermMapping;
 import com.nageoffer.ai.ragent.rag.domain.repository.QueryTermMappingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,13 +44,13 @@ public class QueryTermMappingService {
             return text;
         }
 
-        List<QueryTermMappingDO> mappings = loadMappings();
+        List<QueryTermMapping> mappings = loadMappings();
         if (mappings.isEmpty()) {
             return text;
         }
 
         String result = text;
-        for (QueryTermMappingDO mapping : mappings) {
+        for (QueryTermMapping mapping : mappings) {
             if (mapping.getEnabled() == null || mapping.getEnabled() == 0) {
                 continue;
             }
@@ -74,16 +74,16 @@ public class QueryTermMappingService {
     /**
      * 加载映射规则：优先从 Redis 缓存读取，缓存未命中则从数据库加载并回填缓存
      */
-    private List<QueryTermMappingDO> loadMappings() {
-        List<QueryTermMappingDO> cached = cacheManager.getMappingsFromCache();
+    private List<QueryTermMapping> loadMappings() {
+        List<QueryTermMapping> cached = cacheManager.getMappingsFromCache();
         if (CollUtil.isNotEmpty(cached)) {
             return cached;
         }
 
         // 缓存未命中，从数据库加载
-        List<QueryTermMappingDO> dbList = mappingRepository.findAllEnabled();
+        List<QueryTermMapping> dbList = mappingRepository.findAllEnabled();
         dbList.sort(Comparator
-                .comparing(QueryTermMappingDO::getPriority, Comparator.nullsLast(Integer::compareTo)).reversed()
+                .comparing(QueryTermMapping::getPriority, Comparator.nullsLast(Integer::compareTo)).reversed()
                 .thenComparing(m -> m.getSourceTerm() == null ? 0 : m.getSourceTerm().length(), Comparator.reverseOrder())
         );
 

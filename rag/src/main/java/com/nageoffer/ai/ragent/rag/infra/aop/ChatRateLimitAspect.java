@@ -22,7 +22,7 @@ import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceContext;
 import com.nageoffer.ai.ragent.rag.infra.config.RagTraceProperties;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun;
 import com.nageoffer.ai.ragent.rag.application.RagTraceRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +89,7 @@ public class ChatRateLimitAspect {
         String traceId = IdUtil.getSnowflakeNextIdStr();
         String taskId = IdUtil.getSnowflakeNextIdStr();
         long startMillis = System.currentTimeMillis();
-        traceRecordService.startRun(RagTraceRunDO.builder()
+        traceRecordService.startRun(RagTraceRun.builder()
                 .traceId(traceId)
                 .traceName("rag-stream-chat")
                 .entryMethod(method.getDeclaringClass().getName() + "#" + method.getName())

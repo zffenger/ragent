@@ -21,8 +21,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.rag.infra.config.MemoryProperties;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
 import com.nageoffer.ai.ragent.rag.domain.service.prompt.PromptTemplateLoader;
@@ -83,7 +83,7 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
 
     @Override
     public ChatMessage loadLatestSummary(String conversationId, String userId) {
-        ConversationSummaryDO summary = conversationGroupService.findLatestSummary(conversationId, userId);
+        ConversationSummary summary = conversationGroupService.findLatestSummary(conversationId, userId);
         return toChatMessage(summary);
     }
 
@@ -119,8 +119,8 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
                 return;
             }
 
-            ConversationSummaryDO latestSummary = conversationGroupService.findLatestSummary(conversationId, userId);
-            List<ConversationMessageDO> latestUserTurns = conversationGroupService.listLatestUserOnlyMessages(
+            ConversationSummary latestSummary = conversationGroupService.findLatestSummary(conversationId, userId);
+            List<ConversationMessage> latestUserTurns = conversationGroupService.listLatestUserOnlyMessages(
                     conversationId,
                     userId,
                     maxTurns
@@ -138,7 +138,7 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
                 return;
             }
 
-            List<ConversationMessageDO> toSummarize = conversationGroupService.listMessagesBetweenIds(
+            List<ConversationMessage> toSummarize = conversationGroupService.listMessagesBetweenIds(
                     conversationId,
                     userId,
                     afterId,
@@ -172,7 +172,7 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
         }
     }
 
-    private String summarizeMessages(List<ConversationMessageDO> messages, String existingSummary) {
+    private String summarizeMessages(List<ConversationMessage> messages, String existingSummary) {
         List<ChatMessage> histories = toHistoryMessages(messages);
         if (CollUtil.isEmpty(histories)) {
             return existingSummary;
@@ -214,7 +214,7 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
         }
     }
 
-    private List<ChatMessage> toHistoryMessages(List<ConversationMessageDO> messages) {
+    private List<ChatMessage> toHistoryMessages(List<ConversationMessage> messages) {
         if (CollUtil.isEmpty(messages)) {
             return List.of();
         }
@@ -235,14 +235,14 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
                 .collect(Collectors.toList());
     }
 
-    private ChatMessage toChatMessage(ConversationSummaryDO record) {
+    private ChatMessage toChatMessage(ConversationSummary record) {
         if (record == null || StrUtil.isBlank(record.getContent())) {
             return null;
         }
         return new ChatMessage(ChatMessage.Role.SYSTEM, record.getContent());
     }
 
-    private String resolveSummaryStartId(String conversationId, String userId, ConversationSummaryDO summary) {
+    private String resolveSummaryStartId(String conversationId, String userId, ConversationSummary summary) {
         if (summary == null) {
             return null;
         }
@@ -257,19 +257,19 @@ public class JdbcConversationMemorySummaryService implements ConversationMemoryS
         return conversationGroupService.findMaxMessageIdAtOrBefore(conversationId, userId, after);
     }
 
-    private String resolveCutoffId(List<ConversationMessageDO> latestUserTurns) {
+    private String resolveCutoffId(List<ConversationMessage> latestUserTurns) {
         if (CollUtil.isEmpty(latestUserTurns)) {
             return null;
         }
 
         // 倒序列表的最后一个就是最早的
-        ConversationMessageDO oldest = latestUserTurns.get(latestUserTurns.size() - 1);
+        ConversationMessage oldest = latestUserTurns.get(latestUserTurns.size() - 1);
         return oldest == null ? null : oldest.getId();
     }
 
-    private String resolveLastMessageId(List<ConversationMessageDO> toSummarize) {
+    private String resolveLastMessageId(List<ConversationMessage> toSummarize) {
         for (int i = toSummarize.size() - 1; i >= 0; i--) {
-            ConversationMessageDO item = toSummarize.get(i);
+            ConversationMessage item = toSummarize.get(i);
             if (item != null && item.getId() != null) {
                 return item.getId();
             }

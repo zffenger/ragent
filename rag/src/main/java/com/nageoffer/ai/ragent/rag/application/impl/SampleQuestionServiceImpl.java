@@ -17,6 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.application.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -26,7 +27,7 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.request.SampleQuestionC
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.SampleQuestionPageRequest;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.SampleQuestionUpdateRequest;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.SampleQuestionVO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.SampleQuestionDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.SampleQuestion;
 import com.nageoffer.ai.ragent.rag.domain.repository.SampleQuestionRepository;
 import com.nageoffer.ai.ragent.rag.application.SampleQuestionService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,7 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
         String question = StrUtil.trimToNull(requestParam.getQuestion());
         Assert.notBlank(question, () -> new ClientException("示例问题内容不能为空"));
 
-        SampleQuestionDO record = SampleQuestionDO.builder()
+        SampleQuestion record = SampleQuestion.builder()
                 .title(StrUtil.trimToNull(requestParam.getTitle()))
                 .description(StrUtil.trimToNull(requestParam.getDescription()))
                 .question(question)
@@ -60,7 +61,7 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
     @Override
     public void update(String id, SampleQuestionUpdateRequest requestParam) {
         Assert.notNull(requestParam, () -> new ClientException("请求不能为空"));
-        SampleQuestionDO record = loadById(id);
+        SampleQuestion record = loadById(id);
 
         if (requestParam.getQuestion() != null) {
             String question = StrUtil.trimToNull(requestParam.getQuestion());
@@ -79,27 +80,27 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
 
     @Override
     public void delete(String id) {
-        SampleQuestionDO record = loadById(id);
+        SampleQuestion record = loadById(id);
         questionRepository.deleteById(record.getId());
     }
 
     @Override
     public SampleQuestionVO queryById(String id) {
-        SampleQuestionDO record = loadById(id);
+        SampleQuestion record = loadById(id);
         return toVO(record);
     }
 
     @Override
     public IPage<SampleQuestionVO> pageQuery(SampleQuestionPageRequest requestParam) {
         String keyword = StrUtil.trimToNull(requestParam.getKeyword());
-        Page<SampleQuestionDO> page = new Page<>(requestParam.getCurrent(), requestParam.getSize());
-        IPage<SampleQuestionDO> result = questionRepository.pageQuery(page, keyword);
+        Page<SampleQuestion> page = new Page<>(requestParam.getCurrent(), requestParam.getSize());
+        IPage<SampleQuestion> result = questionRepository.pageQuery(page, keyword);
         return result.convert(this::toVO);
     }
 
     @Override
     public List<SampleQuestionVO> listRandomQuestions() {
-        List<SampleQuestionDO> records = questionRepository.listRandom(DEFAULT_LIMIT);
+        List<SampleQuestion> records = questionRepository.listRandom(DEFAULT_LIMIT);
         if (records == null || records.isEmpty()) {
             return List.of();
         }
@@ -108,13 +109,13 @@ public class SampleQuestionServiceImpl implements SampleQuestionService {
                 .toList();
     }
 
-    private SampleQuestionDO loadById(String id) {
-        SampleQuestionDO record = questionRepository.findById(id);
+    private SampleQuestion loadById(String id) {
+        SampleQuestion record = questionRepository.findById(id);
         Assert.notNull(record, () -> new ClientException("示例问题不存在"));
         return record;
     }
 
-    private SampleQuestionVO toVO(SampleQuestionDO record) {
+    private SampleQuestionVO toVO(SampleQuestion record) {
         return SampleQuestionVO.builder()
                 .id(String.valueOf(record.getId()))
                 .title(record.getTitle())

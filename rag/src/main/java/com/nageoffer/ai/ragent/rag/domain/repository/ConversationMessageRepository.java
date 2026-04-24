@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
 
 import java.util.Date;
 import java.util.List;
@@ -33,7 +33,7 @@ public interface ConversationMessageRepository {
      * @param message 消息信息
      * @return 消息ID
      */
-    String save(ConversationMessageDO message);
+    String save(ConversationMessage message);
 
     /**
      * 根据会话ID和用户ID查询消息列表
@@ -44,7 +44,7 @@ public interface ConversationMessageRepository {
      * @param asc            是否升序
      * @return 消息列表
      */
-    List<ConversationMessageDO> listByConversationIdAndUserId(String conversationId, String userId, Integer limit, boolean asc);
+    List<ConversationMessage> listByConversationIdAndUserId(String conversationId, String userId, Integer limit, boolean asc);
 
     /**
      * 根据会话ID和用户ID查询用户消息列表（倒序）
@@ -54,7 +54,7 @@ public interface ConversationMessageRepository {
      * @param limit          限制数量
      * @return 用户消息列表
      */
-    List<ConversationMessageDO> listLatestUserMessages(String conversationId, String userId, int limit);
+    List<ConversationMessage> listLatestUserMessages(String conversationId, String userId, int limit);
 
     /**
      * 根据ID范围查询消息列表
@@ -65,7 +65,7 @@ public interface ConversationMessageRepository {
      * @param beforeId       结束消息ID（不包含）
      * @return 消息列表
      */
-    List<ConversationMessageDO> listBetweenIds(String conversationId, String userId, String afterId, String beforeId);
+    List<ConversationMessage> listBetweenIds(String conversationId, String userId, String afterId, String beforeId);
 
     /**
      * 查询指定时间点之前或当时的最大消息ID
@@ -93,7 +93,7 @@ public interface ConversationMessageRepository {
      * @param userId    用户ID
      * @return 消息信息
      */
-    ConversationMessageDO findByIdAndUserId(String messageId, String userId);
+    ConversationMessage findByIdAndUserId(String messageId, String userId);
 
     /**
      * 根据会话ID和用户ID删除消息

@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceNodeDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceNode;
 
 /**
  * RAG Trace 节点仓储接口
@@ -29,7 +29,7 @@ public interface RagTraceNodeRepository {
      *
      * @param node 节点信息
      */
-    void save(RagTraceNodeDO node);
+    void save(RagTraceNode node);
 
     /**
      * 更新节点状态
@@ -38,5 +38,5 @@ public interface RagTraceNodeRepository {
      * @param nodeId      节点ID
      * @param node        更新内容
      */
-    void updateByTraceIdAndNodeId(String traceId, String nodeId, RagTraceNodeDO node);
+    void updateByTraceIdAndNodeId(String traceId, String nodeId, RagTraceNode node);
 }

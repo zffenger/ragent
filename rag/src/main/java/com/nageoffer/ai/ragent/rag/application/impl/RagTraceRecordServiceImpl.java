@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.rag.application.impl;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceNodeDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceNode;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun;
 import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceNodeRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.RagTraceRunRepository;
 import com.nageoffer.ai.ragent.rag.application.RagTraceRecordService;
@@ -38,13 +38,13 @@ public class RagTraceRecordServiceImpl implements RagTraceRecordService {
     private final RagTraceNodeRepository nodeRepository;
 
     @Override
-    public void startRun(RagTraceRunDO run) {
+    public void startRun(RagTraceRun run) {
         runRepository.save(run);
     }
 
     @Override
     public void finishRun(String traceId, String status, String errorMessage, Date endTime, long durationMs) {
-        RagTraceRunDO update = RagTraceRunDO.builder()
+        RagTraceRun update = RagTraceRun.builder()
                 .status(status)
                 .errorMessage(errorMessage)
                 .endTime(endTime)
@@ -54,13 +54,13 @@ public class RagTraceRecordServiceImpl implements RagTraceRecordService {
     }
 
     @Override
-    public void startNode(RagTraceNodeDO node) {
+    public void startNode(RagTraceNode node) {
         nodeRepository.save(node);
     }
 
     @Override
     public void finishNode(String traceId, String nodeId, String status, String errorMessage, Date endTime, long durationMs) {
-        RagTraceNodeDO update = RagTraceNodeDO.builder()
+        RagTraceNode update = RagTraceNode.builder()
                 .status(status)
                 .errorMessage(errorMessage)
                 .endTime(endTime)

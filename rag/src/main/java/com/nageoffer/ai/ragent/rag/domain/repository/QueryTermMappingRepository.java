@@ -18,7 +18,7 @@
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.QueryTermMapping;
 
 import java.util.List;
 
@@ -32,14 +32,14 @@ public interface QueryTermMappingRepository {
      *
      * @param mapping 映射规则
      */
-    void save(QueryTermMappingDO mapping);
+    void save(QueryTermMapping mapping);
 
     /**
      * 更新映射规则
      *
      * @param mapping 映射规则
      */
-    void update(QueryTermMappingDO mapping);
+    void update(QueryTermMapping mapping);
 
     /**
      * 根据ID删除映射规则
@@ -54,14 +54,14 @@ public interface QueryTermMappingRepository {
      * @param id 主键ID
      * @return 映射规则
      */
-    QueryTermMappingDO findById(String id);
+    QueryTermMapping findById(String id);
 
     /**
      * 查询所有启用的映射规则
      *
      * @return 映射规则列表
      */
-    List<QueryTermMappingDO> findAllEnabled();
+    List<QueryTermMapping> findAllEnabled();
 
     /**
      * 分页查询映射规则
@@ -70,5 +70,5 @@ public interface QueryTermMappingRepository {
      * @param keyword 关键词
      * @return 分页结果
      */
-    IPage<QueryTermMappingDO> pageQuery(IPage<QueryTermMappingDO> page, String keyword);
+    IPage<QueryTermMapping> pageQuery(IPage<QueryTermMapping> page, String keyword);
 }

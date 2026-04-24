@@ -17,19 +17,18 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
-import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.QueryTermMapping;
 import com.nageoffer.ai.ragent.rag.domain.repository.QueryTermMappingRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.QueryTermMappingMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -42,13 +41,15 @@ public class QueryTermMappingRepositoryImpl implements QueryTermMappingRepositor
     private final QueryTermMappingMapper mappingMapper;
 
     @Override
-    public void save(QueryTermMappingDO mapping) {
-        mappingMapper.insert(mapping);
+    public void save(QueryTermMapping mapping) {
+        QueryTermMappingDO record = toDO(mapping);
+        mappingMapper.insert(record);
     }
 
     @Override
-    public void update(QueryTermMappingDO mapping) {
-        mappingMapper.updateById(mapping);
+    public void update(QueryTermMapping mapping) {
+        QueryTermMappingDO record = toDO(mapping);
+        mappingMapper.updateById(record);
     }
 
     @Override
@@ -57,22 +58,27 @@ public class QueryTermMappingRepositoryImpl implements QueryTermMappingRepositor
     }
 
     @Override
-    public QueryTermMappingDO findById(String id) {
-        return mappingMapper.selectById(id);
+    public QueryTermMapping findById(String id) {
+        QueryTermMappingDO record = mappingMapper.selectById(id);
+        return toEntity(record);
     }
 
     @Override
-    public List<QueryTermMappingDO> findAllEnabled() {
-        return mappingMapper.selectList(
+    public List<QueryTermMapping> findAllEnabled() {
+        List<QueryTermMappingDO> records = mappingMapper.selectList(
                 Wrappers.lambdaQuery(QueryTermMappingDO.class)
                         .eq(QueryTermMappingDO::getEnabled, 1)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public IPage<QueryTermMappingDO> pageQuery(IPage<QueryTermMappingDO> page, String keyword) {
-        return mappingMapper.selectPage(
-                page,
+    public IPage<QueryTermMapping> pageQuery(IPage<QueryTermMapping> page, String keyword) {
+        IPage<QueryTermMappingDO> doPage = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page.getCurrent(), page.getSize());
+        IPage<QueryTermMappingDO> result = mappingMapper.selectPage(
+                doPage,
                 Wrappers.lambdaQuery(QueryTermMappingDO.class)
                         .and(StrUtil.isNotBlank(keyword), wrapper -> wrapper
                                 .like(QueryTermMappingDO::getSourceTerm, keyword)
@@ -81,5 +87,20 @@ public class QueryTermMappingRepositoryImpl implements QueryTermMappingRepositor
                         .orderByAsc(QueryTermMappingDO::getPriority)
                         .orderByDesc(QueryTermMappingDO::getUpdateTime)
         );
+        return result.convert(this::toEntity);
+    }
+
+    private QueryTermMapping toEntity(QueryTermMappingDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, QueryTermMapping.class);
+    }
+
+    private QueryTermMappingDO toDO(QueryTermMapping entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, QueryTermMappingDO.class);
     }
 }

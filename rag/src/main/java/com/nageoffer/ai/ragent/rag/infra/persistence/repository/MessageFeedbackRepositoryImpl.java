@@ -17,8 +17,10 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.MessageFeedback;
 import com.nageoffer.ai.ragent.rag.domain.repository.MessageFeedbackRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.MessageFeedbackMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.MessageFeedbackDO;
@@ -41,28 +43,31 @@ public class MessageFeedbackRepositoryImpl implements MessageFeedbackRepository 
     private final MessageFeedbackMapper feedbackMapper;
 
     @Override
-    public void save(MessageFeedbackDO feedback) {
-        feedbackMapper.insert(feedback);
+    public void save(MessageFeedback feedback) {
+        MessageFeedbackDO record = toDO(feedback);
+        feedbackMapper.insert(record);
     }
 
     @Override
-    public void update(MessageFeedbackDO feedback, Date beforeTime) {
+    public void update(MessageFeedback feedback, Date beforeTime) {
+        MessageFeedbackDO record = toDO(feedback);
         feedbackMapper.update(
-                feedback,
+                record,
                 Wrappers.lambdaUpdate(MessageFeedbackDO.class)
-                        .eq(MessageFeedbackDO::getId, feedback.getId())
+                        .eq(MessageFeedbackDO::getId, record.getId())
                         .lt(MessageFeedbackDO::getUpdateTime, beforeTime)
         );
     }
 
     @Override
-    public MessageFeedbackDO findByMessageIdAndUserId(String messageId, String userId) {
-        return feedbackMapper.selectOne(
+    public MessageFeedback findByMessageIdAndUserId(String messageId, String userId) {
+        MessageFeedbackDO record = feedbackMapper.selectOne(
                 Wrappers.lambdaQuery(MessageFeedbackDO.class)
                         .eq(MessageFeedbackDO::getMessageId, messageId)
                         .eq(MessageFeedbackDO::getUserId, userId)
                         .eq(MessageFeedbackDO::getDeleted, 0)
         );
+        return toEntity(record);
     }
 
     @Override
@@ -85,5 +90,19 @@ public class MessageFeedbackRepositoryImpl implements MessageFeedbackRepository 
                         MessageFeedbackDO::getVote,
                         (first, second) -> first
                 ));
+    }
+
+    private MessageFeedback toEntity(MessageFeedbackDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, MessageFeedback.class);
+    }
+
+    private MessageFeedbackDO toDO(MessageFeedback entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, MessageFeedbackDO.class);
     }
 }

@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 import com.nageoffer.ai.ragent.rag.domain.repository.IntentNodeRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.IntentNodeMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.IntentNodeDO;
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 意图节点仓储实现
@@ -36,11 +39,28 @@ public class IntentNodeRepositoryImpl implements IntentNodeRepository {
     private final IntentNodeMapper intentNodeMapper;
 
     @Override
-    public List<IntentNodeDO> findAllEnabled() {
-        return intentNodeMapper.selectList(
+    public List<IntentNode> findAllEnabled() {
+        List<IntentNodeDO> records = intentNodeMapper.selectList(
                 Wrappers.lambdaQuery(IntentNodeDO.class)
                         .eq(IntentNodeDO::getEnabled, 1)
                         .eq(IntentNodeDO::getDeleted, 0)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
+    }
+
+    private IntentNode toEntity(IntentNodeDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, IntentNode.class);
+    }
+
+    private IntentNodeDO toDO(IntentNode entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, IntentNodeDO.class);
     }
 }

@@ -23,8 +23,8 @@ import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.MessageFeedbackRequest;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.MessageFeedbackDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
+import com.nageoffer.ai.ragent.rag.domain.entity.MessageFeedback;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.MessageFeedbackRepository;
 import com.nageoffer.ai.ragent.rag.application.MessageFeedbackService;
@@ -37,7 +37,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 /**
  * 消息反馈服务实现
@@ -97,12 +96,12 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
     }
 
     private void doSubmitFeedback(String messageId, String userId, Integer vote, String reason, String comment, long submitTime) {
-        ConversationMessageDO message = loadAssistantMessage(messageId, userId);
+        ConversationMessage message = loadAssistantMessage(messageId, userId);
         doUpsertFeedback(messageId, userId, message.getConversationId(), vote, reason, comment, submitTime);
     }
 
-    private ConversationMessageDO loadAssistantMessage(String messageId, String userId) {
-        ConversationMessageDO message = messageRepository.findByIdAndUserId(messageId, userId);
+    private ConversationMessage loadAssistantMessage(String messageId, String userId) {
+        ConversationMessage message = messageRepository.findByIdAndUserId(messageId, userId);
         Assert.notNull(message, () -> new ClientException("消息不存在"));
         Assert.isTrue("assistant".equalsIgnoreCase(message.getRole()), () -> new ClientException("仅支持对助手消息反馈"));
         return message;
@@ -110,10 +109,10 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
 
     private void doUpsertFeedback(String messageId, String userId, String conversationId,
                                   Integer vote, String reason, String comment, long submitTime) {
-        MessageFeedbackDO existing = feedbackRepository.findByMessageIdAndUserId(messageId, userId);
+        MessageFeedback existing = feedbackRepository.findByMessageIdAndUserId(messageId, userId);
 
         if (existing == null) {
-            MessageFeedbackDO feedback = MessageFeedbackDO.builder()
+            MessageFeedback feedback = MessageFeedback.builder()
                     .messageId(messageId)
                     .conversationId(conversationId)
                     .userId(userId)
@@ -124,7 +123,7 @@ public class MessageFeedbackServiceImpl implements MessageFeedbackService {
             feedbackRepository.save(feedback);
         } else {
             // 仅当本次提交时间晚于记录最后更新时间时才覆盖，避免并发乱序
-            MessageFeedbackDO update = MessageFeedbackDO.builder()
+            MessageFeedback update = MessageFeedback.builder()
                     .id(existing.getId())
                     .vote(vote)
                     .reason(reason)

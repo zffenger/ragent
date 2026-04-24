@@ -15,36 +15,56 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.rag.domain.repository;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import com.nageoffer.ai.ragent.rag.domain.entity.ConversationSummary;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
- * 会话摘要仓储接口
+ * 会话实体
  */
-public interface ConversationSummaryRepository {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Conversation {
 
     /**
-     * 保存摘要
-     *
-     * @param summary 摘要信息
+     * 主键ID
      */
-    void save(ConversationSummary summary);
+    private String id;
 
     /**
-     * 根据会话ID和用户ID查询最新摘要
-     *
-     * @param conversationId 会话ID
-     * @param userId         用户ID
-     * @return 最新摘要
+     * 会话ID
      */
-    ConversationSummary findLatestByConversationIdAndUserId(String conversationId, String userId);
+    private String conversationId;
 
     /**
-     * 根据会话ID和用户ID删除摘要
-     *
-     * @param conversationId 会话ID
-     * @param userId         用户ID
+     * 用户ID
      */
-    void deleteByConversationIdAndUserId(String conversationId, String userId);
+    private String userId;
+
+    /**
+     * 会话标题
+     */
+    private String title;
+
+    /**
+     * 最后活跃时间
+     */
+    private Date lastTime;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
 }

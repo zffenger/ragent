@@ -22,9 +22,7 @@ import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.rag.infra.config.MemoryProperties;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.request.ConversationUpdateRequest;
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.ConversationVO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationSummaryDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationRepository;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationSummaryRepository;
@@ -68,7 +66,7 @@ public class ConversationServiceImpl implements ConversationService {
             return List.of();
         }
 
-        List<ConversationDO> records = conversationRepository.listByUserId(userId);
+        List<Conversation> records = conversationRepository.listByUserId(userId);
         if (records == null || records.isEmpty()) {
             return List.of();
         }
@@ -91,11 +89,11 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("用户信息缺失");
         }
 
-        ConversationDO existing = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
+        Conversation existing = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
 
         if (existing == null) {
             String title = generateTitleFromQuestion(question);
-            ConversationDO record = ConversationDO.builder()
+            Conversation record = Conversation.builder()
                     .conversationId(conversationId)
                     .userId(userId)
                     .title(title)
@@ -125,7 +123,7 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("会话名称长度不能超过" + maxLen + "个字符");
         }
 
-        ConversationDO record = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
+        Conversation record = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
         if (record == null) {
             throw new ClientException("会话不存在");
         }
@@ -142,7 +140,7 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("会话信息缺失");
         }
 
-        ConversationDO record = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
+        Conversation record = conversationRepository.findByConversationIdAndUserId(conversationId, userId);
         if (record == null) {
             throw new ClientException("会话不存在");
         }

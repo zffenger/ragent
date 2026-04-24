@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun;
 
 /**
  * RAG Trace 运行仓储接口
@@ -29,7 +29,7 @@ public interface RagTraceRunRepository {
      *
      * @param run 运行记录
      */
-    void save(RagTraceRunDO run);
+    void save(RagTraceRun run);
 
     /**
      * 根据链路ID更新运行状态
@@ -37,5 +37,5 @@ public interface RagTraceRunRepository {
      * @param traceId 链路ID
      * @param run     更新内容
      */
-    void updateByTraceId(String traceId, RagTraceRunDO run);
+    void updateByTraceId(String traceId, RagTraceRun run);
 }

@@ -24,7 +24,7 @@ import com.nageoffer.ai.ragent.rag.domain.service.intent.NodeScore;
 import com.nageoffer.ai.ragent.rag.domain.service.retrieve.RetrieverService;
 import com.nageoffer.ai.ragent.rag.domain.service.retrieve.channel.strategy.CollectionParallelRetriever;
 import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeBaseRepository;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeBase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -159,8 +159,8 @@ public class VectorGlobalSearchChannel implements SearchChannel {
 
         // 如果指定了知识库 ID 列表，只获取这些知识库的 collection
         if (CollUtil.isNotEmpty(knowledgeBaseIds)) {
-            List<KnowledgeBaseDO> kbList = knowledgeBaseRepository.findByIds(knowledgeBaseIds);
-            for (KnowledgeBaseDO kb : kbList) {
+            List<KnowledgeBase> kbList = knowledgeBaseRepository.findByIds(knowledgeBaseIds);
+            for (KnowledgeBase kb : kbList) {
                 String collectionName = kb.getCollectionName();
                 if (collectionName != null && !collectionName.isBlank()) {
                     collections.add(collectionName);
@@ -170,8 +170,8 @@ public class VectorGlobalSearchChannel implements SearchChannel {
         }
 
         // 否则从知识库表获取全量 collection（全局检索兜底）
-        List<KnowledgeBaseDO> kbList = knowledgeBaseRepository.findAll();
-        for (KnowledgeBaseDO kb : kbList) {
+        List<KnowledgeBase> kbList = knowledgeBaseRepository.findAll();
+        for (KnowledgeBase kb : kbList) {
             String collectionName = kb.getCollectionName();
             if (collectionName != null && !collectionName.isBlank()) {
                 collections.add(collectionName);

@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.Conversation;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public interface ConversationRepository {
      * @param userId 用户ID
      * @return 会话列表
      */
-    List<ConversationDO> listByUserId(String userId);
+    List<Conversation> listByUserId(String userId);
 
     /**
      * 根据会话ID和用户ID查询会话
@@ -41,21 +41,21 @@ public interface ConversationRepository {
      * @param userId         用户ID
      * @return 会话信息
      */
-    ConversationDO findByConversationIdAndUserId(String conversationId, String userId);
+    Conversation findByConversationIdAndUserId(String conversationId, String userId);
 
     /**
      * 保存会话
      *
      * @param conversation 会话信息
      */
-    void save(ConversationDO conversation);
+    void save(Conversation conversation);
 
     /**
      * 更新会话
      *
      * @param conversation 会话信息
      */
-    void update(ConversationDO conversation);
+    void update(Conversation conversation);
 
     /**
      * 根据主键ID删除会话

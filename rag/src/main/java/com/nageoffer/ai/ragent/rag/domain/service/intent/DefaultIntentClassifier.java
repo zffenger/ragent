@@ -25,7 +25,8 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.nageoffer.ai.ragent.llm.domain.service.LLMService;
 import com.nageoffer.ai.ragent.llm.domain.util.LLMResponseCleaner;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.IntentNodeDO;
+import com.nageoffer.ai.ragent.rag.domain.enums.IntentKind;
+import com.nageoffer.ai.ragent.rag.domain.enums.IntentLevel;
 import com.nageoffer.ai.ragent.rag.domain.repository.IntentNodeRepository;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
@@ -264,25 +265,32 @@ public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegi
 
     private List<IntentNode> loadIntentTreeFromDB() {
         // 1. 查出所有启用的节点（扁平结构）
-        List<IntentNodeDO> intentNodeDOList = intentNodeRepository.findAllEnabled();
+        List<com.nageoffer.ai.ragent.rag.domain.entity.IntentNode> entityList = intentNodeRepository.findAllEnabled();
 
-        if (intentNodeDOList.isEmpty()) {
+        if (entityList.isEmpty()) {
             return List.of();
         }
 
-        // 2. DO -> IntentNode（第一遍：先把所有节点建出来，放到 map 里）
+        // 2. Entity -> IntentNode（第一遍：先把所有节点建出来，放到 map 里）
         Map<String, IntentNode> id2Node = new HashMap<>();
-        for (IntentNodeDO each : intentNodeDOList) {
-            IntentNode node = BeanUtil.toBean(each, IntentNode.class);
-            // 数据库中的 code 映射到 IntentNode 的 id/parentId
-            node.setId(each.getIntentCode());
-            node.setParentId(each.getParentCode());
-            node.setMcpToolId(each.getMcpToolId());
-            node.setParamPromptTemplate(each.getParamPromptTemplate());
-            // 确保 children 不为 null（避免后面 add NPE）
-            if (node.getChildren() == null) {
-                node.setChildren(new ArrayList<>());
-            }
+        for (com.nageoffer.ai.ragent.rag.domain.entity.IntentNode entity : entityList) {
+            IntentNode node = IntentNode.builder()
+                    .id(entity.getIntentCode())
+                    .kbId(entity.getKbId())
+                    .name(entity.getName())
+                    .description(entity.getDescription())
+                    .level(IntentLevel.fromCode(entity.getLevel()))
+                    .parentId(entity.getParentCode())
+                    .collectionName(entity.getCollectionName())
+                    .mcpToolId(entity.getMcpToolId())
+                    .topK(entity.getTopK())
+                    .promptSnippet(entity.getPromptSnippet())
+                    .promptTemplate(entity.getPromptTemplate())
+                    .paramPromptTemplate(entity.getParamPromptTemplate())
+                    .kind(IntentKind.fromCode(entity.getKind()))
+                    .examples(entity.getExamples() != null ? parseExamples(entity.getExamples()) : new ArrayList<>())
+                    .children(new ArrayList<>())
+                    .build();
             id2Node.put(node.getId(), node);
         }
 
@@ -314,6 +322,21 @@ public class DefaultIntentClassifier implements IntentClassifier, IntentNodeRegi
         fillFullPath(roots, null);
 
         return roots;
+    }
+
+    /**
+     * 解析 examples JSON 字符串为 List
+     */
+    private List<String> parseExamples(String examplesJson) {
+        if (examplesJson == null || examplesJson.isBlank()) {
+            return new ArrayList<>();
+        }
+        try {
+            return JSON.parseArray(examplesJson, String.class);
+        } catch (Exception e) {
+            log.warn("解析 examples JSON 失败: {}", examplesJson, e);
+            return new ArrayList<>();
+        }
     }
 
     /**

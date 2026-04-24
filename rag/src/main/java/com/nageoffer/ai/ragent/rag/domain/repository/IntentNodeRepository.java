@@ -17,7 +17,7 @@
 
 package com.nageoffer.ai.ragent.rag.domain.repository;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.IntentNodeDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.IntentNode;
 
 import java.util.List;
 
@@ -31,5 +31,5 @@ public interface IntentNodeRepository {
      *
      * @return 意图节点列表
      */
-    List<IntentNodeDO> findAllEnabled();
+    List<IntentNode> findAllEnabled();
 }

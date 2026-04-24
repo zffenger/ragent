@@ -17,7 +17,9 @@
 
 package com.nageoffer.ai.ragent.rag.infra.persistence.repository;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.ai.ragent.rag.domain.entity.ConversationMessage;
 import com.nageoffer.ai.ragent.rag.domain.repository.ConversationMessageRepository;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.ConversationMessageMapper;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.ConversationMessageDO;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 会话消息仓储实现
@@ -37,14 +40,15 @@ public class ConversationMessageRepositoryImpl implements ConversationMessageRep
     private final ConversationMessageMapper messageMapper;
 
     @Override
-    public String save(ConversationMessageDO message) {
-        messageMapper.insert(message);
-        return message.getId();
+    public String save(ConversationMessage message) {
+        ConversationMessageDO messageDO = toDO(message);
+        messageMapper.insert(messageDO);
+        return messageDO.getId();
     }
 
     @Override
-    public List<ConversationMessageDO> listByConversationIdAndUserId(String conversationId, String userId, Integer limit, boolean asc) {
-        return messageMapper.selectList(
+    public List<ConversationMessage> listByConversationIdAndUserId(String conversationId, String userId, Integer limit, boolean asc) {
+        List<ConversationMessageDO> records = messageMapper.selectList(
                 Wrappers.lambdaQuery(ConversationMessageDO.class)
                         .eq(ConversationMessageDO::getConversationId, conversationId)
                         .eq(ConversationMessageDO::getUserId, userId)
@@ -52,11 +56,14 @@ public class ConversationMessageRepositoryImpl implements ConversationMessageRep
                         .orderBy(true, asc, ConversationMessageDO::getCreateTime)
                         .last(limit != null, "limit " + limit)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<ConversationMessageDO> listLatestUserMessages(String conversationId, String userId, int limit) {
-        return messageMapper.selectList(
+    public List<ConversationMessage> listLatestUserMessages(String conversationId, String userId, int limit) {
+        List<ConversationMessageDO> records = messageMapper.selectList(
                 Wrappers.lambdaQuery(ConversationMessageDO.class)
                         .eq(ConversationMessageDO::getConversationId, conversationId)
                         .eq(ConversationMessageDO::getUserId, userId)
@@ -65,10 +72,13 @@ public class ConversationMessageRepositoryImpl implements ConversationMessageRep
                         .orderByDesc(ConversationMessageDO::getCreateTime)
                         .last("limit " + limit)
         );
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<ConversationMessageDO> listBetweenIds(String conversationId, String userId, String afterId, String beforeId) {
+    public List<ConversationMessage> listBetweenIds(String conversationId, String userId, String afterId, String beforeId) {
         var query = Wrappers.lambdaQuery(ConversationMessageDO.class)
                 .eq(ConversationMessageDO::getConversationId, conversationId)
                 .eq(ConversationMessageDO::getUserId, userId)
@@ -80,7 +90,10 @@ public class ConversationMessageRepositoryImpl implements ConversationMessageRep
         if (beforeId != null) {
             query.lt(ConversationMessageDO::getId, beforeId);
         }
-        return messageMapper.selectList(query.orderByAsc(ConversationMessageDO::getId));
+        List<ConversationMessageDO> records = messageMapper.selectList(query.orderByAsc(ConversationMessageDO::getId));
+        return records.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -109,13 +122,14 @@ public class ConversationMessageRepositoryImpl implements ConversationMessageRep
     }
 
     @Override
-    public ConversationMessageDO findByIdAndUserId(String messageId, String userId) {
-        return messageMapper.selectOne(
+    public ConversationMessage findByIdAndUserId(String messageId, String userId) {
+        ConversationMessageDO record = messageMapper.selectOne(
                 Wrappers.lambdaQuery(ConversationMessageDO.class)
                         .eq(ConversationMessageDO::getId, messageId)
                         .eq(ConversationMessageDO::getUserId, userId)
                         .eq(ConversationMessageDO::getDeleted, 0)
         );
+        return toEntity(record);
     }
 
     @Override
@@ -126,5 +140,19 @@ public class ConversationMessageRepositoryImpl implements ConversationMessageRep
                         .eq(ConversationMessageDO::getUserId, userId)
                         .eq(ConversationMessageDO::getDeleted, 0)
         );
+    }
+
+    private ConversationMessage toEntity(ConversationMessageDO record) {
+        if (record == null) {
+            return null;
+        }
+        return BeanUtil.toBean(record, ConversationMessage.class);
+    }
+
+    private ConversationMessageDO toDO(ConversationMessage entity) {
+        if (entity == null) {
+            return null;
+        }
+        return BeanUtil.toBean(entity, ConversationMessageDO.class);
     }
 }

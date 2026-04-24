@@ -17,8 +17,8 @@
 
 package com.nageoffer.ai.ragent.rag.application;
 
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceNodeDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.RagTraceRunDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceNode;
+import com.nageoffer.ai.ragent.rag.domain.entity.RagTraceRun;
 
 import java.util.Date;
 
@@ -27,11 +27,11 @@ import java.util.Date;
  */
 public interface RagTraceRecordService {
 
-    void startRun(RagTraceRunDO run);
+    void startRun(RagTraceRun run);
 
     void finishRun(String traceId, String status, String errorMessage, Date endTime, long durationMs);
 
-    void startNode(RagTraceNodeDO node);
+    void startNode(RagTraceNode node);
 
     void finishNode(String traceId, String nodeId, String status, String errorMessage, Date endTime, long durationMs);
 }

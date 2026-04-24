@@ -19,7 +19,7 @@ package com.nageoffer.ai.ragent.rag.domain.service.rewrite;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.QueryTermMappingDO;
+import com.nageoffer.ai.ragent.rag.domain.entity.QueryTermMapping;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -52,7 +52,7 @@ public class QueryTermMappingCacheManager {
      *
      * @return 映射规则列表，缓存不存在则返回 null
      */
-    public List<QueryTermMappingDO> getMappingsFromCache() {
+    public List<QueryTermMapping> getMappingsFromCache() {
         try {
             String cacheJson = stringRedisTemplate.opsForValue().get(CACHE_KEY);
             if (cacheJson == null) {
@@ -72,7 +72,7 @@ public class QueryTermMappingCacheManager {
      *
      * @param mappings 映射规则列表（已排序）
      */
-    public void saveMappingsToCache(List<QueryTermMappingDO> mappings) {
+    public void saveMappingsToCache(List<QueryTermMapping> mappings) {
         try {
             String cacheJson = objectMapper.writeValueAsString(mappings);
             stringRedisTemplate.opsForValue().set(CACHE_KEY, cacheJson, CACHE_EXPIRE_DAYS, TimeUnit.DAYS);
