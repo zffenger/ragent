@@ -28,7 +28,7 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.request.IntentNodeUpdat
 import com.nageoffer.ai.ragent.rag.interfaces.controller.vo.IntentNodeTreeVO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.po.IntentNodeDO;
 import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.IntentNodeMapper;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeBaseMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeBaseMapper;
 import com.nageoffer.ai.ragent.rag.domain.enums.IntentKind;
 import com.nageoffer.ai.ragent.rag.domain.enums.IntentLevel;
 import com.nageoffer.ai.ragent.framework.context.UserContext;

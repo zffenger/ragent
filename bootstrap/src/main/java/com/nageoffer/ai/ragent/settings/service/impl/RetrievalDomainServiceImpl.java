@@ -20,7 +20,7 @@ package com.nageoffer.ai.ragent.settings.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeBaseDO;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeBaseMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeBaseMapper;
 import com.nageoffer.ai.ragent.settings.controller.vo.RetrievalDomainVO;
 import com.nageoffer.ai.ragent.chatbot.infra.persistence.po.ChatBotDO;
 import com.nageoffer.ai.ragent.settings.dao.entity.DomainKnowledgeDO;

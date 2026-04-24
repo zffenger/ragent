@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.knowledge.dao.mapper;
+package com.nageoffer.ai.ragent.rag.infra.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeBaseDO;
