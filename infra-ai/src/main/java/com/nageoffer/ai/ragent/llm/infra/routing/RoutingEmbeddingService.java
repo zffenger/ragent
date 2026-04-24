@@ -19,12 +19,12 @@ package com.nageoffer.ai.ragent.llm.infra.routing;
 
 import com.nageoffer.ai.ragent.llm.domain.client.EmbeddingClient;
 import com.nageoffer.ai.ragent.llm.domain.service.EmbeddingService;
+import com.nageoffer.ai.ragent.llm.domain.service.route.ModelSelector;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
 import com.nageoffer.ai.ragent.llm.domain.service.impl.DefaultClientResolver;
 import com.nageoffer.ai.ragent.llm.domain.service.ModelClientResolver;
 import com.nageoffer.ai.ragent.llm.infra.model.ModelRoutingExecutor;
-import com.nageoffer.ai.ragent.llm.infra.model.ModelSelector;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class RoutingEmbeddingService implements EmbeddingService {
 	private final ModelClientResolver<EmbeddingClient> clientResolver;
 
     public RoutingEmbeddingService(
-            ModelSelector selector,
+			ModelSelector selector,
             ModelRoutingExecutor executor,
             List<EmbeddingClient> clients) {
         this.selector = selector;

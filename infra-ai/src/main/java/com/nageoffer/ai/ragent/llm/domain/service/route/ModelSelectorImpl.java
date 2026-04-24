@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.infra.model;
+package com.nageoffer.ai.ragent.llm.domain.service.route;
 
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.llm.infra.config.AIModelProperties;
@@ -40,11 +40,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ModelSelector {
+class ModelSelectorImpl implements ModelSelector {
 
     private final AIModelProperties properties;
     private final ModelHealthStore healthStore;
 
+	@Override
     public List<ModelTarget> selectChatCandidates(boolean deepThinking) {
         AIModelProperties.ModelGroup group = properties.getChat();
         if (group == null) {
@@ -55,10 +56,12 @@ public class ModelSelector {
         return selectCandidates(group, firstChoiceModelId, deepThinking);
     }
 
+	@Override
     public List<ModelTarget> selectEmbeddingCandidates() {
         return selectCandidates(properties.getEmbedding());
     }
 
+	@Override
     public List<ModelTarget> selectRerankCandidates() {
         return selectCandidates(properties.getRerank());
     }

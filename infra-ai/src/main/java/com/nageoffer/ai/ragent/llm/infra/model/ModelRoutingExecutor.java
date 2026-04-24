@@ -21,6 +21,7 @@ import com.nageoffer.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
 import com.nageoffer.ai.ragent.llm.domain.client.LLMClient;
 import com.nageoffer.ai.ragent.llm.domain.service.ModelClientResolver;
+import com.nageoffer.ai.ragent.llm.domain.service.route.ModelHealthStore;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelCapability;
 import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class ModelRoutingExecutor {
             List<ModelTarget> targets,
             ModelClientResolver<C> modelClientResolver,
             ModelCaller<C, T> caller) {
-        String label = capability.getDisplayName();
+        String label = capability.getCapability();
         if (targets == null || targets.isEmpty()) {
             throw new RemoteException("No " + label + " model candidates available");
         }

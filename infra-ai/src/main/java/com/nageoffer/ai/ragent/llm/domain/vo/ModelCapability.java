@@ -49,5 +49,5 @@ public enum ModelCapability {
     /**
      * 能力的显示名称
      */
-    private final String displayName;
+    private final String capability;
 }

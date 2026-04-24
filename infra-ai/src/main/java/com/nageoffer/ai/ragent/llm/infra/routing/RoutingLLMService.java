@@ -31,9 +31,9 @@ import com.nageoffer.ai.ragent.llm.domain.vo.ModelTarget;
 import com.nageoffer.ai.ragent.llm.infra.client.chat.ProbeStreamBridge;
 import com.nageoffer.ai.ragent.llm.domain.service.impl.DefaultClientResolver;
 import com.nageoffer.ai.ragent.llm.domain.service.ModelClientResolver;
-import com.nageoffer.ai.ragent.llm.infra.model.ModelHealthStore;
+import com.nageoffer.ai.ragent.llm.domain.service.route.ModelHealthStore;
 import com.nageoffer.ai.ragent.llm.infra.model.ModelRoutingExecutor;
-import com.nageoffer.ai.ragent.llm.infra.model.ModelSelector;
+import com.nageoffer.ai.ragent.llm.domain.service.route.ModelSelector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -106,7 +106,7 @@ public class RoutingLLMService implements LLMService {
             throw new RemoteException(STREAM_NO_PROVIDER_MESSAGE);
         }
 
-        String label = ModelCapability.CHAT.getDisplayName();
+        String label = ModelCapability.CHAT.getCapability();
         Throwable lastError = null;
 
         for (ModelTarget target : targets) {

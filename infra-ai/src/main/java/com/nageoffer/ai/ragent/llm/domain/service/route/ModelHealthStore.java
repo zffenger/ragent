@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.llm.infra.model;
+package com.nageoffer.ai.ragent.llm.domain.service.route;
 
 import com.nageoffer.ai.ragent.llm.infra.config.AISelectionProperties;
 import lombok.RequiredArgsConstructor;

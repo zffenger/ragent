@@ -24,7 +24,7 @@ import org.springframework.util.StringUtils;
  * 轻量 Token 估算服务
  */
 @Service
-public class HeuristicTokenCounterService implements TokenCounterService {
+class HeuristicTokenCounterService implements TokenCounterService {
 
     @Override
     public Integer countTokens(String text) {
