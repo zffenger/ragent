@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.ingestion.dao.entity;
+package com.nageoffer.ai.ragent.rag.infra.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -23,7 +23,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.nageoffer.ai.ragent.knowledge.dao.handler.JsonbTypeHandler;
+import com.nageoffer.ai.ragent.rag.infra.persistence.handler.JsonbTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,77 +32,52 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 知识库摄取任务实体类
+ * 摄取流水线节点实体对象
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_ingestion_task")
-public class IngestionTaskDO {
+@TableName("t_ingestion_pipeline_node")
+public class IngestionPipelineNodeDO {
 
     /**
-     * 主键 ID
+     * ID
      */
     @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
-     * 管道 ID
+     * 流水线ID
      */
     private String pipelineId;
 
     /**
-     * 数据源类型 (如: file, url, feishu, oss)
+     * 节点ID
      */
-    private String sourceType;
+    private String nodeId;
 
     /**
-     * 数据源位置 (文件路径或 URL)
+     * 节点类型 (如: fetcher, parser, chunker, indexer)
      */
-    private String sourceLocation;
+    private String nodeType;
 
     /**
-     * 源文件名
+     * 下一个节点ID
      */
-    private String sourceFileName;
+    private String nextNodeId;
 
     /**
-     * 任务状态 (如: pending, running, completed, failed)
-     */
-    private String status;
-
-    /**
-     * 切片数量
-     */
-    private Integer chunkCount;
-
-    /**
-     * 错误详情信息
-     */
-    private String errorMessage;
-
-    /**
-     * 日志 JSON
+     * 设置详情JSON
      */
     @TableField(typeHandler = JsonbTypeHandler.class)
-    private String logsJson;
+    private String settingsJson;
 
     /**
-     * 元数据 JSON
+     * 条件详情JSON
      */
     @TableField(typeHandler = JsonbTypeHandler.class)
-    private String metadataJson;
-
-    /**
-     * 开始时间
-     */
-    private Date startedAt;
-
-    /**
-     * 完成时间
-     */
-    private Date completedAt;
+    private String conditionJson;
 
     /**
      * 创建者
@@ -121,13 +96,13 @@ public class IngestionTaskDO {
     private Date createTime;
 
     /**
-     * 修改时间
+     * 更新时间
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     /**
-     * 删除标记 (0: 未删除, 1: 已删除)
+     * 删除标记 0：未删除 1：已删除
      */
     @TableLogic
     private Integer deleted;

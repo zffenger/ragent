@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.ingestion.dao.entity;
+package com.nageoffer.ai.ragent.rag.infra.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -31,14 +31,14 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 数据摄入管道实体
+ * 知识库数据接入任务节点实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_ingestion_pipeline")
-public class IngestionPipelineDO {
+@TableName("t_ingestion_task_node")
+public class IngestionTaskNodeDO {
 
     /**
      * ID
@@ -47,24 +47,55 @@ public class IngestionPipelineDO {
     private String id;
 
     /**
-     * 名称
+     * 任务ID
      */
-    private String name;
+    private String taskId;
 
     /**
-     * 描述
+     * 流水线ID
      */
-    private String description;
+    private String pipelineId;
 
     /**
-     * 创建人
+     * 节点ID
      */
-    private String createdBy;
+    private String nodeId;
 
     /**
-     * 更新人
+     * 节点类型
+     * 如 fetcher、parser、chunker 等
      */
-    private String updatedBy;
+    private String nodeType;
+
+    /**
+     * 节点顺序
+     */
+    private Integer nodeOrder;
+
+    /**
+     * 状态 (如: success, failed, skipped)
+     */
+    private String status;
+
+    /**
+     * 持续时间（毫秒）
+     */
+    private Long durationMs;
+
+    /**
+     * 消息
+     */
+    private String message;
+
+    /**
+     * 错误消息
+     */
+    private String errorMessage;
+
+    /**
+     * 输出JSON
+     */
+    private String outputJson;
 
     /**
      * 创建时间
@@ -79,7 +110,7 @@ public class IngestionPipelineDO {
     private Date updateTime;
 
     /**
-     * 是否删除
+     * 删除标记
      */
     @TableLogic
     private Integer deleted;

@@ -77,7 +77,11 @@ interfaces/facade/UserFacade.java                      // 外部服务门面
 ```
 
 ### 其他要求
-各种PO/VO值对象与Entity之间的互转不要使用BeanUtil.copy()
+- 不要遗留TODO
+- 各种PO/VO值对象与Entity之间的互转不要使用BeanUtil.copy()
+- 在将 Mapper 重构为 Repository 层时，必须保持原有的查询语义
+  - 分页查询必须在数据库层面完成，不能用 findAll() 后内存分页
+  - 不要用循环查询单个替代批量查询
 
 ## 重构步骤
 

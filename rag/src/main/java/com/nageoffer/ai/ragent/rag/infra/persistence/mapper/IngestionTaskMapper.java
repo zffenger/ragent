@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.ingestion.dao.mapper;
+package com.nageoffer.ai.ragent.rag.infra.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionPipelineNodeDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.IngestionTaskDO;
 
-public interface IngestionPipelineNodeMapper extends BaseMapper<IngestionPipelineNodeDO> {
+public interface IngestionTaskMapper extends BaseMapper<IngestionTaskDO> {
 }

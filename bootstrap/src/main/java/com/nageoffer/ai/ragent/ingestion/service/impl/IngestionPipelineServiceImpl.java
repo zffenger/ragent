@@ -19,7 +19,6 @@ package com.nageoffer.ai.ragent.ingestion.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,10 +28,10 @@ import com.nageoffer.ai.ragent.ingestion.controller.request.IngestionPipelineNod
 import com.nageoffer.ai.ragent.ingestion.controller.request.IngestionPipelineUpdateRequest;
 import com.nageoffer.ai.ragent.ingestion.controller.vo.IngestionPipelineNodeVO;
 import com.nageoffer.ai.ragent.ingestion.controller.vo.IngestionPipelineVO;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionPipelineDO;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionPipelineNodeDO;
-import com.nageoffer.ai.ragent.ingestion.dao.mapper.IngestionPipelineMapper;
-import com.nageoffer.ai.ragent.ingestion.dao.mapper.IngestionPipelineNodeMapper;
+import com.nageoffer.ai.ragent.rag.domain.entity.IngestionPipeline;
+import com.nageoffer.ai.ragent.rag.domain.entity.IngestionPipelineNode;
+import com.nageoffer.ai.ragent.rag.domain.repository.IngestionPipelineRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.IngestionPipelineNodeRepository;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.ingestion.domain.enums.IngestionNodeType;
@@ -45,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,33 +54,33 @@ import java.util.List;
 @RequiredArgsConstructor
 public class IngestionPipelineServiceImpl implements IngestionPipelineService {
 
-    private final IngestionPipelineMapper pipelineMapper;
-    private final IngestionPipelineNodeMapper nodeMapper;
+    private final IngestionPipelineRepository pipelineRepository;
+    private final IngestionPipelineNodeRepository nodeRepository;
     private final ObjectMapper objectMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public IngestionPipelineVO create(IngestionPipelineCreateRequest request) {
         Assert.notNull(request, () -> new ClientException("请求不能为空"));
-        IngestionPipelineDO pipeline = IngestionPipelineDO.builder()
+        IngestionPipeline pipeline = IngestionPipeline.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .createdBy(UserContext.getUsername())
                 .updatedBy(UserContext.getUsername())
                 .build();
         try {
-            pipelineMapper.insert(pipeline);
+            pipelineRepository.save(pipeline);
         } catch (DuplicateKeyException dke) {
             throw new ClientException("流水线名称已存在");
         }
         upsertNodes(pipeline.getId(), request.getNodes());
-        return toVO(pipeline, fetchNodes(pipeline.getId()));
+        return toVO(pipeline, nodeRepository.findByPipelineId(pipeline.getId()));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public IngestionPipelineVO update(String pipelineId, IngestionPipelineUpdateRequest request) {
-        IngestionPipelineDO pipeline = pipelineMapper.selectById(pipelineId);
+        IngestionPipeline pipeline = pipelineRepository.findById(pipelineId);
         Assert.notNull(pipeline, () -> new ClientException("未找到流水线"));
 
         if (StringUtils.hasText(request.getName())) {
@@ -90,32 +90,28 @@ public class IngestionPipelineServiceImpl implements IngestionPipelineService {
             pipeline.setDescription(request.getDescription());
         }
         pipeline.setUpdatedBy(UserContext.getUsername());
-        pipelineMapper.updateById(pipeline);
+        pipelineRepository.update(pipeline);
 
         if (request.getNodes() != null) {
             upsertNodes(pipeline.getId(), request.getNodes());
         }
-        return toVO(pipeline, fetchNodes(pipeline.getId()));
+        return toVO(pipeline, nodeRepository.findByPipelineId(pipeline.getId()));
     }
 
     @Override
     public IngestionPipelineVO get(String pipelineId) {
-        IngestionPipelineDO pipeline = pipelineMapper.selectById(pipelineId);
+        IngestionPipeline pipeline = pipelineRepository.findById(pipelineId);
         Assert.notNull(pipeline, () -> new ClientException("未找到流水线"));
-        return toVO(pipeline, fetchNodes(pipeline.getId()));
+        return toVO(pipeline, nodeRepository.findByPipelineId(pipeline.getId()));
     }
 
     @Override
     public IPage<IngestionPipelineVO> page(Page<IngestionPipelineVO> page, String keyword) {
-        Page<IngestionPipelineDO> mpPage = new Page<>(page.getCurrent(), page.getSize());
-        LambdaQueryWrapper<IngestionPipelineDO> qw = new LambdaQueryWrapper<IngestionPipelineDO>()
-                .eq(IngestionPipelineDO::getDeleted, 0)
-                .like(StringUtils.hasText(keyword), IngestionPipelineDO::getName, keyword)
-                .orderByDesc(IngestionPipelineDO::getUpdateTime);
-        IPage<IngestionPipelineDO> result = pipelineMapper.selectPage(mpPage, qw);
+        IPage<IngestionPipeline> result = pipelineRepository.findPage(page, keyword);
+
         Page<IngestionPipelineVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         voPage.setRecords(result.getRecords().stream()
-                .map(each -> toVO(each, fetchNodes(each.getId())))
+                .map(each -> toVO(each, nodeRepository.findByPipelineId(each.getId())))
                 .toList());
         return voPage;
     }
@@ -123,27 +119,24 @@ public class IngestionPipelineServiceImpl implements IngestionPipelineService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(String pipelineId) {
-        IngestionPipelineDO pipeline = pipelineMapper.selectById(pipelineId);
+        IngestionPipeline pipeline = pipelineRepository.findById(pipelineId);
         Assert.notNull(pipeline, () -> new ClientException("未找到流水线"));
-        pipeline.setDeleted(1);
-        pipeline.setUpdatedBy(UserContext.getUsername());
-        pipelineMapper.deleteById(pipeline);
-
-        LambdaQueryWrapper<IngestionPipelineNodeDO> qw = new LambdaQueryWrapper<IngestionPipelineNodeDO>()
-                .eq(IngestionPipelineNodeDO::getPipelineId, pipeline.getId());
-        nodeMapper.delete(qw);
+        // 删除管道节点
+        nodeRepository.deleteByPipelineId(pipelineId);
+        // 删除管道（软删除）
+        pipelineRepository.deleteById(pipelineId);
     }
 
     @Override
     public PipelineDefinition getDefinition(String pipelineId) {
-        IngestionPipelineDO pipeline = pipelineMapper.selectById(pipelineId);
+        IngestionPipeline pipeline = pipelineRepository.findById(pipelineId);
         Assert.notNull(pipeline, () -> new ClientException("未找到流水线"));
 
-        List<NodeConfig> nodes = fetchNodes(pipeline.getId()).stream()
+        List<NodeConfig> nodes = nodeRepository.findByPipelineId(pipeline.getId()).stream()
                 .map(this::toNodeConfig)
                 .toList();
         return PipelineDefinition.builder()
-                .id(String.valueOf(pipeline.getId()))
+                .id(pipeline.getId())
                 .name(pipeline.getName())
                 .description(pipeline.getDescription())
                 .nodes(nodes)
@@ -154,14 +147,14 @@ public class IngestionPipelineServiceImpl implements IngestionPipelineService {
         if (nodes == null) {
             return;
         }
-        LambdaQueryWrapper<IngestionPipelineNodeDO> qw = new LambdaQueryWrapper<IngestionPipelineNodeDO>()
-                .eq(IngestionPipelineNodeDO::getPipelineId, pipelineId);
-        nodeMapper.delete(qw);
+        // 先删除旧节点
+        nodeRepository.deleteByPipelineId(pipelineId);
+        // 再插入新节点
         for (IngestionPipelineNodeRequest node : nodes) {
             if (node == null) {
                 continue;
             }
-            IngestionPipelineNodeDO entity = IngestionPipelineNodeDO.builder()
+            IngestionPipelineNode entity = IngestionPipelineNode.builder()
                     .pipelineId(pipelineId)
                     .nodeId(node.getNodeId())
                     .nodeType(normalizeNodeType(node.getNodeType()))
@@ -171,24 +164,17 @@ public class IngestionPipelineServiceImpl implements IngestionPipelineService {
                     .createdBy(UserContext.getUsername())
                     .updatedBy(UserContext.getUsername())
                     .build();
-            nodeMapper.insert(entity);
+			nodeRepository.save(entity);
         }
     }
 
-    private List<IngestionPipelineNodeDO> fetchNodes(String pipelineId) {
-        LambdaQueryWrapper<IngestionPipelineNodeDO> qw = new LambdaQueryWrapper<IngestionPipelineNodeDO>()
-                .eq(IngestionPipelineNodeDO::getPipelineId, pipelineId)
-                .eq(IngestionPipelineNodeDO::getDeleted, 0);
-        return nodeMapper.selectList(qw);
-    }
-
-    private IngestionPipelineVO toVO(IngestionPipelineDO pipeline, List<IngestionPipelineNodeDO> nodes) {
+    private IngestionPipelineVO toVO(IngestionPipeline pipeline, List<IngestionPipelineNode> nodes) {
         IngestionPipelineVO vo = BeanUtil.toBean(pipeline, IngestionPipelineVO.class);
         vo.setNodes(nodes.stream().map(this::toNodeVO).toList());
         return vo;
     }
 
-    private IngestionPipelineNodeVO toNodeVO(IngestionPipelineNodeDO node) {
+    private IngestionPipelineNodeVO toNodeVO(IngestionPipelineNode node) {
         IngestionPipelineNodeVO vo = BeanUtil.toBean(node, IngestionPipelineNodeVO.class);
         vo.setNodeType(normalizeNodeTypeForOutput(node.getNodeType()));
         vo.setSettings(parseJson(node.getSettingsJson()));
@@ -196,7 +182,7 @@ public class IngestionPipelineServiceImpl implements IngestionPipelineService {
         return vo;
     }
 
-    private NodeConfig toNodeConfig(IngestionPipelineNodeDO node) {
+    private NodeConfig toNodeConfig(IngestionPipelineNode node) {
         return NodeConfig.builder()
                 .nodeId(node.getNodeId())
                 .nodeType(normalizeNodeType(node.getNodeType()))

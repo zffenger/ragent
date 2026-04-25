@@ -19,7 +19,6 @@ package com.nageoffer.ai.ragent.ingestion.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -28,10 +27,10 @@ import com.nageoffer.ai.ragent.rag.interfaces.controller.request.DocumentSourceR
 import com.nageoffer.ai.ragent.ingestion.controller.request.IngestionTaskCreateRequest;
 import com.nageoffer.ai.ragent.ingestion.controller.vo.IngestionTaskNodeVO;
 import com.nageoffer.ai.ragent.ingestion.controller.vo.IngestionTaskVO;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionTaskDO;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionTaskNodeDO;
-import com.nageoffer.ai.ragent.ingestion.dao.mapper.IngestionTaskMapper;
-import com.nageoffer.ai.ragent.ingestion.dao.mapper.IngestionTaskNodeMapper;
+import com.nageoffer.ai.ragent.rag.domain.entity.IngestionTask;
+import com.nageoffer.ai.ragent.rag.domain.entity.IngestionTaskNode;
+import com.nageoffer.ai.ragent.rag.domain.repository.IngestionTaskRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.IngestionTaskNodeRepository;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.ingestion.domain.context.DocumentSource;
@@ -55,6 +54,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,8 +72,8 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
 
     private final IngestionEngine engine;
     private final IngestionPipelineService pipelineService;
-    private final IngestionTaskMapper taskMapper;
-    private final IngestionTaskNodeMapper taskNodeMapper;
+    private final IngestionTaskRepository taskRepository;
+    private final IngestionTaskNodeRepository taskNodeRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -108,20 +108,16 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
 
     @Override
     public IngestionTaskVO get(String taskId) {
-        IngestionTaskDO task = taskMapper.selectById(taskId);
+        IngestionTask task = taskRepository.findById(taskId);
         Assert.notNull(task, () -> new ClientException("未找到任务"));
         return toVO(task);
     }
 
     @Override
     public IPage<IngestionTaskVO> page(Page<IngestionTaskVO> page, String status) {
-        Page<IngestionTaskDO> mpPage = new Page<>(page.getCurrent(), page.getSize());
-        String normalizedStatus = normalizeStatus(status);
-        LambdaQueryWrapper<IngestionTaskDO> qw = new LambdaQueryWrapper<IngestionTaskDO>()
-                .eq(IngestionTaskDO::getDeleted, 0)
-                .eq(StringUtils.hasText(normalizedStatus), IngestionTaskDO::getStatus, normalizedStatus)
-                .orderByDesc(IngestionTaskDO::getCreateTime);
-        IPage<IngestionTaskDO> result = taskMapper.selectPage(mpPage, qw);
+		String normalizedStatus = normalizeStatus(status);
+        IPage<IngestionTask> result = taskRepository.findPage(page, normalizedStatus);
+
         Page<IngestionTaskVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         voPage.setRecords(result.getRecords().stream().map(this::toVO).toList());
         return voPage;
@@ -129,13 +125,11 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
 
     @Override
     public List<IngestionTaskNodeVO> listNodes(String taskId) {
-        LambdaQueryWrapper<IngestionTaskNodeDO> qw = new LambdaQueryWrapper<IngestionTaskNodeDO>()
-                .eq(IngestionTaskNodeDO::getDeleted, 0)
-                .eq(IngestionTaskNodeDO::getTaskId, taskId)
-                .orderByAsc(IngestionTaskNodeDO::getNodeOrder)
-                .orderByAsc(IngestionTaskNodeDO::getId);
-        List<IngestionTaskNodeDO> nodes = taskNodeMapper.selectList(qw);
-        return nodes.stream().map(this::toNodeVO).toList();
+        List<IngestionTaskNode> nodes = taskNodeRepository.findByTaskId(taskId);
+        return nodes.stream()
+                .sorted(Comparator.comparingInt(IngestionTaskNode::getNodeOrder).thenComparing(IngestionTaskNode::getId))
+                .map(this::toNodeVO)
+                .toList();
     }
 
     private IngestionResult executeInternal(String pipelineId,
@@ -146,7 +140,7 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
         String resolvedPipelineId = resolvePipelineId(pipelineId);
         PipelineDefinition pipeline = pipelineService.getDefinition(resolvedPipelineId);
 
-        IngestionTaskDO task = IngestionTaskDO.builder()
+        IngestionTask task = IngestionTask.builder()
                 .pipelineId(resolvedPipelineId)
                 .sourceType(source.getType() == null ? null : source.getType().getValue())
                 .sourceLocation(source.getLocation())
@@ -157,10 +151,10 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
                 .createdBy(UserContext.getUsername())
                 .updatedBy(UserContext.getUsername())
                 .build();
-        taskMapper.insert(task);
+        taskRepository.save(task);
 
         IngestionContext context = IngestionContext.builder()
-                .taskId(String.valueOf(task.getId()))
+                .taskId(task.getId())
                 .pipelineId(resolvedPipelineId)
                 .source(source)
                 .rawBytes(rawBytes)
@@ -181,7 +175,7 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
                 .build();
     }
 
-    private void updateTaskFromContext(IngestionTaskDO task, IngestionContext context) {
+    private void updateTaskFromContext(IngestionTask task, IngestionContext context) {
         task.setStatus(context.getStatus() == null ? IngestionStatus.FAILED.getValue() : context.getStatus().getValue());
         task.setChunkCount(context.getChunks() == null ? 0 : context.getChunks().size());
         task.setErrorMessage(context.getError() == null ? null : context.getError().getMessage());
@@ -189,10 +183,10 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
         task.setUpdatedBy(UserContext.getUsername());
         task.setLogsJson(writeJson(buildLogSummary(context.getLogs())));
         task.setMetadataJson(writeJson(buildTaskMetadata(context)));
-        taskMapper.updateById(task);
+        taskRepository.update(task);
     }
 
-    private void saveNodeLogs(IngestionTaskDO task, PipelineDefinition pipeline, List<NodeLog> logs) {
+    private void saveNodeLogs(IngestionTask task, PipelineDefinition pipeline, List<NodeLog> logs) {
         if (logs == null || logs.isEmpty()) {
             return;
         }
@@ -200,7 +194,7 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
         for (NodeLog log : logs) {
             String status = resolveNodeStatus(log);
             String outputJson = truncateOutputJson(log.getOutput());
-            IngestionTaskNodeDO nodeDO = IngestionTaskNodeDO.builder()
+            IngestionTaskNode node = IngestionTaskNode.builder()
                     .taskId(task.getId())
                     .pipelineId(task.getPipelineId())
                     .nodeId(log.getNodeId())
@@ -212,7 +206,7 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
                     .errorMessage(log.getError())
                     .outputJson(outputJson)
                     .build();
-            taskNodeMapper.insert(nodeDO);
+			taskNodeRepository.save(node);
         }
     }
 
@@ -322,10 +316,10 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
         return source;
     }
 
-    private IngestionTaskVO toVO(IngestionTaskDO task) {
+    private IngestionTaskVO toVO(IngestionTask task) {
         return IngestionTaskVO.builder()
-                .id(String.valueOf(task.getId()))
-                .pipelineId(String.valueOf(task.getPipelineId()))
+                .id(task.getId())
+                .pipelineId(task.getPipelineId())
                 .sourceType(normalizeSourceType(task.getSourceType()))
                 .sourceLocation(task.getSourceLocation())
                 .sourceFileName(task.getSourceFileName())
@@ -342,11 +336,11 @@ public class IngestionTaskServiceImpl implements IngestionTaskService {
                 .build();
     }
 
-    private IngestionTaskNodeVO toNodeVO(IngestionTaskNodeDO node) {
+    private IngestionTaskNodeVO toNodeVO(IngestionTaskNode node) {
         return IngestionTaskNodeVO.builder()
-                .id(String.valueOf(node.getId()))
-                .taskId(String.valueOf(node.getTaskId()))
-                .pipelineId(String.valueOf(node.getPipelineId()))
+                .id(node.getId())
+                .taskId(node.getTaskId())
+                .pipelineId(node.getPipelineId())
                 .nodeId(node.getNodeId())
                 .nodeType(normalizeNodeType(node.getNodeType()))
                 .nodeOrder(node.getNodeOrder())

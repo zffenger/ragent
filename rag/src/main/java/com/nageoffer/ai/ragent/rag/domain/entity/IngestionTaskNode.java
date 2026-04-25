@@ -15,14 +15,8 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.ingestion.dao.entity;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,19 +25,17 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 知识库数据接入任务节点实体
+ * 知识库数据接入任务节点领域实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_ingestion_task_node")
-public class IngestionTaskNodeDO {
+public class IngestionTaskNode {
 
     /**
      * ID
      */
-    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
@@ -100,18 +92,10 @@ public class IngestionTaskNodeDO {
     /**
      * 创建时间
      */
-    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
-
-    /**
-     * 删除标记
-     */
-    @TableLogic
-    private Integer deleted;
 }

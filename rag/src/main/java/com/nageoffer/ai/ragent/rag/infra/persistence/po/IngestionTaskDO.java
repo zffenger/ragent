@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.knowledge.dao.entity;
+package com.nageoffer.ai.ragent.rag.infra.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -23,6 +23,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.nageoffer.ai.ragent.rag.infra.persistence.handler.JsonbTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,126 +32,102 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 知识库文档实体
+ * 知识库摄取任务实体类
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_knowledge_document")
-public class KnowledgeDocumentDO {
+@TableName("t_ingestion_task")
+public class IngestionTaskDO {
 
+    /**
+     * 主键 ID
+     */
     @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
-     * 所属知识库 ID
-     */
-    private String kbId;
-
-    /**
-     * 文档名称
-     */
-    private String docName;
-
-    /**
-     * 来源类型：file / url
-     */
-    private String sourceType;
-
-    /**
-     * 来源位置（URL）
-     */
-    private String sourceLocation;
-
-    /**
-     * 是否开启定时拉取：1-启用，0-禁用
-     */
-    private Integer scheduleEnabled;
-
-    /**
-     * 定时表达式（cron）
-     */
-    private String scheduleCron;
-
-    /**
-     * 是否启用：1-启用，0-禁用
-     */
-    private Integer enabled;
-
-    /**
-     * 分块数（chunk 数量）
-     */
-    private Integer chunkCount;
-
-    /**
-     * 文件地址（存 OSS / NFS 等路径）
-     */
-    private String fileUrl;
-
-    /**
-     * 文件类型：pdf / markdown / docx 等
-     */
-    private String fileType;
-
-    /**
-     * 文件大小（单位字节）
-     */
-    private Long fileSize;
-
-    /**
-     * 处理模式：chunk / pipeline
-     * - chunk: 使用分块策略直接分块
-     * - pipeline: 使用数据通道进行清洗处理
-     */
-    private String processMode;
-
-    /**
-     * 分块策略
-     * 仅在 processMode=chunk 时有效
-     */
-    private String chunkStrategy;
-
-    /**
-     * 分块参数配置（JSON）
-     * 仅在 processMode=chunk 时有效
-     */
-    @TableField(typeHandler = com.nageoffer.ai.ragent.rag.infra.persistence.handler.JsonbTypeHandler.class)
-    private String chunkConfig;
-
-    /**
-     * 数据通道（Pipeline）ID
-     * 仅在 processMode=pipeline 时有效
+     * 管道 ID
      */
     private String pipelineId;
 
     /**
-     * 状态：
-     * - pending：待向量化
-     * - running：向量化中
-     * - failed：向量化失败
-     * - success：向量化完成
+     * 数据源类型 (如: file, url, feishu, oss)
+     */
+    private String sourceType;
+
+    /**
+     * 数据源位置 (文件路径或 URL)
+     */
+    private String sourceLocation;
+
+    /**
+     * 源文件名
+     */
+    private String sourceFileName;
+
+    /**
+     * 任务状态 (如: pending, running, completed, failed)
      */
     private String status;
 
     /**
-     * 创建人
+     * 切片数量
+     */
+    private Integer chunkCount;
+
+    /**
+     * 错误详情信息
+     */
+    private String errorMessage;
+
+    /**
+     * 日志 JSON
+     */
+    @TableField(typeHandler = JsonbTypeHandler.class)
+    private String logsJson;
+
+    /**
+     * 元数据 JSON
+     */
+    @TableField(typeHandler = JsonbTypeHandler.class)
+    private String metadataJson;
+
+    /**
+     * 开始时间
+     */
+    private Date startedAt;
+
+    /**
+     * 完成时间
+     */
+    private Date completedAt;
+
+    /**
+     * 创建者
      */
     private String createdBy;
 
     /**
-     * 修改人
+     * 更新者
      */
     private String updatedBy;
 
+    /**
+     * 创建时间
+     */
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
+    /**
+     * 修改时间
+     */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     /**
-     * 是否删除：0-正常，1-删除
+     * 删除标记 (0: 未删除, 1: 已删除)
      */
     @TableLogic
     private Integer deleted;

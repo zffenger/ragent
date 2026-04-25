@@ -39,8 +39,8 @@ import com.nageoffer.ai.ragent.core.parser.ParserType;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionPipelineDO;
-import com.nageoffer.ai.ragent.ingestion.dao.mapper.IngestionPipelineMapper;
+import com.nageoffer.ai.ragent.rag.domain.entity.IngestionPipeline;
+import com.nageoffer.ai.ragent.rag.domain.repository.IngestionPipelineRepository;
 import com.nageoffer.ai.ragent.ingestion.domain.context.IngestionContext;
 import com.nageoffer.ai.ragent.ingestion.domain.pipeline.PipelineDefinition;
 import com.nageoffer.ai.ragent.ingestion.engine.IngestionEngine;
@@ -108,7 +108,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     private final ObjectMapper objectMapper;
     private final KnowledgeDocumentScheduleService scheduleService;
     private final IngestionPipelineService ingestionPipelineService;
-    private final IngestionPipelineMapper ingestionPipelineMapper;
+    private final IngestionPipelineRepository ingestionPipelineRepository;
     private final IngestionEngine ingestionEngine;
     private final ChunkEmbeddingService chunkEmbeddingService;
     private final KnowledgeDocumentChunkLogMapper chunkLogMapper;
@@ -685,9 +685,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                 }
             }
             if (!pipelineIds.isEmpty()) {
-                List<IngestionPipelineDO> pipelines = ingestionPipelineMapper.selectByIds(pipelineIds);
+                List<IngestionPipeline> pipelines = ingestionPipelineRepository.findByIds(pipelineIds);
                 if (CollUtil.isNotEmpty(pipelines)) {
-                    for (IngestionPipelineDO pipeline : pipelines) {
+                    for (IngestionPipeline pipeline : pipelines) {
                         pipelineNameMap.put(pipeline.getId(), pipeline.getName());
                     }
                 }

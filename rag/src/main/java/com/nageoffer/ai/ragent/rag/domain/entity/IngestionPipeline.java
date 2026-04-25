@@ -15,10 +15,56 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.ingestion.dao.mapper;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.ingestion.dao.entity.IngestionTaskNodeDO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface IngestionTaskNodeMapper extends BaseMapper<IngestionTaskNodeDO> {
+import java.util.Date;
+
+/**
+ * 数据摄入管道领域实体
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class IngestionPipeline {
+
+    /**
+     * ID
+     */
+    private String id;
+
+    /**
+     * 名称
+     */
+    private String name;
+
+    /**
+     * 描述
+     */
+    private String description;
+
+    /**
+     * 创建人
+     */
+    private String createdBy;
+
+    /**
+     * 更新人
+     */
+    private String updatedBy;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
 }

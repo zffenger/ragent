@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.ingestion.dao.entity;
+package com.nageoffer.ai.ragent.rag.infra.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -23,7 +23,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.nageoffer.ai.ragent.knowledge.dao.handler.JsonbTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,14 +31,14 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 摄取流水线节点实体对象
+ * 数据摄入管道实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_ingestion_pipeline_node")
-public class IngestionPipelineNodeDO {
+@TableName("t_ingestion_pipeline")
+public class IngestionPipelineDO {
 
     /**
      * ID
@@ -48,44 +47,22 @@ public class IngestionPipelineNodeDO {
     private String id;
 
     /**
-     * 流水线ID
+     * 名称
      */
-    private String pipelineId;
+    private String name;
 
     /**
-     * 节点ID
+     * 描述
      */
-    private String nodeId;
+    private String description;
 
     /**
-     * 节点类型 (如: fetcher, parser, chunker, indexer)
-     */
-    private String nodeType;
-
-    /**
-     * 下一个节点ID
-     */
-    private String nextNodeId;
-
-    /**
-     * 设置详情JSON
-     */
-    @TableField(typeHandler = JsonbTypeHandler.class)
-    private String settingsJson;
-
-    /**
-     * 条件详情JSON
-     */
-    @TableField(typeHandler = JsonbTypeHandler.class)
-    private String conditionJson;
-
-    /**
-     * 创建者
+     * 创建人
      */
     private String createdBy;
 
     /**
-     * 更新者
+     * 更新人
      */
     private String updatedBy;
 
@@ -102,7 +79,7 @@ public class IngestionPipelineNodeDO {
     private Date updateTime;
 
     /**
-     * 删除标记 0：未删除 1：已删除
+     * 是否删除
      */
     @TableLogic
     private Integer deleted;
