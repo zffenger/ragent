@@ -19,8 +19,8 @@ package com.nageoffer.ai.ragent.knowledge.schedule;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nageoffer.ai.ragent.knowledge.config.KnowledgeScheduleProperties;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentScheduleDO;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeDocumentScheduleDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeDocumentScheduleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

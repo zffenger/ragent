@@ -21,7 +21,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -40,7 +39,15 @@ import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
 import com.nageoffer.ai.ragent.framework.exception.ServiceException;
 import com.nageoffer.ai.ragent.rag.domain.entity.IngestionPipeline;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeBase;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeDocument;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeDocumentChunkLog;
 import com.nageoffer.ai.ragent.rag.domain.repository.IngestionPipelineRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeBaseRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeDocumentChunkLogRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeDocumentRepository;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeDocumentMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeDocumentDO;
 import com.nageoffer.ai.ragent.ingestion.domain.context.IngestionContext;
 import com.nageoffer.ai.ragent.ingestion.domain.pipeline.PipelineDefinition;
 import com.nageoffer.ai.ragent.ingestion.engine.IngestionEngine;
@@ -54,12 +61,6 @@ import com.nageoffer.ai.ragent.knowledge.controller.vo.KnowledgeChunkVO;
 import com.nageoffer.ai.ragent.knowledge.controller.vo.KnowledgeDocumentChunkLogVO;
 import com.nageoffer.ai.ragent.knowledge.controller.vo.KnowledgeDocumentSearchVO;
 import com.nageoffer.ai.ragent.knowledge.controller.vo.KnowledgeDocumentVO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeBaseDO;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentChunkLogDO;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentDO;
-import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeBaseMapper;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentChunkLogMapper;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentMapper;
 import com.nageoffer.ai.ragent.knowledge.enums.DocumentStatus;
 import com.nageoffer.ai.ragent.knowledge.enums.ProcessMode;
 import com.nageoffer.ai.ragent.knowledge.enums.SourceType;
@@ -98,8 +99,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
-    private final KnowledgeBaseMapper knowledgeBaseMapper;
-    private final KnowledgeDocumentMapper documentMapper;
+    private final KnowledgeBaseRepository knowledgeBaseRepository;
+    private final KnowledgeDocumentRepository documentRepository;
+    private final KnowledgeDocumentChunkLogRepository chunkLogRepository;
+	private final KnowledgeDocumentMapper documentMapper;
     private final DocumentParserSelector parserSelector;
     private final ChunkingStrategyFactory chunkingStrategyFactory;
     private final FileStorageService fileStorageService;
@@ -111,7 +114,6 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     private final IngestionPipelineRepository ingestionPipelineRepository;
     private final IngestionEngine ingestionEngine;
     private final ChunkEmbeddingService chunkEmbeddingService;
-    private final KnowledgeDocumentChunkLogMapper chunkLogMapper;
     private final TransactionOperations transactionOperations;
     private final RedissonClient redissonClient;
     private final KnowledgeScheduleProperties scheduleProperties;
@@ -119,15 +121,15 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
     @Override
     public KnowledgeDocumentVO upload(String kbId, KnowledgeDocumentUploadRequest requestParam, MultipartFile file) {
-        KnowledgeBaseDO kbDO = knowledgeBaseMapper.selectById(kbId);
-        Assert.notNull(kbDO, () -> new ClientException("知识库不存在"));
+        KnowledgeBase kb = knowledgeBaseRepository.findById(kbId);
+        Assert.notNull(kb, () -> new ClientException("知识库不存在"));
 
         SourceType sourceType = SourceType.normalize(requestParam.getSourceType());
         validateSourceAndSchedule(sourceType, requestParam);
-        StoredFileDTO stored = resolveStoredFile(kbDO.getCollectionName(), sourceType, requestParam.getSourceLocation(), file);
+        StoredFileDTO stored = resolveStoredFile(kb.getCollectionName(), sourceType, requestParam.getSourceLocation(), file);
         ProcessModeConfig modeConfig = resolveProcessModeConfig(requestParam);
 
-        KnowledgeDocumentDO documentDO = KnowledgeDocumentDO.builder()
+        KnowledgeDocument document = KnowledgeDocument.builder()
                 .kbId(kbId)
                 .docName(stored.getOriginalFilename())
                 .enabled(1)
@@ -147,9 +149,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                 .createdBy(UserContext.getUsername())
                 .updatedBy(UserContext.getUsername())
                 .build();
-        documentMapper.insert(documentDO);
+        documentRepository.save(document);
 
-        return BeanUtil.toBean(documentDO, KnowledgeDocumentVO.class);
+        return toVO(document);
     }
 
     @Override
@@ -173,21 +175,15 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
         try {
             // 使用乐观锁更新状态，防止并发执行
-            int updated = documentMapper.update(
-                    new LambdaUpdateWrapper<KnowledgeDocumentDO>()
-                            .set(KnowledgeDocumentDO::getStatus, DocumentStatus.RUNNING.getCode())
-                            .set(KnowledgeDocumentDO::getUpdatedBy, operator)
-                            .eq(KnowledgeDocumentDO::getId, docId)
-                            .ne(KnowledgeDocumentDO::getStatus, DocumentStatus.RUNNING.getCode())
-            );
-            if (updated == 0) {
-                KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-                Assert.notNull(documentDO, () -> new ClientException("文档不存在"));
+            boolean updated = documentRepository.tryUpdateStatus(docId, DocumentStatus.RUNNING.getCode(), operator);
+            if (!updated) {
+                KnowledgeDocument document = documentRepository.findById(docId);
+                Assert.notNull(document, () -> new ClientException("文档不存在"));
                 throw new ClientException("文档分块操作正在进行中，请稍后再试");
             }
 
-            KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-            scheduleService.upsertSchedule(documentDO);
+            KnowledgeDocument document = documentRepository.findById(docId);
+            scheduleService.upsertSchedule(document);
 
             // 在虚拟线程中异步执行分块任务
             Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
@@ -213,28 +209,28 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
     @Override
     public void executeChunk(String docId) {
-        KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-        if (documentDO == null) {
+        KnowledgeDocument document = documentRepository.findById(docId);
+        if (document == null) {
             log.warn("文档不存在，跳过分块任务, docId={}", docId);
             return;
         }
 
-        runChunkTask(documentDO);
+        runChunkTask(document);
     }
 
-    private void runChunkTask(KnowledgeDocumentDO documentDO) {
-        String docId = documentDO.getId();
-        ProcessMode processMode = ProcessMode.normalize(documentDO.getProcessMode());
+    private void runChunkTask(KnowledgeDocument document) {
+        String docId = document.getId();
+        ProcessMode processMode = ProcessMode.normalize(document.getProcessMode());
 
-        KnowledgeDocumentChunkLogDO chunkLog = KnowledgeDocumentChunkLogDO.builder()
+        KnowledgeDocumentChunkLog chunkLog = KnowledgeDocumentChunkLog.builder()
                 .docId(docId)
                 .status(DocumentStatus.RUNNING.getCode())
                 .processMode(processMode.getValue())
-                .chunkStrategy(documentDO.getChunkStrategy())
-                .pipelineId(documentDO.getPipelineId())
+                .chunkStrategy(document.getChunkStrategy())
+                .pipelineId(document.getPipelineId())
                 .startTime(new Date())
                 .build();
-        chunkLogMapper.insert(chunkLog);
+        chunkLogRepository.save(chunkLog);
 
         long totalStartTime = System.currentTimeMillis();
         long extractDuration = 0;
@@ -246,10 +242,10 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             List<VectorChunk> chunkResults;
             if (ProcessMode.PIPELINE == processMode) {
                 long start = System.currentTimeMillis();
-                chunkResults = runPipelineProcess(documentDO);
+                chunkResults = runPipelineProcess(document);
                 chunkDuration = System.currentTimeMillis() - start;
             } else {
-                ChunkProcessResult result = runChunkProcess(documentDO);
+                ChunkProcessResult result = runChunkProcess(document);
                 extractDuration = result.extractDuration();
                 chunkDuration = result.chunkDuration();
                 embedDuration = result.embedDuration();
@@ -257,7 +253,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             }
 
             long persistStart = System.currentTimeMillis();
-            String collectionName = resolveCollectionName(documentDO.getKbId());
+            String collectionName = resolveCollectionName(document.getKbId());
             int savedCount = persistChunksAndVectorsAtomically(collectionName, docId, chunkResults);
             persistDuration = System.currentTimeMillis() - persistStart;
 
@@ -266,7 +262,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                     extractDuration, chunkDuration, embedDuration, persistDuration, totalDuration, null);
         } catch (Exception e) {
             log.error("文档分块任务执行失败：docId={}", docId, e);
-            markChunkFailed(documentDO.getId());
+            markChunkFailed(document.getId());
             long totalDuration = System.currentTimeMillis() - totalStartTime;
             updateChunkLog(chunkLog.getId(), DocumentStatus.FAILED.getCode(), 0,
                     extractDuration, chunkDuration, embedDuration, persistDuration, totalDuration, e.getMessage());
@@ -288,13 +284,13 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             knowledgeChunkService.batchCreate(docId, chunks);
             vectorStoreService.deleteDocumentVectors(collectionName, docId);
             vectorStoreService.indexDocumentChunks(collectionName, docId, chunkResults);
-            KnowledgeDocumentDO updateDocumentDO = KnowledgeDocumentDO.builder()
+            KnowledgeDocument updateDoc = KnowledgeDocument.builder()
                     .id(docId)
                     .chunkCount(chunks.size())
                     .status(DocumentStatus.SUCCESS.getCode())
                     .updatedBy(UserContext.getUsername())
                     .build();
-            documentMapper.updateById(updateDocumentDO);
+            documentRepository.updateById(updateDoc);
         });
         return chunks.size();
     }
@@ -302,7 +298,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     private void updateChunkLog(String logId, String status, int chunkCount, long extractDuration,
                                 long chunkDuration, long embedDuration, long persistDuration,
                                 long totalDuration, String errorMessage) {
-        KnowledgeDocumentChunkLogDO update = KnowledgeDocumentChunkLogDO.builder()
+        KnowledgeDocumentChunkLog update = KnowledgeDocumentChunkLog.builder()
                 .id(logId)
                 .status(status)
                 .chunkCount(chunkCount)
@@ -314,22 +310,22 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                 .errorMessage(errorMessage)
                 .endTime(new Date())
                 .build();
-        chunkLogMapper.updateById(update);
+        chunkLogRepository.update(update);
     }
 
     /**
      * 使用分块策略处理文档，失败直接抛异常，由 runChunkTask 统一处理错误状态
      * 4 阶段中的前 3 阶段：Extract → Chunk → Embed
      */
-    private ChunkProcessResult runChunkProcess(KnowledgeDocumentDO documentDO) {
-        ChunkingMode chunkingMode = ChunkingMode.fromValue(documentDO.getChunkStrategy());
-        KnowledgeBaseDO kbDO = knowledgeBaseMapper.selectById(documentDO.getKbId());
-        String embeddingModel = kbDO.getEmbeddingModel();
-        ChunkingOptions config = buildChunkingOptions(chunkingMode, documentDO);
+    private ChunkProcessResult runChunkProcess(KnowledgeDocument document) {
+        ChunkingMode chunkingMode = ChunkingMode.fromValue(document.getChunkStrategy());
+        KnowledgeBase kb = knowledgeBaseRepository.findById(document.getKbId());
+        String embeddingModel = kb.getEmbeddingModel();
+        ChunkingOptions config = buildChunkingOptions(chunkingMode, document);
 
         long extractStart = System.currentTimeMillis();
-        try (InputStream is = fileStorageService.openStream(documentDO.getFileUrl())) {
-            String text = parserSelector.select(ParserType.TIKA.getType()).extractText(is, documentDO.getDocName());
+        try (InputStream is = fileStorageService.openStream(document.getFileUrl())) {
+            String text = parserSelector.select(ParserType.TIKA.getType()).extractText(is, document.getDocName());
             long extractDuration = System.currentTimeMillis() - extractStart;
 
             ChunkingStrategy chunkingStrategy = chunkingStrategyFactory.requireStrategy(chunkingMode);
@@ -358,20 +354,20 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     /**
      * 使用 Pipeline 处理文档，失败直接抛异常，由 runChunkTask 统一处理错误状态
      */
-    private List<VectorChunk> runPipelineProcess(KnowledgeDocumentDO documentDO) {
-        String docId = String.valueOf(documentDO.getId());
-        String pipelineId = documentDO.getPipelineId();
+    private List<VectorChunk> runPipelineProcess(KnowledgeDocument document) {
+        String docId = String.valueOf(document.getId());
+        String pipelineId = document.getPipelineId();
 
         if (pipelineId == null) {
             throw new IllegalStateException("Pipeline模式下Pipeline ID为空：docId=" + docId);
         }
 
-        KnowledgeBaseDO kbDO = knowledgeBaseMapper.selectById(documentDO.getKbId());
+        KnowledgeBase kb = knowledgeBaseRepository.findById(document.getKbId());
 
         PipelineDefinition pipelineDef = ingestionPipelineService.getDefinition(pipelineId);
 
         byte[] fileBytes;
-        try (InputStream is = fileStorageService.openStream(documentDO.getFileUrl())) {
+        try (InputStream is = fileStorageService.openStream(document.getFileUrl())) {
             fileBytes = is.readAllBytes();
         } catch (Exception e) {
             throw new RuntimeException("读取文件内容失败：docId=" + docId, e);
@@ -381,9 +377,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                 .taskId(docId)
                 .pipelineId(pipelineId)
                 .rawBytes(fileBytes)
-                .mimeType(documentDO.getFileType())
+                .mimeType(document.getFileType())
                 .vectorSpaceId(VectorSpaceId.builder()
-                        .logicalName(kbDO.getCollectionName())
+                        .logicalName(kb.getCollectionName())
                         .build())
                 .skipIndexerWrite(true)
                 .build();
@@ -403,53 +399,62 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         return chunks;
     }
 
+    public void chunkDocument(KnowledgeDocument document) {
+        if (document == null) {
+            return;
+        }
+        runChunkTask(document);
+    }
+
+    /**
+     * 兼容旧接口，将 DO 转换为 Entity 后执行分块
+     */
     public void chunkDocument(KnowledgeDocumentDO documentDO) {
         if (documentDO == null) {
             return;
         }
-        runChunkTask(documentDO);
+        KnowledgeDocument document = toEntity(documentDO);
+        runChunkTask(document);
     }
 
     private void markChunkFailed(String docId) {
         transactionOperations.executeWithoutResult(status -> {
-            KnowledgeDocumentDO update = new KnowledgeDocumentDO();
-            update.setId(docId);
-            update.setStatus(DocumentStatus.FAILED.getCode());
-            update.setUpdatedBy(UserContext.getUsername());
-            documentMapper.updateById(update);
+            KnowledgeDocument updateDoc = KnowledgeDocument.builder()
+                    .id(docId)
+                    .status(DocumentStatus.FAILED.getCode())
+                    .updatedBy(UserContext.getUsername())
+                    .build();
+            documentRepository.updateById(updateDoc);
         });
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(String docId) {
-        KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-        Assert.notNull(documentDO, () -> new ClientException("文档不存在"));
+        KnowledgeDocument document = documentRepository.findById(docId);
+        Assert.notNull(document, () -> new ClientException("文档不存在"));
 
         // 禁止在文档分块运行时删除
-        if (DocumentStatus.RUNNING.getCode().equals(documentDO.getStatus())) {
+        if (DocumentStatus.RUNNING.getCode().equals(document.getStatus())) {
             throw new ClientException("文档正在分块中，无法删除");
         }
 
         knowledgeChunkService.deleteByDocId(docId);
         scheduleService.deleteByDocId(docId);
-        chunkLogMapper.delete(Wrappers.lambdaQuery(KnowledgeDocumentChunkLogDO.class)
-                .eq(KnowledgeDocumentChunkLogDO::getDocId, docId));
+        chunkLogRepository.deleteByDocId(docId);
 
-        documentDO.setDeleted(1);
-        documentDO.setUpdatedBy(UserContext.getUsername());
-        documentMapper.deleteById(documentDO);
+        documentRepository.softDelete(docId, UserContext.getUsername());
 
-        String collectionName = resolveCollectionName(documentDO.getKbId());
+        String collectionName = resolveCollectionName(document.getKbId());
         vectorStoreService.deleteDocumentVectors(collectionName, docId);
-        deleteStoredFileQuietly(documentDO);
+        deleteStoredFileQuietly(document);
     }
 
     @Override
     public KnowledgeDocumentVO get(String docId) {
-        KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-        Assert.notNull(documentDO, () -> new ClientException("文档不存在"));
-        return BeanUtil.toBean(documentDO, KnowledgeDocumentVO.class);
+        KnowledgeDocument document = documentRepository.findById(docId);
+        Assert.notNull(document, () -> new ClientException("文档不存在"));
+        return toVO(document);
     }
 
     @Override
@@ -549,23 +554,16 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         documentMapper.update(updateWrapper);
 
         if (scheduleChanged) {
-            KnowledgeDocumentDO updated = documentMapper.selectById(docId);
+            KnowledgeDocument updated = documentRepository.findById(docId);
             scheduleService.upsertSchedule(updated);
         }
     }
 
     @Override
     public IPage<KnowledgeDocumentVO> page(String kbId, KnowledgeDocumentPageRequest requestParam) {
-        Page<KnowledgeDocumentDO> pageParam = new Page<>(requestParam.getCurrent(), requestParam.getSize());
-        LambdaQueryWrapper<KnowledgeDocumentDO> queryWrapper = Wrappers.lambdaQuery(KnowledgeDocumentDO.class)
-                .eq(KnowledgeDocumentDO::getKbId, kbId)
-                .eq(KnowledgeDocumentDO::getDeleted, 0)
-                .like(requestParam.getKeyword() != null && !requestParam.getKeyword().isBlank(), KnowledgeDocumentDO::getDocName, requestParam.getKeyword())
-                .eq(requestParam.getStatus() != null && !requestParam.getStatus().isBlank(), KnowledgeDocumentDO::getStatus, requestParam.getStatus())
-                .orderByDesc(KnowledgeDocumentDO::getCreateTime);
-
-        return documentMapper.selectPage(pageParam, queryWrapper)
-                .convert(each -> BeanUtil.toBean(each, KnowledgeDocumentVO.class));
+        Page<KnowledgeDocument> pageParam = new Page<>(requestParam.getCurrent(), requestParam.getSize());
+        IPage<KnowledgeDocument> result = documentRepository.findPage(pageParam, kbId, requestParam.getKeyword(), requestParam.getStatus());
+        return result.convert(this::toVO);
     }
 
     @Override
@@ -574,16 +572,9 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             return Collections.emptyList();
         }
 
-        int size = Math.min(Math.max(limit, 1), 20);
-        Page<KnowledgeDocumentDO> mpPage = new Page<>(1, size);
-        LambdaQueryWrapper<KnowledgeDocumentDO> qw = new LambdaQueryWrapper<KnowledgeDocumentDO>()
-                .eq(KnowledgeDocumentDO::getDeleted, 0)
-                .like(KnowledgeDocumentDO::getDocName, keyword)
-                .orderByDesc(KnowledgeDocumentDO::getUpdateTime);
-
-        IPage<KnowledgeDocumentDO> result = documentMapper.selectPage(mpPage, qw);
-        List<KnowledgeDocumentSearchVO> records = result.getRecords().stream()
-                .map(each -> BeanUtil.toBean(each, KnowledgeDocumentSearchVO.class))
+        List<KnowledgeDocument> documents = documentRepository.search(keyword, limit);
+        List<KnowledgeDocumentSearchVO> records = documents.stream()
+                .map(this::toSearchVO)
                 .toList();
         if (records.isEmpty()) {
             return records;
@@ -599,10 +590,10 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             return records;
         }
 
-        List<KnowledgeBaseDO> bases = knowledgeBaseMapper.selectByIds(kbIds);
+        List<KnowledgeBase> bases = knowledgeBaseRepository.findByIds(kbIds);
         Map<String, String> nameMap = new HashMap<>();
         if (bases != null) {
-            for (KnowledgeBaseDO base : bases) {
+            for (KnowledgeBase base : bases) {
                 nameMap.put(base.getId(), base.getName());
             }
         }
@@ -614,23 +605,23 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
     @Override
     public void enable(String docId, boolean enabled) {
-        KnowledgeDocumentDO documentDO = documentMapper.selectById(docId);
-        Assert.notNull(documentDO, () -> new ClientException("文档不存在"));
+        KnowledgeDocument document = documentRepository.findById(docId);
+        Assert.notNull(document, () -> new ClientException("文档不存在"));
 
         // 禁止在文档分块运行时修改
-        if (DocumentStatus.RUNNING.getCode().equals(documentDO.getStatus())) {
+        if (DocumentStatus.RUNNING.getCode().equals(document.getStatus())) {
             throw new ClientException("文档正在分块中，无法修改");
         }
 
         // 如果已经是目标状态，直接返回
         int targetEnabled = enabled ? 1 : 0;
-        if (documentDO.getEnabled() != null && documentDO.getEnabled() == targetEnabled) {
+        if (document.getEnabled() != null && document.getEnabled() == targetEnabled) {
             return;
         }
 
         // 提前查知识库，两个分支都需要，避免重复查询
-        KnowledgeBaseDO kbDO = knowledgeBaseMapper.selectById(documentDO.getKbId());
-        String collectionName = kbDO.getCollectionName();
+        KnowledgeBase kb = knowledgeBaseRepository.findById(document.getKbId());
+        String collectionName = kb.getCollectionName();
 
         // 启用时：embed 耗时较长，在事务外提前执行，避免长事务占用连接
         List<VectorChunk> vectorChunks = null;
@@ -647,16 +638,25 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
                 log.warn("启用文档时未找到任何 Chunk，跳过向量重建，docId={}", docId);
                 return;
             }
-            chunkEmbeddingService.embed(vectorChunks, kbDO.getEmbeddingModel());
+            chunkEmbeddingService.embed(vectorChunks, kb.getEmbeddingModel());
         }
 
         final List<VectorChunk> finalVectorChunks = vectorChunks;
         transactionOperations.executeWithoutResult(status -> {
-            documentDO.setEnabled(targetEnabled);
-            documentDO.setUpdatedBy(UserContext.getUsername());
-            documentMapper.updateById(documentDO);
-            scheduleService.syncScheduleIfExists(documentDO);
-            knowledgeChunkService.updateEnabledByDocId(docId, String.valueOf(kbDO.getId()), enabled);
+            KnowledgeDocument updateDoc = KnowledgeDocument.builder()
+                    .id(docId)
+                    .enabled(targetEnabled)
+                    .updatedBy(UserContext.getUsername())
+                    .build();
+            documentRepository.updateById(updateDoc);
+            KnowledgeDocument updatedDoc = KnowledgeDocument.builder()
+                    .id(docId)
+                    .kbId(document.getKbId())
+                    .enabled(targetEnabled)
+                    .sourceType(document.getSourceType())
+                    .build();
+            scheduleService.syncScheduleIfExists(updatedDoc);
+            knowledgeChunkService.updateEnabledByDocId(docId, String.valueOf(kb.getId()), enabled);
 
             if (!enabled) {
                 vectorStoreService.deleteDocumentVectors(collectionName, docId);
@@ -668,18 +668,13 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
     @Override
     public IPage<KnowledgeDocumentChunkLogVO> getChunkLogs(String docId, Page<KnowledgeDocumentChunkLogVO> page) {
-        Page<KnowledgeDocumentChunkLogDO> mpPage = new Page<>(page.getCurrent(), page.getSize());
-        LambdaQueryWrapper<KnowledgeDocumentChunkLogDO> qw = new LambdaQueryWrapper<KnowledgeDocumentChunkLogDO>()
-                .eq(KnowledgeDocumentChunkLogDO::getDocId, docId)
-                .orderByDesc(KnowledgeDocumentChunkLogDO::getCreateTime);
+        IPage<KnowledgeDocumentChunkLog> result = chunkLogRepository.findPage(page, docId);
 
-        IPage<KnowledgeDocumentChunkLogDO> result = chunkLogMapper.selectPage(mpPage, qw);
-
-        List<KnowledgeDocumentChunkLogDO> records = result.getRecords();
+        List<KnowledgeDocumentChunkLog> records = result.getRecords();
         Map<String, String> pipelineNameMap = new HashMap<>();
         if (CollUtil.isNotEmpty(records)) {
             Set<String> pipelineIds = new HashSet<>();
-            for (KnowledgeDocumentChunkLogDO record : records) {
+            for (KnowledgeDocumentChunkLog record : records) {
                 if (record.getPipelineId() != null) {
                     pipelineIds.add(record.getPipelineId());
                 }
@@ -696,7 +691,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
 
         Page<KnowledgeDocumentChunkLogVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
         voPage.setRecords(records.stream().map(each -> {
-            KnowledgeDocumentChunkLogVO vo = BeanUtil.toBean(each, KnowledgeDocumentChunkLogVO.class);
+            KnowledgeDocumentChunkLogVO vo = toChunkLogVO(each);
             if (each.getPipelineId() != null) {
                 vo.setPipelineName(pipelineNameMap.get(each.getPipelineId()));
             }
@@ -710,7 +705,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         return voPage;
     }
 
-    private static long getOther(KnowledgeDocumentChunkLogDO each, Long totalDuration) {
+    private static long getOther(KnowledgeDocumentChunkLog each, Long totalDuration) {
         String mode = each.getProcessMode();
         boolean pipelineMode = ProcessMode.PIPELINE.getValue().equalsIgnoreCase(mode);
         long extract = each.getExtractDuration() == null ? 0 : each.getExtractDuration();
@@ -723,7 +718,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     }
 
     private String resolveCollectionName(String kbId) {
-        return knowledgeBaseMapper.selectById(kbId).getCollectionName();
+        return knowledgeBaseRepository.findById(kbId).getCollectionName();
     }
 
     private boolean isScheduleEnabled(SourceType sourceType, KnowledgeDocumentUploadRequest request) {
@@ -778,8 +773,8 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         return remoteFileFetcher.fetchAndStore(bucketName, sourceLocation);
     }
 
-    private ChunkingOptions buildChunkingOptions(ChunkingMode mode, KnowledgeDocumentDO documentDO) {
-        Map<String, Object> config = parseChunkConfig(documentDO.getChunkConfig());
+    private ChunkingOptions buildChunkingOptions(ChunkingMode mode, KnowledgeDocument document) {
+        Map<String, Object> config = parseChunkConfig(document.getChunkConfig());
         return mode.createOptions(config);
     }
 
@@ -819,14 +814,118 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         }
     }
 
-    private void deleteStoredFileQuietly(KnowledgeDocumentDO documentDO) {
-        if (documentDO == null || !StringUtils.hasText(documentDO.getFileUrl())) {
+    private void deleteStoredFileQuietly(KnowledgeDocument document) {
+        if (document == null || !StringUtils.hasText(document.getFileUrl())) {
             return;
         }
         try {
-            fileStorageService.deleteByUrl(documentDO.getFileUrl());
+            fileStorageService.deleteByUrl(document.getFileUrl());
         } catch (Exception e) {
-            log.warn("删除文档存储文件失败, docId={}, fileUrl={}", documentDO.getId(), documentDO.getFileUrl(), e);
+            log.warn("删除文档存储文件失败, docId={}, fileUrl={}", document.getId(), document.getFileUrl(), e);
         }
+    }
+
+    // ==================== VO 转换方法 ====================
+
+    private KnowledgeDocumentVO toVO(KnowledgeDocument document) {
+        if (document == null) {
+            return null;
+        }
+        KnowledgeDocumentVO vo = new KnowledgeDocumentVO();
+        vo.setId(document.getId());
+        vo.setKbId(document.getKbId());
+        vo.setDocName(document.getDocName());
+        vo.setSourceType(document.getSourceType());
+        vo.setSourceLocation(document.getSourceLocation());
+        vo.setScheduleEnabled(document.getScheduleEnabled());
+        vo.setScheduleCron(document.getScheduleCron());
+        vo.setEnabled(document.getEnabled() != null && document.getEnabled() == 1);
+        vo.setChunkCount(document.getChunkCount());
+        vo.setFileUrl(document.getFileUrl());
+        vo.setFileType(document.getFileType());
+        vo.setFileSize(document.getFileSize());
+        vo.setProcessMode(document.getProcessMode());
+        vo.setChunkStrategy(document.getChunkStrategy());
+        vo.setChunkConfig(document.getChunkConfig());
+        vo.setPipelineId(document.getPipelineId());
+        vo.setStatus(document.getStatus());
+        vo.setCreatedBy(document.getCreatedBy());
+        vo.setUpdatedBy(document.getUpdatedBy());
+        if (document.getCreateTime() != null) {
+            vo.setCreateTime(document.getCreateTime().toInstant()
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        }
+        if (document.getUpdateTime() != null) {
+            vo.setUpdateTime(document.getUpdateTime().toInstant()
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        }
+        return vo;
+    }
+
+    private KnowledgeDocumentSearchVO toSearchVO(KnowledgeDocument document) {
+        if (document == null) {
+            return null;
+        }
+        KnowledgeDocumentSearchVO vo = new KnowledgeDocumentSearchVO();
+        vo.setId(document.getId());
+        vo.setKbId(document.getKbId());
+        vo.setDocName(document.getDocName());
+        return vo;
+    }
+
+    private KnowledgeDocumentChunkLogVO toChunkLogVO(KnowledgeDocumentChunkLog log) {
+        if (log == null) {
+            return null;
+        }
+        KnowledgeDocumentChunkLogVO vo = new KnowledgeDocumentChunkLogVO();
+        vo.setId(log.getId());
+        vo.setDocId(log.getDocId());
+        vo.setStatus(log.getStatus());
+        vo.setProcessMode(log.getProcessMode());
+        vo.setChunkStrategy(log.getChunkStrategy());
+        vo.setPipelineId(log.getPipelineId());
+        vo.setExtractDuration(log.getExtractDuration());
+        vo.setChunkDuration(log.getChunkDuration());
+        vo.setEmbedDuration(log.getEmbedDuration());
+        vo.setPersistDuration(log.getPersistDuration());
+        vo.setTotalDuration(log.getTotalDuration());
+        vo.setChunkCount(log.getChunkCount());
+        vo.setErrorMessage(log.getErrorMessage());
+        vo.setStartTime(log.getStartTime());
+        vo.setEndTime(log.getEndTime());
+        vo.setCreateTime(log.getCreateTime());
+        return vo;
+    }
+
+    /**
+     * 将 DO 转换为 Entity
+     */
+    private KnowledgeDocument toEntity(KnowledgeDocumentDO record) {
+        if (record == null) {
+            return null;
+        }
+        return KnowledgeDocument.builder()
+                .id(record.getId())
+                .kbId(record.getKbId())
+                .docName(record.getDocName())
+                .sourceType(record.getSourceType())
+                .sourceLocation(record.getSourceLocation())
+                .scheduleEnabled(record.getScheduleEnabled())
+                .scheduleCron(record.getScheduleCron())
+                .enabled(record.getEnabled())
+                .chunkCount(record.getChunkCount())
+                .fileUrl(record.getFileUrl())
+                .fileType(record.getFileType())
+                .fileSize(record.getFileSize())
+                .processMode(record.getProcessMode())
+                .chunkStrategy(record.getChunkStrategy())
+                .chunkConfig(record.getChunkConfig())
+                .pipelineId(record.getPipelineId())
+                .status(record.getStatus())
+                .createdBy(record.getCreatedBy())
+                .updatedBy(record.getUpdatedBy())
+                .createTime(record.getCreateTime())
+                .updateTime(record.getUpdateTime())
+                .build();
     }
 }

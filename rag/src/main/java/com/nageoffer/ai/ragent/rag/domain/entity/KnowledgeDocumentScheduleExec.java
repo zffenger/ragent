@@ -15,13 +15,8 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.knowledge.dao.entity;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,17 +25,20 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 知识库文档定时刷新任务实体
+ * 知识库文档定时刷新执行记录领域实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_knowledge_document_schedule")
-public class KnowledgeDocumentScheduleDO {
+public class KnowledgeDocumentScheduleExec {
 
-    @TableId(type = IdType.ASSIGN_ID)
     private String id;
+
+    /**
+     * 定时任务 ID
+     */
+    private String scheduleId;
 
     /**
      * 文档 ID
@@ -53,68 +51,51 @@ public class KnowledgeDocumentScheduleDO {
     private String kbId;
 
     /**
-     * 定时表达式
+     * 执行状态
      */
-    private String cronExpr;
+    private String status;
 
     /**
-     * 是否启用定时
+     * 执行信息
      */
-    private Integer enabled;
+    private String message;
 
     /**
-     * 下次执行时间
+     * 开始时间
      */
-    private Date nextRunTime;
+    private Date startTime;
 
     /**
-     * 上次执行时间
+     * 结束时间
      */
-    private Date lastRunTime;
+    private Date endTime;
 
     /**
-     * 上次成功时间
+     * 文件名
      */
-    private Date lastSuccessTime;
+    private String fileName;
 
     /**
-     * 上次执行状态
+     * 文件大小
      */
-    private String lastStatus;
+    private Long fileSize;
 
     /**
-     * 上次错误信息
+     * 内容哈希
      */
-    private String lastError;
+    private String contentHash;
 
     /**
-     * 上次 ETag
+     * ETag
      */
-    private String lastEtag;
+    private String etag;
 
     /**
-     * 上次 Last-Modified
+     * Last-Modified
      */
     private String lastModified;
 
-    /**
-     * 上次内容哈希
-     */
-    private String lastContentHash;
-
-    /**
-     * 锁持有者
-     */
-    private String lockOwner;
-
-    /**
-     * 锁到期时间
-     */
-    private Date lockUntil;
-
-    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 }

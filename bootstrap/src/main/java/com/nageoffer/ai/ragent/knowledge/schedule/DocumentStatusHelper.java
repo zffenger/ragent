@@ -19,8 +19,8 @@ package com.nageoffer.ai.ragent.knowledge.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentDO;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeDocumentDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeDocumentMapper;
 import com.nageoffer.ai.ragent.knowledge.enums.DocumentStatus;
 import com.nageoffer.ai.ragent.rag.domain.vo.StoredFileDTO;
 import lombok.RequiredArgsConstructor;

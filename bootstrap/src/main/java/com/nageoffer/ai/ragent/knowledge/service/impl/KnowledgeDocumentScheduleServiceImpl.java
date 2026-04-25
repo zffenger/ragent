@@ -17,14 +17,11 @@
 
 package com.nageoffer.ai.ragent.knowledge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nageoffer.ai.ragent.framework.exception.ClientException;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentDO;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentScheduleDO;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentScheduleExecDO;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleExecMapper;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleMapper;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeDocument;
+import com.nageoffer.ai.ragent.rag.domain.entity.KnowledgeDocumentSchedule;
+import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeDocumentScheduleExecRepository;
+import com.nageoffer.ai.ragent.rag.domain.repository.KnowledgeDocumentScheduleRepository;
 import com.nageoffer.ai.ragent.knowledge.enums.SourceType;
 import com.nageoffer.ai.ragent.knowledge.schedule.CronScheduleHelper;
 import com.nageoffer.ai.ragent.knowledge.service.KnowledgeDocumentScheduleService;
@@ -42,34 +39,34 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class KnowledgeDocumentScheduleServiceImpl implements KnowledgeDocumentScheduleService {
 
-    private final KnowledgeDocumentScheduleMapper scheduleMapper;
-    private final KnowledgeDocumentScheduleExecMapper scheduleExecMapper;
+    private final KnowledgeDocumentScheduleRepository scheduleRepository;
+    private final KnowledgeDocumentScheduleExecRepository scheduleExecRepository;
     @Value("${rag.knowledge.schedule.min-interval-seconds:60}")
     private long scheduleMinIntervalSeconds;
 
     @Override
-    public void upsertSchedule(KnowledgeDocumentDO documentDO) {
-        syncSchedule(documentDO, true);
+    public void upsertSchedule(KnowledgeDocument document) {
+        syncSchedule(document, true);
     }
 
     @Override
-    public void syncScheduleIfExists(KnowledgeDocumentDO documentDO) {
-        syncSchedule(documentDO, false);
+    public void syncScheduleIfExists(KnowledgeDocument document) {
+        syncSchedule(document, false);
     }
 
-    private void syncSchedule(KnowledgeDocumentDO documentDO, boolean allowCreate) {
-        if (documentDO == null) {
+    private void syncSchedule(KnowledgeDocument document, boolean allowCreate) {
+        if (document == null) {
             return;
         }
-        if (documentDO.getId() == null || documentDO.getKbId() == null) {
+        if (document.getId() == null || document.getKbId() == null) {
             return;
         }
-        if (!SourceType.URL.getValue().equalsIgnoreCase(documentDO.getSourceType())) {
+        if (!SourceType.URL.getValue().equalsIgnoreCase(document.getSourceType())) {
             return;
         }
-        boolean docEnabled = documentDO.getEnabled() == null || documentDO.getEnabled() == 1;
-        String cron = documentDO.getScheduleCron();
-        boolean enabled = documentDO.getScheduleEnabled() != null && documentDO.getScheduleEnabled() == 1;
+        boolean docEnabled = document.getEnabled() == null || document.getEnabled() == 1;
+        String cron = document.getScheduleCron();
+        boolean enabled = document.getScheduleEnabled() != null && document.getScheduleEnabled() == 1;
         if (!StringUtils.hasText(cron)) {
             enabled = false;
         }
@@ -89,32 +86,25 @@ public class KnowledgeDocumentScheduleServiceImpl implements KnowledgeDocumentSc
             }
         }
 
-        KnowledgeDocumentScheduleDO existing = scheduleMapper.selectOne(
-                new LambdaQueryWrapper<KnowledgeDocumentScheduleDO>()
-                        .eq(KnowledgeDocumentScheduleDO::getDocId, documentDO.getId())
-                        .last("LIMIT 1")
-        );
+        KnowledgeDocumentSchedule existing = scheduleRepository.findByDocId(document.getId());
 
         if (existing == null) {
             if (!allowCreate) {
                 return;
             }
-            KnowledgeDocumentScheduleDO schedule = KnowledgeDocumentScheduleDO.builder()
-                    .docId(documentDO.getId())
-                    .kbId(documentDO.getKbId())
+            KnowledgeDocumentSchedule schedule = KnowledgeDocumentSchedule.builder()
+                    .docId(document.getId())
+                    .kbId(document.getKbId())
                     .cronExpr(cron)
                     .enabled(enabled ? 1 : 0)
                     .nextRunTime(nextRunTime)
                     .build();
-            scheduleMapper.insert(schedule);
+            scheduleRepository.save(schedule);
         } else {
-            scheduleMapper.update(
-                    new LambdaUpdateWrapper<KnowledgeDocumentScheduleDO>()
-                            .eq(KnowledgeDocumentScheduleDO::getId, existing.getId())
-                            .set(KnowledgeDocumentScheduleDO::getCronExpr, cron)
-                            .set(KnowledgeDocumentScheduleDO::getEnabled, enabled ? 1 : 0)
-                            .set(KnowledgeDocumentScheduleDO::getNextRunTime, nextRunTime)
-            );
+            existing.setCronExpr(cron);
+            existing.setEnabled(enabled ? 1 : 0);
+            existing.setNextRunTime(nextRunTime);
+            scheduleRepository.update(existing);
         }
     }
 
@@ -124,9 +114,7 @@ public class KnowledgeDocumentScheduleServiceImpl implements KnowledgeDocumentSc
         if (!StringUtils.hasText(docId)) {
             return;
         }
-        scheduleExecMapper.delete(new LambdaQueryWrapper<KnowledgeDocumentScheduleExecDO>()
-                .eq(KnowledgeDocumentScheduleExecDO::getDocId, docId));
-        scheduleMapper.delete(new LambdaQueryWrapper<KnowledgeDocumentScheduleDO>()
-                .eq(KnowledgeDocumentScheduleDO::getDocId, docId));
+        scheduleExecRepository.deleteByDocId(docId);
+        scheduleRepository.deleteByDocId(docId);
     }
 }

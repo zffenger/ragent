@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.knowledge.dao.mapper;
+package com.nageoffer.ai.ragent.rag.infra.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentScheduleExecDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeDocumentChunkLogDO;
 
-public interface KnowledgeDocumentScheduleExecMapper extends BaseMapper<KnowledgeDocumentScheduleExecDO> {
+/**
+ * 知识库文档分块日志 Mapper
+ */
+public interface KnowledgeDocumentChunkLogMapper extends BaseMapper<KnowledgeDocumentChunkLogDO> {
 }

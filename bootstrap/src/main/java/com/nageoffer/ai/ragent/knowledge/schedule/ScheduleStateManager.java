@@ -19,10 +19,10 @@ package com.nageoffer.ai.ragent.knowledge.schedule;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentScheduleDO;
-import com.nageoffer.ai.ragent.knowledge.dao.entity.KnowledgeDocumentScheduleExecDO;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleExecMapper;
-import com.nageoffer.ai.ragent.knowledge.dao.mapper.KnowledgeDocumentScheduleMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeDocumentScheduleDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.po.KnowledgeDocumentScheduleExecDO;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeDocumentScheduleExecMapper;
+import com.nageoffer.ai.ragent.rag.infra.persistence.mapper.KnowledgeDocumentScheduleMapper;
 import com.nageoffer.ai.ragent.knowledge.enums.ScheduleRunStatus;
 import com.nageoffer.ai.ragent.knowledge.handler.RemoteFileFetcher;
 import com.nageoffer.ai.ragent.rag.domain.vo.StoredFileDTO;

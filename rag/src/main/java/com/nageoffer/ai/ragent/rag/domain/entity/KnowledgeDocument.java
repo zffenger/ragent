@@ -15,14 +15,8 @@
  * limitations under the License.
  */
 
-package com.nageoffer.ai.ragent.knowledge.dao.entity;
+package com.nageoffer.ai.ragent.rag.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,16 +25,14 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 知识库文档实体
+ * 知识库文档领域实体
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("t_knowledge_document")
-public class KnowledgeDocumentDO {
+public class KnowledgeDocument {
 
-    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
@@ -100,36 +92,26 @@ public class KnowledgeDocumentDO {
 
     /**
      * 处理模式：chunk / pipeline
-     * - chunk: 使用分块策略直接分块
-     * - pipeline: 使用数据通道进行清洗处理
      */
     private String processMode;
 
     /**
      * 分块策略
-     * 仅在 processMode=chunk 时有效
      */
     private String chunkStrategy;
 
     /**
      * 分块参数配置（JSON）
-     * 仅在 processMode=chunk 时有效
      */
-    @TableField(typeHandler = com.nageoffer.ai.ragent.rag.infra.persistence.handler.JsonbTypeHandler.class)
     private String chunkConfig;
 
     /**
      * 数据通道（Pipeline）ID
-     * 仅在 processMode=pipeline 时有效
      */
     private String pipelineId;
 
     /**
-     * 状态：
-     * - pending：待向量化
-     * - running：向量化中
-     * - failed：向量化失败
-     * - success：向量化完成
+     * 状态
      */
     private String status;
 
@@ -143,15 +125,7 @@ public class KnowledgeDocumentDO {
      */
     private String updatedBy;
 
-    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
-
-    /**
-     * 是否删除：0-正常，1-删除
-     */
-    @TableLogic
-    private Integer deleted;
 }
