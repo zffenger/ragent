@@ -29,12 +29,13 @@
     </properties>
 
     <modules>
-        <module>bootstrap</module>
-        <module>framework</module>
-        <module>llm</module>
-        <module>rag</module>
+        <module>ragent-bootstrap</module>
+        <module>ragent-framework</module>
+        <module>ragent-llm</module>
+        <module>ragent-kb</module>
+        <module>ragent-rag</module>
         <module>mcp-server</module>
-        <module>chatbot</module>
+        <module>ragent-chatbot</module>
     </modules>
 
     <dependencyManagement>

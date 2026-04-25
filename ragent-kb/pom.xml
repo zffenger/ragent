@@ -8,12 +8,12 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>llm</artifactId>
+    <artifactId>ragent-kb</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>framework</artifactId>
+            <artifactId>ragent-framework</artifactId>
             <version>${project.version}</version>
         </dependency>
 

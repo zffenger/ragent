@@ -8,19 +8,19 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>rag</artifactId>
+    <artifactId>ragent-rag</artifactId>
     <description>RAG 模块 - 文档解析、向量检索、意图识别、问题重写、会话记忆等核心能力</description>
 
     <dependencies>
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>framework</artifactId>
+            <artifactId>ragent-framework</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>llm</artifactId>
+            <artifactId>ragent-llm</artifactId>
             <version>${project.version}</version>
         </dependency>
 

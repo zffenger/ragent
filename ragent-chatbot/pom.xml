@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>chatbot</artifactId>
+    <artifactId>ragent-chatbot</artifactId>
     <name>chatbot</name>
     <description>飞书和企微机器人模块，支持单聊、群聊和智能问答</description>
 
@@ -17,14 +17,14 @@
         <!-- 依赖 framework 模块 -->
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>framework</artifactId>
+            <artifactId>ragent-framework</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- 依赖 llm 模块（LLMService） -->
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>llm</artifactId>
+            <artifactId>ragent-llm</artifactId>
             <version>${project.version}</version>
         </dependency>
 

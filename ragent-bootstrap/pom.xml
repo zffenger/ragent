@@ -8,30 +8,36 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bootstrap</artifactId>
+    <artifactId>ragent-bootstrap</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>framework</artifactId>
+            <artifactId>ragent-framework</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>llm</artifactId>
+            <artifactId>ragent-llm</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>rag</artifactId>
+            <artifactId>ragent-kb</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.nageoffer.ai</groupId>
-            <artifactId>chatbot</artifactId>
+            <artifactId>ragent-rag</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.nageoffer.ai</groupId>
+            <artifactId>ragent-chatbot</artifactId>
             <version>${project.version}</version>
         </dependency>
 
